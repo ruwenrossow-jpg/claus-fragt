@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { supabase, supabaseConfigured } from "@/lib/supabase";
+import { missingEnv, supabase, supabaseConfigured } from "@/lib/supabase";
 import { Form, STATUS_LABELS } from "@/lib/types";
 
 export default function Home() {
@@ -43,7 +43,7 @@ export default function Home() {
         <button className="primary" onClick={createForm}>+ Neuer Bogen</button>
       </div>
       <p className="muted">Evaluationsbögen erstellen, teilen und auswerten.</p>
-      {!supabaseConfigured && <p className="error">Supabase-Umgebungsvariablen fehlen (.env.local).</p>}
+      {!supabaseConfigured && <p className="error">Fehlende Umgebungsvariablen: {missingEnv.join(", ")}. Lokal in .env.local eintragen, auf Vercel unter Settings → Environment Variables (danach neu deployen).</p>}
       {error && <p className="error">{error}</p>}
       {loading ? (
         <p className="muted">Lädt …</p>
