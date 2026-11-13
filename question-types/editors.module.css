@@ -1,0 +1,5 @@
+/* Typ-spezifische Felder im Builder (Admin-Look, siehe app/globals.css). */
+.row { display: flex; gap: 8px; align-items: center; margin-top: 6px; }
+.row input[type="text"] { flex: 1; }
+.marker { width: 22px; color: var(--admin-muted); font-weight: 600; }
+.grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 6px; }
