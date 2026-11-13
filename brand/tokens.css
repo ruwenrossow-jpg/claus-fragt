@@ -1,0 +1,50 @@
+/*
+ * Builder-Box: Design-Tokens für Claus fragt.
+ * Quelle: Figma-Prototyp „van der Stein“ (docs/prototyp) + InnoNord-CI.
+ * Regel: Farben, Radien, Schriftgrößen NUR über diese Variablen verwenden.
+ */
+:root {
+  /* InnoNord-CI */
+  --inno-red: #e3000b;
+  --inno-navy: #272a87;
+
+  /* Bogen-Oberfläche (Prototyp) */
+  --survey-bg: #bffaff;
+  --survey-card: #9ee6ef;
+  --survey-field: #7abdc7;
+  --survey-accent: #457f8c;       /* Fortschritt, gewählte Option, Skalen-Chips */
+  --survey-accent-light: #55b8cd; /* Fortschritt-Hintergrund, Ergebnisbalken-Rest */
+  --survey-bubble: #dcdcdc;
+  --survey-neutral: #d9d9d9;      /* leere Radios, leere Sterne */
+  --survey-star: #edc305;
+  --survey-ink: #000000;
+  --survey-on-accent: #ffffff;
+
+  /* Admin-Oberfläche (Builder) */
+  --admin-bg: #f5f6fa;
+  --admin-surface: #ffffff;
+  --admin-border: #dfe1ea;
+  --admin-text: #1b1d3a;
+  --admin-muted: #6b6f8a;
+  --admin-danger: #b3000a;
+
+  /* Typografie: InnoNord-Web nutzt Source Sans Pro; Logo ist eine Slab-Serif (nächste freie: Zilla Slab) */
+  --font-body: var(--font-source-sans), "Source Sans 3", "Source Sans Pro", system-ui, sans-serif;
+  --font-display: var(--font-zilla-slab), "Zilla Slab", Georgia, serif;
+
+  --text-s: 16px;
+  --text-m: 20px;
+  --text-l: 24px;
+  --text-xl: 30px;
+  --text-button: 34px;
+
+  /* Formen */
+  --radius-card: 18px;
+  --radius-field: 20px;
+  --radius-pill: 999px;
+  --border-ink: 1.5px solid var(--survey-ink);
+
+  /* Bildschirm (Prototyp-Raster 393 × 852) */
+  --screen-max: 430px;
+  --screen-pad: 26px;
+}
