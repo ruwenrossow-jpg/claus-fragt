@@ -3,11 +3,14 @@
  * Alle Funktionen werfen bei Fehlern einen Error mit lesbarer Meldung.
  */
 import { supabase } from "./supabase";
-import { Answer, AnswerValue, Form, Question, isEmptyAnswer } from "./types";
+import { Answer, AnswerValue, Form, FormSettings, Question, isEmptyAnswer } from "./types";
 
 const PAGE = 1000;
 
 function unwrap<T>(res: { data: T | null; error: { message: string } | null }): T {
+  if (res.error && /settings|public_slug/.test(res.error.message)) {
+    throw new Error("Datenbank noch nicht aktuell: Bitte die Migration 20261114090000_framework.sql im Supabase SQL-Editor ausführen.");
+  }
   if (res.error) throw new Error(res.error.message);
   return res.data as T;
 }
@@ -30,12 +33,62 @@ export async function listForms(): Promise<Form[]> {
   return unwrap(await supabase.from("forms").select("*").order("updated_at", { ascending: false })) ?? [];
 }
 
-export async function createForm(title = "Neuer Evaluationsbogen"): Promise<Form> {
-  return unwrap(await supabase.from("forms").insert({ title, style: "claus" }).select().single());
+/** Kurzer, zufälliger Link-Teil, z. B. „k3x9qa“ (ohne verwechselbare Zeichen). */
+export function newSlug(): string {
+  const chars = "abcdefghjkmnpqrstuvwxyz23456789";
+  return Array.from(crypto.getRandomValues(new Uint8Array(6)), (b) => chars[b % chars.length]).join("");
+}
+
+export interface NewFormInput {
+  title: string;
+  style: string;
+  settings: FormSettings;
+  questions: (formId: string) => Question[];
+}
+
+/** Legt einen Bogen inkl. vorbelegter Plätze an. */
+export async function createForm(input: NewFormInput): Promise<Form> {
+  const form: Form = unwrap(
+    await supabase.from("forms").insert({ title: input.title, style: input.style, settings: input.settings, public_slug: newSlug() }).select().single()
+  );
+  const qs = input.questions(form.id).map((q, i) => ({ ...q, position: i }));
+  if (qs.length) unwrap(await supabase.from("questions").insert(qs));
+  return form;
+}
+
+/** Bogen als Vorlage kopieren: Fragen ja, Antworten nein. */
+export async function duplicateForm(id: string): Promise<Form> {
+  const { form, questions } = await loadForm(id);
+  return createForm({
+    title: `${form.title} (Kopie)`,
+    style: form.style ?? "inspire",
+    settings: form.settings ?? {},
+    questions: (formId) => questions.map((q) => ({ ...q, id: crypto.randomUUID(), form_id: formId })),
+  });
 }
 
 export async function deleteForm(id: string): Promise<void> {
   unwrap(await supabase.from("forms").delete().eq("id", id));
+}
+
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+/** Öffentlicher Link: /f/<slug> (alte Links mit id funktionieren weiter). */
+export async function loadPublicForm(slugOrId: string): Promise<{ form: Form; questions: Question[] }> {
+  if (UUID.test(slugOrId)) return loadForm(slugOrId);
+  const form: Form = unwrap(await supabase.from("forms").select("*").eq("public_slug", slugOrId).single());
+  return loadForm(form.id);
+}
+
+export async function countResponses(formId: string): Promise<number> {
+  const res = await supabase.from("responses").select("id", { count: "exact", head: true }).eq("form_id", formId);
+  if (res.error) throw new Error(res.error.message);
+  return res.count ?? 0;
+}
+
+export async function listResponseCounts(): Promise<Record<string, number>> {
+  const rows = await fetchAll<{ form_id: string }>((a, b) => supabase.from("responses").select("form_id").range(a, b));
+  return rows.reduce<Record<string, number>>((acc, r) => ({ ...acc, [r.form_id]: (acc[r.form_id] ?? 0) + 1 }), {});
 }
 
 export async function loadForm(id: string): Promise<{ form: Form; questions: Question[] }> {
@@ -47,11 +100,20 @@ export async function loadForm(id: string): Promise<{ form: Form; questions: Que
 }
 
 /** Speichert Bogen + Fragen in einem Rutsch (Reihenfolge = Array-Reihenfolge). */
-export async function saveForm(form: Form, questions: Question[], removedIds: string[]): Promise<void> {
+/** Gibt den (ggf. neu vergebenen) öffentlichen Slug zurück. */
+export async function saveForm(form: Form, questions: Question[], removedIds: string[]): Promise<string> {
+  const slug = form.public_slug || newSlug();
   unwrap(
     await supabase
       .from("forms")
-      .update({ title: form.title, description: form.description, status: form.status, style: form.style })
+      .update({
+        title: form.title,
+        description: form.description,
+        status: form.status,
+        style: form.style,
+        settings: form.settings ?? {},
+        public_slug: slug,
+      })
       .eq("id", form.id)
   );
   if (removedIds.length) unwrap(await supabase.from("questions").delete().in("id", removedIds));
@@ -59,6 +121,7 @@ export async function saveForm(form: Form, questions: Question[], removedIds: st
     const rows = questions.map((q, i) => ({ ...q, position: i }));
     unwrap(await supabase.from("questions").upsert(rows));
   }
+  return slug;
 }
 
 // ---------- Antworten ----------

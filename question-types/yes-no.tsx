@@ -9,6 +9,7 @@ const ITEMS = [
 
 export const yesNo: QuestionTypeDef = {
   kind: "yes_no",
+  autoAdvance: true,
   label: "Ja / Nein",
   defaultBoxTitle: "",
   apply: (q) => ({ ...q, type: "yes_no", options: [], settings: commonSettings(q) }),

@@ -1,13 +1,12 @@
 /* eslint-disable @next/next/no-img-element */
-import { COPY } from "@/brand/copy";
-import { Theme } from "@/brand/themes";
 import { TopBar } from "@/components/ui/TopBar";
 import { distribution, typeOf } from "@/question-types";
 import { Answer, AnswerValue, Question } from "@/lib/types";
+import { Survey } from "./context";
 import styles from "./survey.module.css";
 
 interface Props {
-  theme: Theme;
+  survey: Survey;
   question: Question;
   number: number;
   own: AnswerValue | undefined;
@@ -15,10 +14,11 @@ interface Props {
   onBack?: () => void;
 }
 
-/** Ergebnis-Screen: eigene Antwort im Vergleich zu allen anderen (Prototyp „Results“). */
-export function ResultView({ theme, question, number, own, answers, onBack }: Props) {
+/** Ergebnis-Screen: eigene Antwort im Vergleich zu allen anderen. Nur Anteile, keine Einzelantworten. */
+export function ResultView({ survey, question, number, own, answers, onBack }: Props) {
+  const { theme, copy } = survey;
   const def = typeOf(question);
-  const { rows } = distribution(question, answers);
+  const { rows, total } = distribution(question, answers);
   const matches = def.matches ?? ((v: AnswerValue, o: { value: unknown }) => v === o.value);
   const isOwn = (value: string | number | boolean) => own !== undefined && own !== null && matches(own, { value, label: "", short: "" });
   const ownShorts = rows.filter((r) => isOwn(r.option.value)).map((r) => r.option.short);
@@ -26,16 +26,18 @@ export function ResultView({ theme, question, number, own, answers, onBack }: Pr
   return (
     <>
       <div className={styles.resultHead}>
-        <TopBar onBack={onBack} />
-        <img className={styles.resultMascot} src={theme.mascot.sad} alt={theme.mascot.alt} />
+        <TopBar onBack={onBack} backLabel={copy.buttons.back} />
+        <img className={styles.resultMascot} src={theme.mascot.happy} alt={theme.mascot.alt} />
       </div>
+      <p className={styles.resultKicker}>{copy.result.title}</p>
       <h2 className={styles.resultTitle}>
         Frage {number}
         <br />
-        {question.label}
+        {survey.labelOf(question)}
       </h2>
       <p className={styles.yourAnswer}>
-        {COPY.yourAnswer} = {ownShorts.length ? ownShorts.join(", ") : "–"}:
+        {copy.result.mine} = {ownShorts.length ? ownShorts.join(", ") : "–"}
+        <span className={styles.total}> · {total} Antworten</span>
       </p>
       <div className={styles.rows}>
         {rows.map(({ option, share }) => {

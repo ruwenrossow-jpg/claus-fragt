@@ -6,8 +6,8 @@
 .resultHead { display: flex; justify-content: space-between; align-items: flex-start; padding-right: 26px; }
 .resultHead > button { margin-top: 0; }
 .resultMascot { width: 80px; height: auto; }
-.resultTitle { margin: 36px 26px 0; text-align: center; font-family: inherit; font-size: var(--text-xl); font-weight: 400; line-height: 1.2; color: inherit; }
-.yourAnswer { margin: 48px 30px 18px; font-size: var(--text-m); }
+.resultTitle { margin: 8px 26px 0; text-align: center; font-family: inherit; font-size: var(--text-xl); font-weight: 400; line-height: 1.2; color: inherit; }
+.yourAnswer { margin: 32px 30px 18px; font-size: var(--text-m); }
 .rows { display: flex; flex-direction: column; gap: 14px; margin: 0 20px 0 30px; }
 .row { display: grid; grid-template-columns: 34px 1fr 52px; align-items: center; gap: 12px; font-size: var(--text-m); }
 .rowCaption { grid-column: 2 / 4; margin: -10px 0 0; font-size: 14px; opacity: 0.75; }
@@ -15,3 +15,5 @@
 .barFill { height: 100%; border-radius: var(--radius-pill); background: var(--survey-accent); transition: width 0.5s ease; }
 .pct { text-align: right; }
 .own { color: var(--inno-red); }
+.resultKicker { margin: 12px 26px 0; text-align: center; font-size: var(--text-s); font-weight: 600; }
+.total { font-size: var(--text-s); opacity: 0.7; }

@@ -1,4 +1,4 @@
-import { COPY } from "@/brand/copy";
+import { COPY_DEFAULT as COPY } from "@/brand/copy";
 import { Question } from "@/lib/types";
 import { commonSettings } from "./settings";
 import { EditorProps, InputProps, QuestionTypeDef } from "./types";
@@ -14,8 +14,8 @@ export function scaleRange(q: Question): number[] {
 function Labels({ question }: { question: Question }) {
   return (
     <div className={styles.scaleLabels}>
-      <span>{question.settings.minLabel ?? COPY.scaleMinLabel}</span>
-      <span>{question.settings.maxLabel ?? COPY.scaleMaxLabel}</span>
+      <span>{question.settings.minLabel ?? COPY.scale.min}</span>
+      <span>{question.settings.maxLabel ?? COPY.scale.max}</span>
     </div>
   );
 }
@@ -80,8 +80,8 @@ function ScaleEditor({ question, onChange, maxChoices }: EditorProps & { maxChoi
         </select>
       </div>
       <div className={ed.grid}>
-        <input type="text" value={question.settings.minLabel ?? ""} placeholder={`links: ${COPY.scaleMinLabel}`} onChange={(e) => set({ minLabel: e.target.value || undefined })} />
-        <input type="text" value={question.settings.maxLabel ?? ""} placeholder={`rechts: ${COPY.scaleMaxLabel}`} onChange={(e) => set({ maxLabel: e.target.value || undefined })} />
+        <input type="text" value={question.settings.minLabel ?? ""} placeholder={`links: ${COPY.scale.min}`} onChange={(e) => set({ minLabel: e.target.value || undefined })} />
+        <input type="text" value={question.settings.maxLabel ?? ""} placeholder={`rechts: ${COPY.scale.max}`} onChange={(e) => set({ maxLabel: e.target.value || undefined })} />
       </div>
     </div>
   );
@@ -96,8 +96,9 @@ const scaleResultOptions = (q: Question) => scaleRange(q).map((n) => ({ value: n
 
 export const scale: QuestionTypeDef = {
   kind: "scale",
+  autoAdvance: true,
   label: "Skala (Zahlen)",
-  defaultBoxTitle: "Das ist Ihre Skala:",
+  defaultBoxTitle: "",
   apply: (q) => applyScale(q, "numbers"),
   Input: NumberInput,
   Editor: (p) => <ScaleEditor {...p} maxChoices={[3, 4, 5, 6, 7, 10]} />,
@@ -107,8 +108,9 @@ export const scale: QuestionTypeDef = {
 
 export const stars: QuestionTypeDef = {
   kind: "stars",
+  autoAdvance: true,
   label: "Sterne-Bewertung",
-  defaultBoxTitle: "Bewerten Sie:",
+  defaultBoxTitle: "",
   apply: (q) => applyScale(q, "stars"),
   Input: StarInput,
   Editor: (p) => <ScaleEditor {...p} maxChoices={[3, 4, 5, 6]} />,

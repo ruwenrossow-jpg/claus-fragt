@@ -5,6 +5,7 @@
  */
 import { AnswerValue, Answer, Question } from "@/lib/types";
 import { multipleChoice, singleChoice } from "./choice";
+import { levels } from "./levels";
 import { scale, stars } from "./scale";
 import { longText, shortText } from "./text";
 import { yesNo } from "./yes-no";
@@ -12,13 +13,14 @@ import { QuestionKind, QuestionTypeDef, ResultOption } from "./types";
 
 export type { QuestionKind, QuestionTypeDef, ResultOption } from "./types";
 
-/** Reihenfolge = Reihenfolge im Builder. Die ersten vier entsprechen dem Figma-Prototyp. */
-export const QUESTION_TYPES: QuestionTypeDef[] = [singleChoice, scale, stars, longText, multipleChoice, shortText, yesNo];
+/** Reihenfolge = Reihenfolge in der Typ-Auswahl. */
+export const QUESTION_TYPES: QuestionTypeDef[] = [singleChoice, levels, scale, stars, longText, multipleChoice, shortText, yesNo];
 
 const BY_KIND = Object.fromEntries(QUESTION_TYPES.map((t) => [t.kind, t])) as Record<QuestionKind, QuestionTypeDef>;
 
 export function kindOf(q: Question): QuestionKind {
   if (q.type === "scale" && q.settings.display === "stars") return "stars";
+  if (q.type === "single_choice" && q.settings.display === "levels") return "levels";
   return q.type;
 }
 
@@ -70,4 +72,15 @@ export function average(q: Question, answers: Answer[]): number | null {
   if (q.type !== "scale") return null;
   const nums = answers.filter((a) => a.question_id === q.id).map((a) => Number(a.value)).filter((n) => !Number.isNaN(n));
   return nums.length ? nums.reduce((a, b) => a + b, 0) / nums.length : null;
+}
+
+export { levelScore } from "./levels";
+
+/** Wird die Frage im Bogen gezeigt? Leere optionale Plätze fallen weg; Auswahlfragen brauchen ≥ 2 Optionen. */
+export function isPlayable(q: Question): boolean {
+  const def = typeOf(q);
+  if (def.resultOptions && (q.type === "single_choice" || q.type === "multiple_choice")) {
+    if (q.options.filter((o) => o.trim()).length < 2) return false;
+  }
+  return q.label.trim() !== "" || q.required;
 }

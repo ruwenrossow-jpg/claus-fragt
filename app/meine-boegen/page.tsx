@@ -4,24 +4,32 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { AdminHeader } from "@/components/AdminHeader";
-import { createForm, deleteForm, listForms } from "@/lib/data";
-import { missingEnv } from "@/lib/supabase";
+import { deleteForm, duplicateForm, listForms, listResponseCounts } from "@/lib/data";
+import { getStyle } from "@/lib/styles";
 import { Form, STATUS_LABELS } from "@/lib/types";
 
-export default function Home() {
+export default function MyFormsPage() {
   const router = useRouter();
   const [forms, setForms] = useState<Form[] | null>(null);
+  const [counts, setCounts] = useState<Record<string, number>>({});
   const [error, setError] = useState<string | null>(null);
 
-  const load = () => listForms().then(setForms, (e: Error) => setError(e.message));
+  const load = () =>
+    Promise.all([listForms(), listResponseCounts()]).then(
+      ([f, c]) => {
+        setForms(f);
+        setCounts(c);
+      },
+      (e: Error) => setError(e.message)
+    );
   useEffect(() => {
     load();
   }, []);
 
-  async function create() {
+  async function duplicate(f: Form) {
     try {
-      const f = await createForm();
-      router.push(`/forms/${f.id}/edit`);
+      const copy = await duplicateForm(f.id);
+      router.push(`/b/${copy.id}/bearbeiten`);
     } catch (e) {
       setError((e as Error).message);
     }
@@ -35,13 +43,10 @@ export default function Home() {
 
   return (
     <>
-      <AdminHeader>
-        <button type="button" className="btn primary" onClick={create}>+ Neuer Bogen</button>
-      </AdminHeader>
+      <AdminHeader />
       <main className="admin-main admin-narrow">
-        <h1>Evaluationsbögen</h1>
-        <p className="muted">Bögen bauen, per Link teilen und auswerten.</p>
-        {missingEnv.length > 0 && <p className="error">Fehlende Umgebungsvariablen: {missingEnv.join(", ")}</p>}
+        <h1>Meine Bögen</h1>
+        <Link href="/neu" className="btn primary big" style={{ margin: "8px 0 12px" }}>+ Neuer Bogen</Link>
         {error && <p className="error">{error}</p>}
         {!forms ? (
           <p className="muted">Lädt …</p>
@@ -52,12 +57,15 @@ export default function Home() {
             <div key={f.id} className="panel row spread">
               <div>
                 <strong>{f.title}</strong>
-                <div className="muted">{STATUS_LABELS[f.status]} · geändert {new Date(f.updated_at).toLocaleString("de-DE")}</div>
+                <div className="muted">
+                  {STATUS_LABELS[f.status]} · {counts[f.id] ?? 0} Antworten · {getStyle(f.style).name}
+                </div>
               </div>
               <div className="row">
-                <Link className="btn small" href={`/forms/${f.id}/edit`}>Bearbeiten</Link>
-                <Link className="btn small" href={`/f/${f.id}`} target="_blank">Ansehen</Link>
-                <Link className="btn small" href={`/forms/${f.id}/results`}>Auswertung</Link>
+                <Link className="btn small" href={`/b/${f.id}/bearbeiten`}>Bearbeiten</Link>
+                <Link className="btn small" href={`/b/${f.id}/bearbeiten?teilen=1`}>Teilen</Link>
+                <Link className="btn small" href={`/b/${f.id}/ergebnisse`}>Ergebnisse</Link>
+                <button type="button" className="btn small" onClick={() => duplicate(f)}>Duplizieren</button>
                 <button type="button" className="btn small danger" onClick={() => remove(f)}>Löschen</button>
               </div>
             </div>

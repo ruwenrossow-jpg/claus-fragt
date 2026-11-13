@@ -1,4 +1,4 @@
-import { COPY } from "@/brand/copy";
+import { COPY_DEFAULT as COPY } from "@/brand/copy";
 import { Question } from "@/lib/types";
 import { commonSettings } from "./settings";
 import { EditorProps, QuestionTypeDef } from "./types";
@@ -13,7 +13,7 @@ function PlaceholderEditor({ question, onChange }: EditorProps) {
     <input
       type="text"
       value={question.settings.placeholder ?? ""}
-      placeholder={`Platzhalter im Feld (Standard: ${COPY.textPlaceholder})`}
+      placeholder={`Platzhalter im Feld (Standard: ${COPY.placeholder.text})`}
       onChange={(e) => onChange({ settings: { ...question.settings, placeholder: e.target.value || undefined } })}
     />
   );
@@ -21,14 +21,15 @@ function PlaceholderEditor({ question, onChange }: EditorProps) {
 
 export const longText: QuestionTypeDef = {
   kind: "long_text",
+  autoAdvance: false,
   label: "Offene Antwort",
-  defaultBoxTitle: "Offene Antwort:",
+  defaultBoxTitle: "",
   apply: (q) => ({ ...q, type: "long_text", options: [], settings: textSettings(q) }),
   Input: ({ question, value, onChange }) => (
     <textarea
       className={`${styles.field} ${styles.textarea}`}
       value={typeof value === "string" ? value : ""}
-      placeholder={question.settings.placeholder || COPY.textPlaceholder}
+      placeholder={question.settings.placeholder || COPY.placeholder.text}
       onChange={(e) => onChange(e.target.value)}
     />
   ),
@@ -38,15 +39,16 @@ export const longText: QuestionTypeDef = {
 
 export const shortText: QuestionTypeDef = {
   kind: "short_text",
+  autoAdvance: false,
   label: "Kurze Antwort",
-  defaultBoxTitle: "Ihre Antwort:",
+  defaultBoxTitle: "",
   apply: (q) => ({ ...q, type: "short_text", options: [], settings: textSettings(q) }),
   Input: ({ question, value, onChange }) => (
     <input
       type="text"
       className={styles.field}
       value={typeof value === "string" ? value : ""}
-      placeholder={question.settings.placeholder || COPY.textPlaceholder}
+      placeholder={question.settings.placeholder || COPY.placeholder.text}
       onChange={(e) => onChange(e.target.value)}
     />
   ),

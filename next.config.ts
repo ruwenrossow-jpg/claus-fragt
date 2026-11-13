@@ -8,6 +8,13 @@ const PUBLIC_URL = "https://zsoiiwtcynjwkhdcbkih.supabase.co";
 const PUBLIC_KEY = "sb_publishable_vHf8tZks1Pvq99dLRJX-Nw_3Fbz47Vh";
 
 const nextConfig: NextConfig = {
+  async redirects() {
+    return [
+      { source: "/", destination: "/meine-boegen", permanent: false },
+      { source: "/forms/:id/edit", destination: "/b/:id/bearbeiten", permanent: true },
+      { source: "/forms/:id/results", destination: "/b/:id/ergebnisse", permanent: true },
+    ];
+  },
   env: {
     NEXT_PUBLIC_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL || PUBLIC_URL,
     NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY:

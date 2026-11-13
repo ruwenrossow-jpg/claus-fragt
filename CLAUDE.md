@@ -5,6 +5,9 @@
 Evaluationsbögen für InnoNord: Ein **Builder** (Admin) erstellt Bögen, Teilnehmende füllen sie per Link im
 Claus-Look (Figma-Prototyp „van der Stein“) aus, und die Ergebnisse dienen dazu, den Wissenstransfer von Event zu Event zu verbessern.
 
+Routen: `/meine-boegen`, `/neu`, `/b/<id>/bearbeiten`, `/b/<id>/ergebnisse`, `/f/<slug>`, `/f/<slug>/qr`.
+Framework/Styles/Regeln/KPI: `lib/framework.ts`, `lib/styles.ts`, `lib/rules.ts`, `lib/kpi.ts`.
+
 ## Zuerst lesen
 1. `brand/BUILDERBOOK.md`: Design-System (Farben, Typo, Bausteine, Screens). **Verbindlich.**
 2. `docs/ARCHITEKTUR.md`: Ordner, Datenfluss, Erweiterungspunkte.
@@ -24,7 +27,7 @@ Claus-Look (Figma-Prototyp „van der Stein“) aus, und die Ergebnisse dienen d
 
 ## Definition of Done (jede Runde)
 1. `npx tsc --noEmit` und `npm run build` grün.
-2. `npm run dev`, dann `node scripts/visual-test.mjs http://localhost:3000` (alles fehlerfrei) und `npm run test:vergleich`.
+2. `npm run dev`, dann `node scripts/visual-test.mjs http://localhost:3000` (alles fehlerfrei) und bei Design-Änderungen `node scripts/vergleich.mjs <screens>`.
 3. Screenshots in `.shots/vergleich-*.png` mit `docs/prototyp/` vergleichen: Abweichungen beheben oder begründen.
 4. Learnings in `docs/LEARNINGS.md` eintragen.
 5. Branch + PR, Vercel-Preview abwarten, Preview-Link testen.

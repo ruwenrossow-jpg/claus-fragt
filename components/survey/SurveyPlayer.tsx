@@ -1,55 +1,58 @@
 "use client";
 
-/* eslint-disable @next/next/no-img-element */
-import { useState } from "react";
-import { COPY, fillCopy } from "@/brand/copy";
-import { getTheme } from "@/brand/themes";
-import { AnswerCard } from "@/components/ui/AnswerCard";
-import { MascotCorner, MascotHero } from "@/components/ui/Mascot";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { Intro, MascotHero } from "@/components/ui/Mascot";
 import { PillButton } from "@/components/ui/PillButton";
 import { Screen } from "@/components/ui/Screen";
 import { TopBar } from "@/components/ui/TopBar";
-import { boxTitleOf, isAnswerable, typeOf } from "@/question-types";
 import { Answer, AnswerValue, Form, Question, isEmptyAnswer } from "@/lib/types";
+import { isAnswerable, typeOf } from "@/question-types";
+import { buildSurvey } from "./context";
 import { START, Step, nextStep, prevStep, progressOf } from "./flow";
+import { QuestionScreen } from "./QuestionScreen";
 import { ResultView } from "./ResultView";
 import styles from "./survey.module.css";
+
+const AUTO_ADVANCE_MS = 400;
 
 export interface SurveyPlayerProps {
   form: Form;
   questions: Question[];
   /** Speichert die Antworten (live). Fehlt = Vorschau, es wird nichts gespeichert. */
   onSave?: (values: Record<string, AnswerValue>) => Promise<void>;
-  /** Lädt alle Antworten des Bogens für die Ergebnis-Screens (live). */
+  /** Lädt die Antworten aller für die Ergebnis-Screens (live). */
   loadAnswers?: () => Promise<Answer[]>;
   /** Von außen gesteuerter Screen (Builder-Vorschau). */
   step?: Step;
   onStepChange?: (step: Step) => void;
 }
 
-/** Spielt einen Bogen im Prototyp-Look ab. Wird vom Teilnehmer-Link UND von der Builder-Vorschau genutzt. */
-export function SurveyPlayer({ form, questions, onSave, loadAnswers, step: controlledStep, onStepChange }: SurveyPlayerProps) {
-  const theme = getTheme(form.style);
+/** Spielt einen Bogen ab. Wird vom Teilnehmer-Link UND von der Builder-Vorschau genutzt. */
+export function SurveyPlayer({ form, questions: allQuestions, onSave, loadAnswers, step: controlledStep, onStepChange }: SurveyPlayerProps) {
+  const survey = useMemo(() => buildSurvey(form, allQuestions), [form, allQuestions]);
+  const { theme, copy, questions } = survey;
   const [ownStep, setOwnStep] = useState<Step>(START);
   const [values, setValues] = useState<Record<string, AnswerValue>>({});
   const [answers, setAnswers] = useState<Answer[]>([]);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [showHint, setShowHint] = useState(false);
+  const [hint, setHint] = useState<string | null>(null);
+  const timer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  useEffect(() => () => clearTimeout(timer.current), []);
 
   const step = controlledStep ?? ownStep;
-  // Vorschau ohne Datenbank: Ergebnis-Screens zeigen nur die eigenen Antworten
-  const ownAnswers: Answer[] = Object.entries(values).map(([question_id, value]) => ({ response_id: "preview", question_id, value }));
   const resultQuestions = questions.filter(isAnswerable);
+  const n = questions.length;
+
   const go = (s: Step) => {
-    setShowHint(false);
+    clearTimeout(timer.current);
+    setHint(null);
     setError(null);
     if (onStepChange) onStepChange(s);
     else setOwnStep(s);
   };
-  const next = () => go(nextStep(step, questions.length, resultQuestions.length));
-  const back = prevStep(step, questions.length);
-  const header = <TopBar onBack={back ? () => go(back) : undefined} progress={progressOf(step, questions.length)} />;
+  const next = () => go(nextStep(step, n, resultQuestions.length));
+  const back = prevStep(step, n);
 
   async function run(task: () => Promise<void>) {
     setBusy(true);
@@ -64,42 +67,69 @@ export function SurveyPlayer({ form, questions, onSave, loadAnswers, step: contr
     }
   }
 
-  if (form.status === "closed" && onSave) {
-    return <Screen header={<TopBar />}><MascotHero theme={theme} mood="sad" text={COPY.closedBubble} /></Screen>;
+  /** Weiter von einer Frage: Pflicht prüfen, nach der letzten Frage speichern. */
+  function leaveQuestion(index: number, snapshot: Record<string, AnswerValue>) {
+    const q = questions[index];
+    if (q.required && isEmptyAnswer(snapshot[q.id])) return setHint(copy.hints.required);
+    if (index === n - 1 && onSave) return run(() => onSave(snapshot));
+    next();
   }
+
+  function answer(q: Question, index: number, v: AnswerValue) {
+    const snapshot = { ...values, [q.id]: v };
+    setValues(snapshot);
+    setHint(null);
+    clearTimeout(timer.current);
+    if (theme.autoAdvance && typeOf(q).autoAdvance && !isEmptyAnswer(v)) {
+      timer.current = setTimeout(() => leaveQuestion(index, snapshot), AUTO_ADVANCE_MS);
+    }
+  }
+
+  if (form.status === "closed" && onSave) {
+    return (
+      <Screen header={<TopBar />}>
+        <MascotHero theme={theme} mood="sad" text={copy.closed.title} />
+        <Intro sub={copy.closed.sub} />
+      </Screen>
+    );
+  }
+
+  const progressLabel = (i: number) => {
+    if (i === n - 1) return copy.progress.last;
+    if (n >= 4 && i === Math.floor(n / 2)) return copy.progress.half;
+    return copy.steps[questions[i].step ?? 0] ?? "";
+  };
+  const header = (label?: string) => (
+    <TopBar onBack={back ? () => go(back) : undefined} backLabel={copy.buttons.back} progress={progressOf(step, n)} label={label} />
+  );
 
   switch (step.kind) {
     case "start":
       return (
         <Screen
-          header={onSave && form.status === "draft" ? <p className={styles.notice}>Entwurf – noch nicht veröffentlicht</p> : <TopBar />}
-          footer={<PillButton onClick={next} disabled={!questions.length}>{COPY.buttons.start}</PillButton>}
+          header={onSave && form.status === "draft" ? <p className={styles.notice}>Entwurf – noch nicht live</p> : <TopBar />}
+          footer={<PillButton onClick={next} disabled={!n}>{copy.start.button}</PillButton>}
         >
-          <MascotHero theme={theme} mood="happy" text={fillCopy(form.description?.trim() || COPY.startBubble, { anzahl: questions.length })} />
+          <MascotHero theme={theme} mood="happy" size="s" text={survey.fill(copy.start.claus)} />
+          <Intro title={survey.fill(copy.start.title)} sub={survey.fill(copy.start.sub)} tags={copy.start.chips.map(survey.fill)} />
         </Screen>
       );
 
     case "question": {
       const q = questions[step.index];
       if (!q) return null;
-      const def = typeOf(q);
-      const side = q.settings.mascotSide && q.settings.mascotSide !== "auto" ? q.settings.mascotSide : step.index % 2 === 0 ? "left" : "right";
-      const missing = q.required && isEmptyAnswer(values[q.id]);
-      const isLast = step.index === questions.length - 1;
-      const onNext = () => {
-        if (missing) return setShowHint(true);
-        if (isLast && onSave) return run(() => onSave(values));
-        next();
-      };
       return (
-        <Screen header={header} footer={<PillButton onClick={onNext} disabled={busy}>{busy ? "…" : COPY.buttons.next}</PillButton>}>
-          <MascotCorner theme={theme} side={side} text={q.label || "Hier könnte Ihre Frage stehen"} help={q.help_text} />
-          <AnswerCard title={boxTitleOf(q)}>
-            <def.Input question={q} value={values[q.id]} onChange={(v) => setValues((s) => ({ ...s, [q.id]: v }))} />
-          </AnswerCard>
-          {showHint && <p className={styles.hint}>{COPY.requiredHint}</p>}
-          {error && <p className={styles.error}>{error}</p>}
-        </Screen>
+        <QuestionScreen
+          survey={survey}
+          index={step.index}
+          header={header(progressLabel(step.index))}
+          value={values[q.id]}
+          onAnswer={(v) => answer(q, step.index, v)}
+          onNext={() => leaveQuestion(step.index, values)}
+          busy={busy}
+          hint={hint}
+          error={error}
+        />
       );
     }
 
@@ -110,8 +140,9 @@ export function SurveyPlayer({ form, questions, onSave, loadAnswers, step: contr
           if (hasResults && loadAnswers) setAnswers(await loadAnswers());
         });
       return (
-        <Screen header={header} footer={<PillButton onClick={onNext} disabled={busy}>{busy ? "…" : hasResults ? COPY.buttons.result : COPY.buttons.finish}</PillButton>}>
-          <MascotHero theme={theme} mood="sad" text={COPY.overBubble} />
+        <Screen header={header()} footer={<PillButton onClick={onNext} disabled={busy}>{busy ? "…" : hasResults ? copy.buttons.result : copy.buttons.finish}</PillButton>}>
+          <MascotHero theme={theme} mood="sad" size="s" text={copy.end.claus} />
+          <Intro title={copy.end.title} />
           {error && <p className={styles.error}>{error}</p>}
         </Screen>
       );
@@ -121,14 +152,16 @@ export function SurveyPlayer({ form, questions, onSave, loadAnswers, step: contr
       const q = resultQuestions[step.index];
       if (!q) return null;
       const isLast = step.index === resultQuestions.length - 1;
+      // Vorschau ohne Datenbank: nur die eigenen Antworten
+      const shown = loadAnswers ? answers : Object.entries(values).map(([question_id, value]) => ({ response_id: "preview", question_id, value }));
       return (
-        <Screen footer={<PillButton onClick={next}>{isLast ? COPY.buttons.finish : COPY.buttons.next}</PillButton>}>
+        <Screen footer={<PillButton onClick={next}>{isLast ? copy.buttons.finish : copy.buttons.next}</PillButton>}>
           <ResultView
-            theme={theme}
+            survey={survey}
             question={q}
             number={questions.indexOf(q) + 1}
             own={values[q.id]}
-            answers={loadAnswers ? answers : ownAnswers}
+            answers={shown}
             onBack={back ? () => go(back) : undefined}
           />
         </Screen>
@@ -138,7 +171,8 @@ export function SurveyPlayer({ form, questions, onSave, loadAnswers, step: contr
     case "done":
       return (
         <Screen header={<TopBar />}>
-          <MascotHero theme={theme} mood="happy" text={COPY.doneBubble} />
+          <MascotHero theme={theme} mood="happy" text={copy.thanks.title} />
+          <Intro sub={copy.thanks.sub} />
         </Screen>
       );
   }

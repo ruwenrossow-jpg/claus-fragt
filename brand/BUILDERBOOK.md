@@ -67,6 +67,16 @@ Die Werte sind pixelgenau aus den Prototyp-PNGs und dem InnoNord-Logo ausgelesen
   Das frohe Bild stammt aus einem 500-px-JPG, deshalb sind am Rand leichte Reste möglich. **Besser: PNG mit Transparenz direkt aus Figma exportieren.**
 - Logo `innonord-logo.jpg` hat einen weißen Hintergrund und gehört deshalb nur auf weiße Flächen (Admin-Kopfzeile).
 
+## Styles & Ton (seit 14.11.)
+| Style | Ansprache (Standard) | Emojis | Claus auf Fragen | Auto-Weiter |
+|---|---|---|---|---|
+| Inspire | du | ja | immer | ja |
+| Network | du | nein | am Anfang jedes Bereichs | ja |
+| Implement | Sie | nein | nie (nur Start/Ende) | ja |
+Ansprache ist pro Bogen änderbar (Chip im Editor). Texte: `brand/copy.ts`. Start-Screen: Claus-Sprechblase, Titel, Untertitel, Chips („{anzahl} kurze Fragen · anonym · Ergebnis gleich danach“).
+Fragen-Screen: Fortschritt mit Prozent + Bereichs-Label („Kurz zu dir:“, „Halbzeit!“, „Letzte Frage!“). Auto-Weiter nach 400 ms bei Einfachauswahl, Stufen, Sternen, Skala, Ja/Nein; WEITER! nur bei Mehrfachauswahl/Text; „Überspringen“ bei freiwilligen Fragen.
+Stufen: 4 Zeilen mit Signalbalken-Symbol rechts. Box-Überschriften sind standardmäßig leer (Tonalität: kein „Bewerten Sie:“).
+
 ## Offen / folgt
 - Tonalitätsregeln → `brand/copy.ts` (+ ggf. Regeln je Framework-Schritt)
 - 5-Schritt-Framework → `lib/framework.ts` (Namen, Beschreibungen, empfohlene Fragetypen)

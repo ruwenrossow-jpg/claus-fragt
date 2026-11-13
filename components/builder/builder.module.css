@@ -32,3 +32,20 @@
   .overlayBar { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 8px 12px; background: #fff; border-bottom: 1px solid var(--admin-border); }
   .overlayBody { flex: 1; overflow-y: auto; display: flex; }
 }
+
+.metaRow { display: flex; justify-content: space-between; align-items: center; margin-top: 4px; font-size: 13px; }
+.tips { margin: 6px 0 0; font-size: 12px; color: var(--admin-muted); }
+.levels { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin: 10px 0 0; font-size: 14px; }
+.levels span { padding: 3px 9px; border-radius: 999px; background: var(--survey-card); border: 1px solid var(--admin-border); }
+.adjust { margin-top: 12px; }
+.adjust summary { cursor: pointer; font-weight: 600; color: var(--inno-navy); }
+.stepHead { display: flex; align-items: baseline; gap: 10px; margin: 26px 0 0; }
+.stepHead h2 { margin: 0; }
+.stepNum { display: inline-grid; place-items: center; width: 30px; height: 30px; border-radius: 50%; background: var(--inno-navy); color: #fff; font-weight: 700; }
+.chips { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-top: 10px; }
+.chip { display: inline-flex; align-items: center; gap: 6px; padding: 5px 10px; border: 1px solid var(--admin-border); border-radius: 999px; background: #fff; font-size: 14px; }
+.chip select { padding: 2px 4px; border: 0; background: transparent; font-weight: 600; color: var(--inno-navy); }
+.modalBackdrop { position: fixed; inset: 0; z-index: 20; display: grid; place-items: center; padding: 16px; background: rgba(21, 23, 46, 0.45); }
+.modal { width: min(560px, 100%); max-height: 92dvh; overflow-y: auto; margin: 0; }
+.qrRow { display: flex; gap: 16px; align-items: center; flex-wrap: wrap; margin: 14px 0; }
+.liveBanner { margin: 10px 0 0; }

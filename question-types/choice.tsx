@@ -1,7 +1,8 @@
 import { ChoiceList } from "./ChoiceList";
 import { OptionsEditor } from "./OptionsEditor";
 import { letter } from "./letters";
-import { QuestionTypeDef, ResultOption } from "./types";
+import { EditorProps, QuestionTypeDef, ResultOption } from "./types";
+import ed from "./editors.module.css";
 import { Question } from "@/lib/types";
 import { commonSettings } from "./settings";
 
@@ -17,6 +18,7 @@ function resultOptions(q: Question): ResultOption[] {
 
 export const singleChoice: QuestionTypeDef = {
   kind: "single_choice",
+  autoAdvance: true,
   label: "Multiple Choice (eine Antwort)",
   defaultBoxTitle: "",
   apply: (q) => withOptions(q, "single_choice"),
@@ -32,23 +34,48 @@ export const singleChoice: QuestionTypeDef = {
   format: (_q, v) => (v == null ? "" : String(v)),
 };
 
+function MaxChoicesEditor({ question, onChange }: EditorProps) {
+  return (
+    <>
+      <OptionsEditor question={question} onChange={onChange} />
+      <label className={ed.row}>
+        Höchstens
+        <select value={question.settings.maxChoices ?? 0} onChange={(e) => onChange({ settings: { ...question.settings, maxChoices: Number(e.target.value) || undefined } })}>
+          <option value={0}>beliebig viele</option>
+          {[1, 2, 3, 4].map((n) => <option key={n} value={n}>{n}</option>)}
+        </select>
+        Antworten
+      </label>
+    </>
+  );
+}
+
 export const multipleChoice: QuestionTypeDef = {
   kind: "multiple_choice",
+  autoAdvance: false,
   label: "Mehrfachauswahl",
-  defaultBoxTitle: "Mehrere Antworten möglich:",
-  apply: (q) => withOptions(q, "multiple_choice"),
+  defaultBoxTitle: "",
+  apply: (q) => {
+    const next = withOptions(q, "multiple_choice");
+    return q.settings.maxChoices ? { ...next, settings: { ...next.settings, maxChoices: q.settings.maxChoices } } : next;
+  },
   Input: ({ question, value, onChange }) => {
     const arr = Array.isArray(value) ? value : [];
+    const max = question.settings.maxChoices;
     return (
       <ChoiceList
         square
         items={question.options.map((o, i) => ({ key: o, label: o || `Antwort ${letter(i)}` }))}
         isOn={(k) => arr.includes(k)}
-        onToggle={(k) => onChange(arr.includes(k) ? arr.filter((x) => x !== k) : [...arr, k])}
+        onToggle={(k) => {
+          if (arr.includes(k)) return onChange(arr.filter((x) => x !== k));
+          // bei erreichtem Maximum ersetzt die neue Auswahl die älteste
+          onChange(max && arr.length >= max ? [...arr.slice(arr.length - max + 1), k] : [...arr, k]);
+        }}
       />
     );
   },
-  Editor: OptionsEditor,
+  Editor: MaxChoicesEditor,
   resultOptions,
   matches: (v, o) => Array.isArray(v) && v.includes(String(o.value)),
   format: (_q, v) => (Array.isArray(v) ? v.join("; ") : ""),

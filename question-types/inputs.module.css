@@ -36,3 +36,5 @@
 .field:focus { outline: 2px solid var(--survey-accent); outline-offset: 1px; }
 .field::placeholder { color: rgba(0, 0, 0, 0.45); }
 .textarea { min-height: 148px; }
+.options:has(> :nth-child(4)) { gap: 22px; }
+.option[aria-checked="true"] { font-weight: 600; }

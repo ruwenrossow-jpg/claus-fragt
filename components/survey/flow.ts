@@ -37,9 +37,9 @@ export function prevStep(step: Step, questionCount: number): Step | null {
   }
 }
 
-/** Fortschrittsbalken: Fragen füllen ihn schrittweise, auf dem Ende-Screen ist er voll. */
+/** Fortschritt in %: Anteil der schon beantworteten Fragen; auf dem Ende-Screen 100 %. */
 export function progressOf(step: Step, questionCount: number): number | undefined {
-  if (step.kind === "question") return (step.index + 1) / (questionCount + 1);
+  if (step.kind === "question") return questionCount ? step.index / questionCount : 0;
   if (step.kind === "over") return 1;
   return undefined;
 }

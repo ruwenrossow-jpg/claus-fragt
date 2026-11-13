@@ -10,14 +10,29 @@ export type DbQuestionType =
 
 export type FormStatus = "draft" | "published" | "closed";
 
+export type Ansprache = "du" | "Sie";
+
+/** Framework-Konfiguration eines Bogens (Spalte forms.settings, jsonb). */
+export interface FormSettings {
+  eventTyp?: string;
+  eventName?: string;
+  thema?: string;
+  teach?: boolean;
+  menti?: boolean;
+  ansprache?: Ansprache;
+}
+
 export interface Form {
   id: string;
+  /** interner Titel (= Eventname bei neuen Bögen) */
   title: string;
-  /** Wird als Begrüßung in der Start-Sprechblase gezeigt (leer = Standardtext). */
   description: string | null;
+  /** "published" wird in der Oberfläche als „Live“ bezeichnet */
   status: FormStatus;
-  /** Theme-id, siehe brand/themes.ts */
+  /** Style-id (inspire | implement | network), siehe lib/styles.ts */
   style: string | null;
+  settings?: FormSettings | null;
+  public_slug?: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -30,8 +45,14 @@ export interface QuestionSettings {
   max?: number;
   minLabel?: string;
   maxLabel?: string;
-  /** "stars" = Skala als Sterne-Bewertung */
-  display?: "numbers" | "stars";
+  /** Darstellung: "stars" = Skala als Sterne, "levels" = Einfachauswahl als Stufen (score = Position 1–4) */
+  display?: "numbers" | "stars" | "levels";
+  /** Platz im Framework (lib/framework.ts), fehlt bei eigenen Fragen */
+  slotId?: string;
+  /** KPI, für die diese Frage zählt */
+  kpi?: "transfer" | "ziel" | "teach";
+  /** Mehrfachauswahl: höchstens so viele Antworten */
+  maxChoices?: number;
   /** Überschrift in der Antwort-Box, z. B. „Bewerten Sie:“ */
   boxTitle?: string;
   placeholder?: string;
@@ -62,7 +83,7 @@ export interface Answer {
 
 export const STATUS_LABELS: Record<FormStatus, string> = {
   draft: "Entwurf",
-  published: "Veröffentlicht",
+  published: "Live",
   closed: "Geschlossen",
 };
 
