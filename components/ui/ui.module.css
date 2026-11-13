@@ -1,0 +1,109 @@
+/* Bausteine der Bogen-Oberfläche. Werte ausschließlich aus brand/tokens.css. */
+
+/* ---------- Screen ---------- */
+.screen {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: var(--screen-max);
+  min-height: 100%;
+  margin: 0 auto;
+  padding: 14px 0 60px;
+  background: var(--survey-bg);
+  color: var(--survey-ink);
+  font-family: var(--font-body);
+}
+.screenBody { flex: 1; display: flex; flex-direction: column; }
+.screenFooter { display: flex; justify-content: center; padding-top: 32px; }
+
+/* ---------- Kopfzeile ---------- */
+.back {
+  align-self: flex-start;
+  margin: 0 0 12px 10px;
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  font-size: var(--text-m);
+  color: var(--survey-ink);
+  cursor: pointer;
+}
+.backPlaceholder { height: 30px; margin-bottom: 12px; }
+
+.progress {
+  height: 34px;
+  margin: 0 20px;
+  border-radius: var(--radius-pill);
+  background: var(--survey-accent-light);
+  overflow: hidden;
+}
+.progressFill {
+  height: 100%;
+  border-radius: var(--radius-pill);
+  background: var(--survey-accent);
+  transition: width 0.35s ease;
+}
+
+/* ---------- Pill-Button ---------- */
+.pill {
+  min-width: 212px;
+  height: 72px;
+  padding: 0 32px;
+  border: 0;
+  border-radius: var(--radius-pill);
+  background: var(--inno-red);
+  color: var(--survey-on-accent);
+  font: inherit;
+  font-size: var(--text-button);
+  letter-spacing: 0.5px;
+  cursor: pointer;
+  transition: transform 0.1s ease, opacity 0.2s ease;
+}
+.pill:active { transform: scale(0.97); }
+.pill:disabled { opacity: 0.45; cursor: default; }
+
+/* ---------- Sprechblase ---------- */
+.bubble {
+  position: relative;
+  display: flex;
+  align-items: center;
+  min-height: 128px;
+  padding: 30px 38px;
+  border: 1px solid var(--survey-ink);
+  border-radius: 50%;
+  background: var(--survey-bubble);
+  font-size: var(--text-m);
+  line-height: 1.25;
+}
+.bubbleText { width: 100%; }
+.bubbleHelp { display: block; margin-top: 6px; font-size: var(--text-s); opacity: 0.75; }
+.tail { position: absolute; width: 34px; height: 44px; overflow: visible; }
+.tailUpLeft { top: -38px; left: 22%; }
+.tailUpRight { top: -38px; right: 22%; transform: scaleX(-1); }
+.tailDownRight { bottom: -38px; right: 24%; transform: scaleY(-1); }
+
+/* ---------- Maskottchen-Anordnungen ---------- */
+.hero { display: flex; flex-direction: column; align-items: center; padding: 60px 26px 0; }
+.hero .bubble { width: 274px; margin-right: 26px; }
+.heroMascot { width: 86%; max-width: 300px; height: auto; margin-top: 50px; }
+
+.corner { display: flex; flex-direction: column; padding: 10px 26px 0; }
+.cornerMascot { width: 116px; height: auto; margin: -6px -10px 0; }
+.cornerLeft .cornerMascot { align-self: flex-start; }
+.cornerRight .cornerMascot { align-self: flex-end; }
+.corner .bubble { align-self: center; width: 272px; margin-top: 30px; }
+
+/* ---------- Antwort-Box ---------- */
+.card {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-height: 242px;
+  margin: 48px var(--screen-pad) 0;
+  padding: 22px;
+  border: 2px solid var(--survey-ink);
+  border-radius: var(--radius-card);
+  background: var(--survey-card);
+}
+.cardTitle { margin: 0; padding-bottom: 32px; font-family: inherit; font-size: var(--text-l); font-weight: 400; color: inherit; }

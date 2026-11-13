@@ -1,18 +1,14 @@
-# claus-fragt
-Builder für Evaluationsbögen (Next.js + Supabase, Deployment über Vercel).
+# Claus fragt
+Builder für Evaluationsbögen von InnoNord (Next.js 16 + Supabase, Deployment über Vercel).
+
+- **Builder:** `/` → Bogen anlegen → Fragen bauen, Live-Vorschau im Handy-Rahmen (mobil: Button „Vorschau“)
+- **Teilnehmende:** `/f/<id>`: Claus-Look nach Figma-Prototyp (Start → Fragen → Ende → Ergebnis)
+- **Auswertung:** `/forms/<id>/results` + CSV
+
+Doku: `CLAUDE.md` (Regeln) · `brand/BUILDERBOOK.md` (Design-System) · `docs/ARCHITEKTUR.md` · `docs/LEARNINGS.md`
 
 ## Setup
-1. Migration `supabase/migrations/20261113180000_evaluation_builder.sql` im Supabase SQL-Editor ausführen.
-2. `.env.local` nach Vorlage `.env.example` anlegen (in Vercel sind die Variablen bereits gesetzt).
+1. Migrationen aus `supabase/migrations/` im Supabase SQL-Editor ausführen.
+2. Optional `.env.local` nach `.env.example` (sonst greifen die öffentlichen Fallbacks in `next.config.ts`).
 3. `npm install && npm run dev`
-
-## Seiten
-- `/` Übersicht aller Bögen
-- `/forms/[id]/edit` Builder (Fragen, Typen, Pflicht, Reihenfolge, Framework-Schritt, Status)
-- `/f/[id]` Bogen ausfüllen (Link zum Teilen)
-- `/forms/[id]/results` Auswertung + CSV-Export
-
-## Platzhalter für später
-- `lib/framework.ts` 5-Schritt-Frage-Framework (Namen, Beschreibungen, Regeln)
-- `lib/styles.ts` auswählbare Stile (Design-Regeln, Progressbar, Maskottchen)
-- RLS ist im Hackathon-Modus offen (kein Login). Vor echtem Einsatz Auth + Owner-Policies ergänzen.
+4. Tests: `node scripts/visual-test.mjs http://localhost:3000 && npm run test:vergleich` (braucht Google Chrome)
