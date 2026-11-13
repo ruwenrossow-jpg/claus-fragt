@@ -56,7 +56,8 @@ export function SlotCard({ form, question: q, slot, ansprache, active, canMoveUp
           <button type="button" className="link" onClick={() => onPatch({ label: beispiel })}>Beispiel übernehmen</button>
         )}
       </div>
-      {active && <p className={styles.tips}>Tipps: {TONE_TIPS.join(" · ")}</p>}
+      {/* immer gerendert, nur unsichtbar: sonst verschiebt das Einblenden beim Fokus das Layout und Klicks gehen ins Leere */}
+      <p className={styles.tips} style={{ visibility: active ? "visible" : "hidden" }}>Tipps: {TONE_TIPS.join(" · ")}</p>
 
       {fixedLevels ? (
         <p className={styles.levels}>

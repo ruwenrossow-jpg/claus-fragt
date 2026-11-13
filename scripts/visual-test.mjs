@@ -37,8 +37,9 @@ for (let i = (await links.count()) - 1; i >= 0; i--) await links.nth(i).click();
 const card = (name) => admin.locator("section.panel", { has: admin.locator(`span:text-is("${name}")`) });
 for (const [slot, opts] of [["Highlight", ["Pitches", "Coding", "Essen"]], ["Verbesserung", ["Mehr Zeit", "Mehr Mentoring", "Bessere Räume"]]]) {
   for (let i = 0; i < opts.length; i++) {
-    await card(slot).locator("button:has-text('+ Antwort')").click();
-    await card(slot).locator('input[placeholder^="Antwort"]').nth(i).fill(opts[i]);
+    const inputs = card(slot).locator('input[placeholder^="Antwort"]');
+    if ((await inputs.count()) <= i) await card(slot).locator("button:has-text('+ Antwort')").click();
+    await inputs.nth(i).fill(opts[i]);
   }
 }
 await admin.screenshot({ path: OUT + "2-editor.png" });

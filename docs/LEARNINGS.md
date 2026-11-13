@@ -2,6 +2,8 @@
 
 Neue Einträge oben. Format: Datum – Problem → Lösung/Regel.
 
+- 2026-11-14: Elemente, die beim Fokus eingeblendet werden, verschieben das Layout zwischen mousedown und mouseup → Klick geht verloren. Regel: auf Fokus nur Farbe/Sichtbarkeit ändern, nie die Höhe.
+
 - 2026-11-14: Nach dem Umbenennen von Routen meldet `tsc` Fehler aus `.next/types` → vor dem Typecheck `rm -rf .next`.
 - 2026-11-14: Neue Fragearten (Stufen) ohne Migration: DB-Typ + `settings.display` (wie Sterne). Migration nur für Bogen-Felder nötig (`forms.settings`, `public_slug`).
 - 2026-11-14: Zustandsänderung + Speichern im selben Klick (Live schalten) → `save(patch)` statt `patchForm()` + `save()`, sonst wird der alte Stand gespeichert.
