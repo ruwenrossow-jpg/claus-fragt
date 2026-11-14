@@ -137,3 +137,18 @@
 .qrActions .btn { justify-content: center; }
 .shareTafel { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-top: 18px; padding: 12px 14px; background: var(--admin-navy-soft); border-radius: var(--radius-admin-s); }
 .shareFoot { display: flex; justify-content: space-between; gap: 10px; flex-wrap: wrap; margin-top: 22px; padding-top: 16px; border-top: 1px solid var(--admin-border); }
+
+/* Zuklappen: Griff oben an der aktiven Karte (wie bei Handy-Blättern) + Pfeil im Fuß */
+.cardActive { position: relative; scroll-margin-top: 76px; }
+.collapseBar {
+  display: flex; justify-content: center; align-items: flex-start; width: calc(100% + 48px); height: 22px; margin: -18px -24px 6px;
+  padding: 6px 0 0; background: none; border: 0; cursor: pointer;
+}
+.grabber { width: 44px; height: 5px; border-radius: var(--radius-pill); background: var(--admin-border); transition: background 0.15s ease, width 0.15s ease; }
+.collapseBar:hover .grabber, .collapseBar:focus-visible .grabber { width: 56px; background: var(--admin-muted); }
+.collapseBar:focus-visible { outline: none; }
+.collapseFoot { margin-right: auto; }
+@media (max-width: 640px) { .collapseBar { width: calc(100% + 32px); margin: -14px -16px 6px; height: 26px; } }
+
+/* Tippen am Handy: schwebende Knöpfe weg, damit nichts über dem Feld liegt */
+:global(body:has(textarea:focus, input[type="text"]:focus)) .mobilePreviewBtn { display: none; }

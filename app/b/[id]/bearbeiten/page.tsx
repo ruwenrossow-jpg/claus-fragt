@@ -168,6 +168,7 @@ export default function EditorPage() {
                 active={q.id === activeId}
                 center={q.id === centerId}
                 onActivate={() => setActiveId(q.id)}
+                onCollapse={() => setActiveId(null)}
                 onPatch={(p) => draft.patchQuestion(q.id, p)}
                 onKind={(k) => draft.changeKind(q.id, k)}
                 onMove={(d) => draft.move(q.id, d)}

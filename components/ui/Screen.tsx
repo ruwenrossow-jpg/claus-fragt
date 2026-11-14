@@ -27,7 +27,8 @@ interface Props {
  */
 export function Screen({ header, stage, children, footer, note, bodyKey, typingStage }: Props) {
   const body = useRef<HTMLDivElement>(null);
-  const keyboard = useKeyboard();
+  const root = useRef<HTMLDivElement>(null);
+  const keyboard = useKeyboard(root);
   const typing = keyboard.open && Boolean(typingStage);
   // Tastatur offen: Feld im sichtbaren Bereich halten
   useLayoutEffect(() => {
@@ -59,6 +60,7 @@ export function Screen({ header, stage, children, footer, note, bodyKey, typingS
   }, [bodyKey]);
   return (
     <div
+      ref={root}
       className={`${styles.screen} ${typing ? styles.typing : ""}`}
       style={typing ? { position: "fixed", top: keyboard.top, left: 0, right: 0, height: keyboard.height, zIndex: 50 } : undefined}
       data-typing={typing || undefined}

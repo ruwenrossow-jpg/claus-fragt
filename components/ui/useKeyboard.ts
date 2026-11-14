@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { RefObject, useEffect, useState } from "react";
 
 export interface KeyboardState {
   /** Bildschirmtastatur offen, während ein Textfeld Fokus hat */
@@ -17,8 +17,10 @@ const isTextField = (el: Element | null) => el instanceof HTMLTextAreaElement ||
  * Erkennt die Bildschirmtastatur am Handy: Ein Textfeld hat Fokus UND der sichtbare Bereich (visualViewport) ist deutlich kleiner
  * als sonst. iOS verkleinert dabei nur den sichtbaren Bereich, nicht die Seite (100dvh bleibt) – ohne diese Erkennung liegt das Feld
  * unter der Tastatur. Am Desktop bleibt open = false.
+ * `scope`: nur Textfelder IN diesem Bereich zählen – sonst würde z. B. die (versteckte) Bogen-Vorschau im Editor bei jedem
+ * Tippen im Editor die Seite nach oben reißen.
  */
-export function useKeyboard(): KeyboardState {
+export function useKeyboard(scope: RefObject<HTMLElement | null>): KeyboardState {
   const [state, setState] = useState<KeyboardState>(CLOSED);
   useEffect(() => {
     const vv = window.visualViewport;
@@ -26,7 +28,8 @@ export function useKeyboard(): KeyboardState {
     let base = vv.height;
     const update = () => {
       base = Math.max(base, vv.height);
-      const open = isTextField(document.activeElement) && vv.height < base - 120;
+      const el = document.activeElement;
+      const open = isTextField(el) && Boolean(scope.current?.contains(el)) && vv.height < base - 120;
       setState((s) => (open ? { open, height: Math.round(vv.height), top: Math.round(vv.offsetTop) } : s.open ? CLOSED : s));
       if (open) window.scrollTo(0, 0);
     };
@@ -51,6 +54,6 @@ export function useKeyboard(): KeyboardState {
       document.removeEventListener("focusin", onFocus);
       document.removeEventListener("focusout", onFocus);
     };
-  }, []);
+  }, [scope]);
   return state;
 }

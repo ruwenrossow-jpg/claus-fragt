@@ -78,3 +78,9 @@ Neue Einträge oben. Format: Datum – Problem → Lösung/Regel.
 ## 14.11. Passwort-Anmeldung (Mail-Limit)
 - Supabase ohne eigenes SMTP schickt nur ~2 Mails pro Stunde → nach Abmelden + neuem Link schnell „zu viele Links“. Lösung: Passwort im Konto-Menü festlegen (`updateUser`), danach „Mit Passwort“ ohne Mail; Modus + E-Mail merkt sich die Anmelde-Seite.
 - Test ohne echte Konten: `/auth/v1/token?grant_type=password` und `/auth/v1/user` per Playwright-Route nachstellen (`scripts/abmelden-test.mjs`). Keine Test-Nutzer in Ruwens Auth anlegen (ohne Secret Key nicht löschbar).
+
+## 14.11. Editor am Handy: Tastatur
+- Die Bogen-Vorschau ist im Editor am Handy versteckt, aber gemountet. Ihr `useKeyboard` hat bei JEDEM Textfeld (auch im Editor) `scrollTo(0,0)` gemacht → Seite klebte oben, Feld unter der Tastatur, Wegscrollen unmöglich. Jetzt zählt nur ein Feld im eigenen Screen (`useKeyboard(scope)`).
+- Aufklappen einer Frage am Handy (pointer: coarse) fokussiert nicht mehr → keine Tastatur; Karte rückt nach oben (`scroll-margin-top`). Neue Fragen (+ Frage) bekommen weiter den Fokus.
+- Zuklappen: Griff oben an der aktiven Karte + Pfeil im Fuß. Beim Tippen am Handy: Vorschau-Knopf und Ablauf-Schiene ausgeblendet (`body:has(:focus)`, nur ≤ 1000 px).
+- Test: `scripts/editor-handy-test.mjs` (Tastatur = Viewport verkleinern).

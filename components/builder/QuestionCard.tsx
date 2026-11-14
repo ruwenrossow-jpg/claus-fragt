@@ -17,6 +17,8 @@ interface Props {
   /** neu angelegt/dupliziert: Karte sanft in die Bildschirmmitte scrollen */
   center?: boolean;
   onActivate: () => void;
+  /** aktive Karte zuklappen */
+  onCollapse: () => void;
   onPatch: (patch: Partial<Question>) => void;
   onKind: (kind: QuestionKind) => void;
   onMove: (dir: -1 | 1) => void;
@@ -30,18 +32,23 @@ const KIND_OPTIONS = QUESTION_TYPES.map((t) => ({ value: t.kind, label: t.label,
  * Eine Frage im Editor, wie bei Google Forms: inaktiv eine ruhige Zusammenfassung,
  * aktiv mit Fragetext, Frageart, den Feldern dieser Art und im Fuß Verschieben, Duplizieren, Löschen, Pflicht.
  */
-export function QuestionCard({ question: q, index, count, active, center = false, onActivate, onPatch, onKind, onMove, onDuplicate, onRemove }: Props) {
+export function QuestionCard({ question: q, index, count, active, center = false, onActivate, onCollapse, onPatch, onKind, onMove, onDuplicate, onRemove }: Props) {
   const def = typeOf(q);
   const info = isInfo(q);
   const card = useRef<HTMLElement>(null);
   const label = useRef<HTMLTextAreaElement>(null);
-  // Aktiv geworden: Cursor direkt in den Fragetext; neue Karten zusätzlich in die Bildschirmmitte
+  // Aktiv geworden: am Laptop Cursor direkt in den Fragetext. Am Handy (Touch) nur bei neuen Karten – beim Aufklappen einer
+  // bestehenden Frage soll nicht sofort die Tastatur aufgehen; die Karte rückt nur nach oben ins Bild.
   useEffect(() => {
     if (!active) return;
-    label.current?.focus({ preventScroll: true });
-    const end = label.current?.value.length ?? 0;
-    label.current?.setSelectionRange(end, end);
+    const touch = window.matchMedia("(pointer: coarse)").matches;
+    if (!touch || center) {
+      label.current?.focus({ preventScroll: true });
+      const end = label.current?.value.length ?? 0;
+      label.current?.setSelectionRange(end, end);
+    }
     if (center) card.current?.scrollIntoView({ block: "center", behavior: "smooth" });
+    else if (touch) card.current?.scrollIntoView({ block: "start", behavior: "smooth" });
   }, [active, center]);
 
   if (!active) {
@@ -64,6 +71,18 @@ export function QuestionCard({ question: q, index, count, active, center = false
   const warnings = questionWarnings(q);
   return (
     <section ref={card} className={`${styles.card} ${styles.cardActive}`} data-question={index + 1} aria-label={`Frage ${index + 1}`}>
+      <button
+        type="button"
+        className={styles.collapseBar}
+        aria-label="Zuklappen"
+        data-collapse
+        onClick={() => {
+          (document.activeElement as HTMLElement | null)?.blur();
+          onCollapse();
+        }}
+      >
+        <span className={styles.grabber} />
+      </button>
       <div className={styles.cardTop}>
         <textarea
           ref={label}
@@ -99,6 +118,17 @@ export function QuestionCard({ question: q, index, count, active, center = false
       )}
 
       <footer className={styles.cardFoot}>
+        <button
+          type="button"
+          className={`icon-btn ${styles.collapseFoot}`}
+          aria-label="Zuklappen"
+          onClick={() => {
+            (document.activeElement as HTMLElement | null)?.blur();
+            onCollapse();
+          }}
+        >
+          <Icon name="chevronUp" />
+        </button>
         <button type="button" className="icon-btn" onClick={() => onMove(-1)} disabled={index === 0} aria-label="Nach oben"><Icon name="up" /></button>
         <button type="button" className="icon-btn" onClick={() => onMove(1)} disabled={index === count - 1} aria-label="Nach unten"><Icon name="down" /></button>
         <button type="button" className="icon-btn" onClick={onDuplicate} aria-label="Duplizieren"><Icon name="copy" /></button>

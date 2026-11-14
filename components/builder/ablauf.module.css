@@ -74,3 +74,6 @@
   .rail { right: 4px; padding: 4px; }
   .rail .field { width: 28px; height: 28px; }
 }
+@media (max-width: 1000px) { :global(body:has(textarea:focus, input[type="text"]:focus)) .rail { display: none; } }
+/* Handy/Tablet: Während eine Frage aufgeklappt ist, verdeckt die Schiene sonst Schalter am rechten Rand */
+@media (max-width: 1000px) { :global(body:has(section[aria-label^="Frage "])) .rail { display: none; } }
