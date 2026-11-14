@@ -18,7 +18,9 @@ export function TopBar({ onBack, backLabel = "Zurück", progress, label, progres
     <>
       {onBack ? (
         <button type="button" className={styles.back} onClick={onBack} data-back>
-          <span aria-hidden>&lt; </span>
+          <svg className={styles.backIcon} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+            <path d="M15 5l-7 7 7 7" />
+          </svg>
           {backLabel}
         </button>
       ) : (

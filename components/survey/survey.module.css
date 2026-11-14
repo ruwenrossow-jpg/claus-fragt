@@ -11,7 +11,11 @@
 .rowCaption { margin: var(--space-1) 0 0; font-size: var(--text-xs); line-height: 1.2; opacity: 0.75; }
 .pct { text-align: right; }
 .own { color: var(--inno-red); font-weight: 600; }
+/* Kleine Screens (iPhone mit Safari-Leisten ≈ 660 px): Ergebnis kompakter, damit möglichst alle Zeilen ohne Scrollen passen */
 @container screen (max-height: 760px) {
-  .rows { gap: var(--space-2); }
-  .yourAnswer { margin-bottom: var(--space-3); }
+  .rows { gap: var(--space-1); }
+  .row { line-height: 18px; }
+  .bar { height: 14px; margin-top: 2px; }
+  .rowCaption { margin-top: 2px; }
+  .yourAnswer { margin-bottom: var(--space-2); font-size: var(--text-s); }
 }

@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { plural } from "@/brand/copy";
-import { Intro, StageProps, Stage } from "@/components/ui/Mascot";
+import { Intro, MiniStage, StageProps, Stage } from "@/components/ui/Mascot";
 import { AnswerCard } from "@/components/ui/AnswerCard";
 import { PillButton, PillSpacer } from "@/components/ui/PillButton";
 import { Screen } from "@/components/ui/Screen";
@@ -261,6 +261,7 @@ export function SurveyPlayer({ form, questions: allQuestions, onSave, loadAnswer
     <Screen
       header={p.header ?? <TopBar />}
       stage={<Stage theme={theme} {...p.stage} />}
+      typingStage={<MiniStage theme={theme} text={p.stage.text} />}
       footer={p.button ? <PillButton onClick={guarded(p.button.onClick)} disabled={p.button.disabled}>{p.button.label}</PillButton> : <PillSpacer />}
       note={note}
       bodyKey={"index" in step ? `${step.kind}-${step.index}` : step.kind === "tafel" ? `tafel-${tafelKey}-${sent[tafel?.questionId ?? ""] && editing !== tafel?.questionId}` : step.kind}

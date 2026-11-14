@@ -74,3 +74,25 @@ Teilnehmende lesen **nie direkt** aus den Tabellen, sondern über zwei RPC-Funkt
 | Öffentlicher Link auf RPCs umstellen | 0,5 Tag |
 | E2E-Test mit Login, Doku, Review mit Ruwen | 0,5 Tag |
 | **Summe** | **2–2,5 Tage** |
+
+## Ruwens Fragen (14.11.) – Antworten und Empfehlung
+**Ist Login sinnvoll?** Ja, vor dem Einsatz durch andere zwingend. Heute sieht jede Person, die `/meine-boegen` aufruft, alle Bögen
+und kann sie ändern; die Freitexte sind technisch abrufbar.
+
+**Wie werden Bögen heute gespeichert?** Alle in Ruwens Supabase-Datenbank, ohne Besitzer:in. Es gibt kein „meins“ und „deins“.
+Alternativen ohne Login, die wir **nicht** empfehlen:
+- Geheimer Bearbeiten-Link je Bogen (wie Doodle): wer den Link verliert, verliert den Bogen; wer ihn weiterleitet, gibt alles frei.
+- Nur im Browser merken (localStorage): Gerät oder Browser wechseln = Bögen weg.
+
+**Können andere Ersteller:innen werden?** Ja. Jede Person meldet sich per E-Mail an und sieht nur ihre eigenen Bögen.
+Ruwen entscheidet in Supabase, ob sich jede:r registrieren darf oder nur Eingeladene. Später kann man Bögen im Team teilen (`form_members`).
+
+**Login erst, wenn man speichern will?** Ja, das geht und ist unsere Empfehlung („erst bauen, dann sichern“):
+1. Wer die App öffnet, bekommt im Hintergrund ein **anonymes Konto** (Supabase „Anonymous Sign-Ins“). Kein Formular, sofort loslegen.
+2. Beim ersten „Speichern & abschließen“ oder „Teilen“ fragt Claus in einem eigenen Dialog:
+   „Damit dein Bogen nicht verloren geht: Gib deine E-Mail an, du bekommst einen Link.“ Nach dem Klick auf den Link wird
+   das anonyme Konto zum festen Konto (`updateUser({ email })`), und alle Bögen bleiben erhalten.
+3. Auf einem anderen Gerät: „Anmelden“ mit derselben E-Mail → dieselben Bögen.
+Zusätzlich in Supabase nötig: **Authentication → Sign In / Providers → „Allow anonymous sign-ins“ an**, dazu ein Spam-Schutz
+(Captcha/Turnstile empfohlen, weil anonyme Konten sonst massenhaft angelegt werden können) und das Aufräumen alter anonymer Konten ohne Bögen.
+Aufwand zusätzlich zum Plan oben: etwa 0,5 Tag.

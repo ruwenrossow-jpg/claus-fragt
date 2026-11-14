@@ -557,10 +557,13 @@ try {
       await p.click("text=Los geht's");
       await p.waitForTimeout(900);
       const scroll = await p.evaluate(() => {
-        const b = document.querySelector("[data-zone=body]");
-        return { scrollbar: b.scrollHeight > b.clientHeight, verlauf: b.getAttribute("data-overflow") };
+        // scrollt die Antwort-Box in sich (Rahmen bleibt sichtbar) oder die Inhaltszone
+        const b = document.querySelector("[data-zone=body] [data-scroll]");
+        const card = b.closest("[role=group]")?.getBoundingClientRect();
+        const zone = document.querySelector("[data-zone=body]").getBoundingClientRect();
+        return { scrollbar: b.scrollHeight > b.clientHeight, verlauf: b.getAttribute("data-overflow"), rahmenGanz: card.bottom <= zone.bottom + 1 };
       });
-      check(`langeTexte${vp.height}Scrollt`, scroll.scrollbar && scroll.verlauf === "true", JSON.stringify(scroll));
+      check(`langeTexte${vp.height}Scrollt`, scroll.scrollbar && scroll.verlauf === "true" && scroll.rahmenGanz, JSON.stringify(scroll));
       await p.screenshot({ path: OUT + `15-lang-${vp.width}.png` });
       // letzte Option: Inhaltszone scrollt in sich, Button bleibt stehen
       const pillBefore = await box(p, "[data-pill]");

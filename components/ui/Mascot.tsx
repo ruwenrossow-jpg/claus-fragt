@@ -49,3 +49,13 @@ export function Intro({ title, sub, tags }: { title?: string; sub?: string; tags
     </div>
   );
 }
+
+/** Kompakte Bühne, solange die Handy-Tastatur offen ist: kleiner Claus + Frage in einer Mini-Blase (Claus bleibt im Bild). */
+export function MiniStage({ theme, text }: { theme: Theme; text: string }) {
+  return (
+    <div className={styles.miniStage} data-mini>
+      <img className={styles.miniMascot} src={theme.mascot.happy} alt="" width={440} height={440} decoding="async" />
+      <p className={styles.miniBubble}>{text}</p>
+    </div>
+  );
+}

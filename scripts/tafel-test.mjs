@@ -112,7 +112,27 @@ try {
   const words = ["Teamgeist", "teamgeist", "Pizza um Mitternacht"];
   for (const [i, p] of phones.entries()) {
     await p.waitForSelector("input[type=text]", { timeout: 8000 });
-    if (i === 0) await measure(p, "tafel-frage");
+    if (i === 0) {
+      await measure(p, "tafel-frage");
+      // Tastatur simulieren: Feld fokussieren, sichtbare Höhe schrumpft → kompakte Ansicht, Feld + Button über der Tastatur
+      await p.focus("input[type=text]");
+      await p.setViewportSize({ width: 393, height: 470 });
+      await p.waitForTimeout(700);
+      const k = await p.evaluate(() => {
+        const vis = (sel) => {
+          const r = document.querySelector(sel)?.getBoundingClientRect();
+          return Boolean(r && r.top >= 0 && r.bottom <= visualViewport.height + 1 && r.height > 0);
+        };
+        return { typing: Boolean(document.querySelector("[data-typing]")), feld: vis("input[type=text]"), button: vis("[data-pill]"), claus: vis("[data-typing] [data-mini] img") };
+      });
+      checks.tastatur = k;
+      check("tastaturFeldUndButtonSichtbar", k.typing && k.feld && k.button && k.claus, JSON.stringify(k));
+      await p.screenshot({ path: OUT + "tafel-05b-handy-tastatur.png" });
+      await p.evaluate(() => document.activeElement.blur());
+      await p.setViewportSize({ width: 393, height: 852 });
+      await p.waitForTimeout(700);
+      check("tastaturZu", !(await p.locator("[data-typing]").count()));
+    }
     await p.fill("input[type=text]", words[i]);
     if (i === 0) await p.screenshot({ path: OUT + "tafel-05-handy-frage.png" });
     await p.click("button:has-text('Abschicken')");

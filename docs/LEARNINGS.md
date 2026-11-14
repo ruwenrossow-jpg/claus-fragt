@@ -2,6 +2,9 @@
 
 Neue Einträge oben. Format: Datum – Problem → Lösung/Regel.
 
+- 2026-11-14 (iPhone): iOS-Tastatur verkleinert nur den sichtbaren Bereich (`visualViewport`), nicht `100dvh` → Feld lag unter der Tastatur. `useKeyboard` erkennt Fokus im Textfeld + geschrumpften visualViewport und legt den Screen `position: fixed` genau über die Tastatur (kompakte Bühne: kleiner Claus + Frage). Test: Feld fokussieren und Viewport-Höhe verkleinern.
+- 2026-11-14 (iPhone): Zu lange Antwort-Box wurde vom Verlauf am Zonenrand mittendurch abgeschnitten (Rahmen weg) → Inhaltszone als Flex-Spalte, die Box schrumpft und scrollt IN sich (`[data-scroll]`), Verlauf oben/unten nur innerhalb der Box. Ergebnis-Zeilen auf kleinen Screens kompakter.
+
 - 2026-11-14 (Tafel): Live-Abgleich ohne Migration: Supabase Realtime Broadcast + Presence funktioniert mit dem Publishable Key ohne Tabelle. Spät Hinzukommende bekommen den Stand über einen Herzschlag (alle 2 s) plus „hello“ → sofortige Antwort; Abbruch der Moderation erkennt das Handy am ausbleibenden Herzschlag.
 - 2026-11-14 (Tafel): Den Tafel-Stand NICHT in `forms.settings` legen – der offene Editor schreibt `settings` komplett und würde ihn überschreiben.
 - 2026-11-14 (Tafel): Wortwolke zählt nur Abgaben ab Tafel-Start (Filter auf `responses.created_at` per `!inner`-Join), sonst erscheinen Antworten früherer Events.
