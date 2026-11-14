@@ -530,10 +530,26 @@ try {
   await admin.click("button[aria-label='Nach Antwort filtern']");
   await admin.click("[role=option]:has-text('Alle Antworten')");
   // CSV
-  const [download] = await Promise.all([admin.waitForEvent("download"), admin.click("button:has-text('CSV exportieren')")]);
+  const [download] = await Promise.all([admin.waitForEvent("download"), admin.click("[data-export=csv]")]);
   const csv = fs.readFileSync(await download.path(), "utf8");
   checks.csv = { datei: download.suggestedFilename(), zeilen: csv.trim().split("\n").length };
   check("csvInhalt", csv.includes("frage_nr") && csv.includes("Super Orga, geändert!") && checks.csv.zeilen > abgaben * 7);
+  // Excel (.xlsx, ZIP ohne Kompression → Inhalte als Text lesbar): eine Zeile pro Abgabe + Kopfzeile, Blatt „Übersicht“
+  const [dlx] = await Promise.all([admin.waitForEvent("download"), admin.click("[data-export=xlsx]")]);
+  const xlsx = fs.readFileSync(await dlx.path());
+  const xs = xlsx.toString("utf8");
+  const sheet1 = xs.slice(xs.indexOf("<worksheet"), xs.indexOf("</worksheet>"));
+  checks.xlsx = { datei: dlx.suggestedFilename(), zeilen: (sheet1.match(/<row /g) || []).length };
+  check("xlsxInhalt", xlsx.subarray(0, 2).toString() === "PK" && dlx.suggestedFilename().endsWith(".xlsx") && xs.includes("Super Orga, geändert!") && xs.includes("Übersicht") && checks.xlsx.zeilen === abgaben + 1, JSON.stringify(checks.xlsx));
+  {
+    const m = await page(PHONE, true);
+    await m.goto(`${BASE}/b/${formId}/ergebnisse`);
+    await m.waitForSelector("[data-export=xlsx]");
+    const btn = await m.locator("[data-export=xlsx]").boundingBox();
+    check("excelButtonHandy", btn && btn.x >= 0 && btn.x + btn.width <= PHONE.width, JSON.stringify(btn));
+    await m.screenshot({ path: OUT + "18c-ergebnisse-handy.png" });
+    await m.close();
+  }
 
   // ======================= Randfälle-Bogen: leer, lange Texte, viele Optionen =======================
   let edgeId, edgeLink;

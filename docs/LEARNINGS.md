@@ -57,3 +57,9 @@ Neue Einträge oben. Format: Datum – Problem → Lösung/Regel.
 - Popover braucht ein transparentes Polster zum Feld (Brücke), sonst schließt `pointerleave` beim Rüberfahren.
 - Sticky-Schiene per IntersectionObserver (`!isIntersecting && top < 0`); Desktop in der 40-px-Lücke zwischen Karten und Handy-Vorschau, damit sie nichts verdeckt.
 - Screenshots von Popovers erst nach der Einblend-Animation (300 ms warten), sonst wirken sie durchsichtig.
+
+## 14.11. Export: CSV + Excel
+- CSV (eine Zeile je Antwort, `;`, UTF-8 mit BOM) öffnet in deutschem Excel sauber, ist aber Rohdaten-Format. Für Menschen: `.xlsx` mit einer Zeile je Person (`lib/export.ts`).
+- `.xlsx` ohne Abhängigkeit: `lib/xlsx.ts` (inlineStr-Zellen, ZIP „stored“ + CRC32). Text wird nie als Formel gelesen. Prüfen lokal per `qlmanage -t` (Quick Look rendert das erste Blatt).
+- `URL.revokeObjectURL` nicht direkt nach `click()` – Safari bricht den Download sonst ab; mit kurzem Timeout.
+- Header-Buttons am Handy: Texte mit `hide-mobile` kürzen, der Test misst, ob der Haupt-Button im Bild ist.

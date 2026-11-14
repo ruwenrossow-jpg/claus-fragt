@@ -9,6 +9,7 @@ import { PageState } from "@/components/admin/PageState";
 import { Select, SelectOption } from "@/components/admin/Select";
 import { buildSurvey } from "@/components/survey/context";
 import { loadAnswers, loadForm, loadResponses } from "@/lib/data";
+import { resultsWorkbook } from "@/lib/export";
 import { computeKpis } from "@/lib/kpi";
 import { Answer, AnswerValue, Form, Question, isTrashed } from "@/lib/types";
 import { ResultOption, average, distribution, isAnswerable, kindOf, levelScore, typeOf } from "@/question-types";
@@ -116,12 +117,22 @@ export default function ResultsPage() {
           .join(";")
       );
     }
-    const url = URL.createObjectURL(new Blob(["﻿" + lines.join("\n")], { type: "text/csv;charset=utf-8" }));
+    download(new Blob(["﻿" + lines.join("\r\n")], { type: "text/csv;charset=utf-8" }), "csv");
+  }
+
+  function exportExcel() {
+    if (!data) return;
+    download(resultsWorkbook({ questions: data.questions, responses: data.responses, answers: data.answers, labelOf }), "xlsx");
+  }
+
+  function download(blob: Blob, ext: string) {
+    if (!data) return;
+    const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.href = url;
-    link.download = `${(data.form.title || "auswertung").replace(/[\\/:*?"<>|]+/g, "-").trim()}.csv`;
+    link.download = `${(data.form.title || "auswertung").replace(/[\\/:*?"<>|]+/g, "-").trim()}.${ext}`;
     link.click();
-    URL.revokeObjectURL(url);
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
   }
 
   const kpis = data && view ? computeKpis(data.questions, view.answers, labelOf) : [];
@@ -130,8 +141,13 @@ export default function ResultsPage() {
   return (
     <>
       <AdminHeader>
-        <Link className="btn ghost" href={`/b/${id}/bearbeiten`}><Icon name="edit" size={18} /> Zum Editor</Link>
-        <button type="button" className="btn primary" onClick={exportCsv} disabled={!data.answers.length}>CSV exportieren</button>
+        <Link className="btn ghost" href={`/b/${id}/bearbeiten`} aria-label="Zum Editor"><Icon name="edit" size={18} /> <span className="hide-mobile">Zum Editor</span></Link>
+        <button type="button" className="btn" onClick={exportCsv} disabled={!data.answers.length} data-export="csv">
+          <Icon name="down" size={18} /> CSV<span className="hide-mobile"> exportieren</span>
+        </button>
+        <button type="button" className="btn primary" onClick={exportExcel} disabled={!data.answers.length} data-export="xlsx">
+          <Icon name="down" size={18} /> Excel<span className="hide-mobile"> exportieren</span>
+        </button>
       </AdminHeader>
       <main className="admin-main admin-narrow">
         <Link href="/meine-boegen" className="back-link"><Icon name="back" size={18} /> Meine Bögen</Link>
