@@ -5,19 +5,23 @@ interface Props {
   backLabel?: string;
   /** 0–1; zeigt Balken + Prozent */
   progress?: number;
-  /** Text links unter dem Balken (Bereich, „Halbzeit!“ …) */
+  /** Text links unter dem Balken („Los geht's!“, „Halbzeit!“ …) */
   label?: string;
+  /** statt „Zurück“: kurzer Hinweis (z. B. Entwurf) */
+  notice?: string;
 }
 
-/** „< Zurück“ + Fortschrittsbalken mit Prozent und Bereichs-Label. */
-export function TopBar({ onBack, backLabel = "Zurück", progress, label }: Props) {
+/** Kopfzone: „< Zurück“ + Fortschrittsbalken mit Prozent. Ohne Inhalte bleibt der Platz frei (festes Raster). */
+export function TopBar({ onBack, backLabel = "Zurück", progress, label, notice }: Props) {
   const pct = progress === undefined ? undefined : Math.round(Math.min(1, Math.max(0, progress)) * 100);
   return (
-    <div>
+    <>
       {onBack ? (
         <button type="button" className={styles.back} onClick={onBack}>
           &lt; {backLabel}
         </button>
+      ) : notice ? (
+        <p className={styles.notice}>{notice}</p>
       ) : (
         <div className={styles.backPlaceholder} />
       )}
@@ -32,6 +36,6 @@ export function TopBar({ onBack, backLabel = "Zurück", progress, label }: Props
           </div>
         </>
       )}
-    </div>
+    </>
   );
 }

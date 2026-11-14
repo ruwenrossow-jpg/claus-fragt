@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useRef } from "react";
 import { Icon } from "@/components/admin/icons";
 import { Select } from "@/components/admin/Select";
 import { Switch } from "@/components/admin/Switch";
@@ -13,6 +14,8 @@ interface Props {
   index: number;
   count: number;
   active: boolean;
+  /** neu angelegt/dupliziert: Karte sanft in die Bildschirmmitte scrollen */
+  center?: boolean;
   onActivate: () => void;
   onPatch: (patch: Partial<Question>) => void;
   onKind: (kind: QuestionKind) => void;
@@ -27,8 +30,18 @@ const KIND_OPTIONS = QUESTION_TYPES.map((t) => ({ value: t.kind, label: t.label,
  * Eine Frage im Editor, wie bei Google Forms: inaktiv eine ruhige Zusammenfassung,
  * aktiv mit Fragetext, Frageart, den Feldern dieser Art und im Fuß Verschieben, Duplizieren, Löschen, Pflicht.
  */
-export function QuestionCard({ question: q, index, count, active, onActivate, onPatch, onKind, onMove, onDuplicate, onRemove }: Props) {
+export function QuestionCard({ question: q, index, count, active, center = false, onActivate, onPatch, onKind, onMove, onDuplicate, onRemove }: Props) {
   const def = typeOf(q);
+  const card = useRef<HTMLElement>(null);
+  const label = useRef<HTMLTextAreaElement>(null);
+  // Aktiv geworden: Cursor direkt in den Fragetext; neue Karten zusätzlich in die Bildschirmmitte
+  useEffect(() => {
+    if (!active) return;
+    label.current?.focus({ preventScroll: true });
+    const end = label.current?.value.length ?? 0;
+    label.current?.setSelectionRange(end, end);
+    if (center) card.current?.scrollIntoView({ block: "center", behavior: "smooth" });
+  }, [active, center]);
 
   if (!active) {
     const options = q.options.filter((o) => o.trim());
@@ -48,15 +61,15 @@ export function QuestionCard({ question: q, index, count, active, onActivate, on
 
   const warnings = questionWarnings(q);
   return (
-    <section className={`${styles.card} ${styles.cardActive}`} data-question={index + 1} aria-label={`Frage ${index + 1}`}>
+    <section ref={card} className={`${styles.card} ${styles.cardActive}`} data-question={index + 1} aria-label={`Frage ${index + 1}`}>
       <div className={styles.cardTop}>
         <textarea
+          ref={label}
           className={styles.labelInput}
           value={q.label}
           placeholder="Frage"
           aria-label="Fragetext"
           rows={1}
-          autoFocus
           onChange={(e) => onPatch({ label: e.target.value })}
         />
         <div className={styles.kind}>

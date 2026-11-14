@@ -40,7 +40,7 @@ docs/prototyp/            Figma-Referenz-Screens; docs/screens/v2: Screens Build
 ## Speichern (Autosave)
 `useFormDraft` speichert 0,8 s nach der letzten Änderung (`saveForm`: Bogen-Update, gelöschte Fragen, Upsert aller Fragen).
 Änderungen während des Speicherns werden danach nachgespeichert (Revisionszähler). Beim Tab-Wechsel/Verlassen wird sofort gespeichert.
-Live schalten / Status ändern speichert sofort (`patchForm(patch, true)`).
+Live schalten / Status ändern speichert sofort (`patchForm(patch, true)`). „Speichern & abschließen“ ruft `saveNow()` (wartet laufendes Speichern ab) und öffnet den Teilen-Dialog.
 
 ## Erweiterungspunkte
 | Vorhaben | Wo |
@@ -54,6 +54,7 @@ Live schalten / Status ändern speichert sofort (`patchForm(patch, true)`).
 
 ## Ablauf Teilnehmende
 Start → Fragen (jeweils WEITER!) → (Speichern) → Ende → Ergebnisse (eigene Antwort vs. alle) → Fertig.
+Ab der ersten Frage hat jeder Screen „Zurück“ (`prevStep` in `flow.ts`, auch Ende/Ergebnis/Fertig).
 Wer nach dem Speichern zurückgeht und etwas ändert, ersetzt die Antworten derselben Abgabe (`saveResponse` mit responseId) und erzeugt keine doppelte.
 
 ## Sicherheit (Hackathon-Modus)

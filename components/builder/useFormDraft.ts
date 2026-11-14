@@ -110,6 +110,16 @@ export function useFormDraft(id: string) {
     },
     /** Erneut versuchen nach einem Fehler */
     retry: flush,
+    /** Sofort speichern (z. B. „Speichern & abschließen“) und warten, bis alles gespeichert ist – auch ein laufendes Speichern. */
+    async saveNow() {
+      for (let i = 0; i < 50 && latest.current.form; i++) {
+        if (!saving.current && revision.current === savedRevision.current) return;
+        if (!saving.current) {
+          await flush();
+          if (revision.current !== savedRevision.current && !saving.current) return; // Fehler → Statusanzeige
+        } else await new Promise((r) => setTimeout(r, 100));
+      }
+    },
     patchQuestion(qid: string, patch: Partial<Question>) {
       changeQuestions((qs) => qs.map((q) => (q.id === qid ? { ...q, ...patch } : q)));
     },

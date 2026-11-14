@@ -1,5 +1,5 @@
 /* Eingabe-Elemente in der Antwort-Box. Werte aus brand/tokens.css. */
-.options { display: flex; flex-direction: column; gap: 40px; padding: 12px 0 12px 0; }
+.options { display: flex; flex-direction: column; gap: var(--space-6); padding: var(--space-1) 0; }
 .option {
   display: flex; align-items: center; gap: clamp(14px, 7vw, 30px);
   padding: 0 0 0 0; border: 0; background: none;
@@ -13,7 +13,7 @@
 .markSquare { border-radius: 8px; }
 .markOn { background: var(--survey-accent); }
 
-.chips { display: flex; justify-content: space-between; gap: 8px; padding: 6px 10px 0; }
+.chips { display: flex; justify-content: space-between; gap: var(--space-2); }
 .chip {
   flex: 1; max-width: 44px; height: 44px;
   border: 2px solid transparent; border-radius: 10px;
@@ -22,10 +22,10 @@
 }
 .chipOn { background: var(--inno-red); border-color: var(--survey-ink); }
 
-.stars { display: flex; justify-content: space-between; padding: 0 8px; }
+.stars { display: flex; justify-content: space-between; }
 .star { padding: 0; border: 0; background: none; cursor: pointer; line-height: 0; }
 
-.scaleLabels { display: flex; justify-content: space-between; margin-top: 40px; font-size: var(--text-s); }
+.scaleLabels { display: flex; justify-content: space-between; margin-top: var(--space-6); font-size: var(--text-s); }
 
 .field {
   width: 100%; padding: 14px 16px;
@@ -35,6 +35,11 @@
 }
 .field:focus { outline: 2px solid var(--survey-accent); outline-offset: 1px; }
 .field::placeholder { color: rgba(0, 0, 0, 0.45); }
-.textarea { min-height: 148px; }
-.options:has(> :nth-child(4)) { gap: 22px; }
+.textarea { min-height: 120px; }
+.options:has(> :nth-child(4)) { gap: var(--space-4); } /* 4+ Optionen: Box passt ohne Scrollen ins Raster (393 × 852) */
+@container screen (max-height: 760px) {
+  .options, .options:has(> :nth-child(4)) { gap: var(--space-3); }
+  .mark { width: 26px; height: 26px; }
+  .scaleLabels { margin-top: var(--space-4); }
+}
 .option[aria-checked="true"] { font-weight: 600; }

@@ -7,9 +7,10 @@
 html, body { margin: 0; min-height: 100%; }
 body { font-family: var(--font-body); background: var(--admin-bg); color: var(--admin-text); -webkit-font-smoothing: antialiased; }
 a { color: var(--inno-navy); }
+.only-mobile { display: none; }
 
 /* ---------- Bogen-Seite (Teilnehmende) ---------- */
-.survey-page { min-height: 100dvh; display: flex; background: var(--survey-bg); }
+.survey-page { height: 100dvh; display: flex; background: var(--survey-bg); }
 .survey-message { margin: 0; min-height: 100dvh; padding: 40px; text-align: center; background: var(--survey-bg); font-family: var(--font-body); }
 
 /* ---------- Admin: Rahmen ---------- */
@@ -27,6 +28,7 @@ a { color: var(--inno-navy); }
   .admin-header { flex-wrap: nowrap; padding: 8px 12px; }
   .admin-header > .row { flex-wrap: nowrap; gap: 4px; }
   .hide-mobile { display: none; }
+  .only-mobile { display: inline; }
   .admin-brand img { height: 32px; }
   .admin-brand span { display: none; }
   .admin-main { padding: 16px 12px 96px; }

@@ -21,7 +21,7 @@ const DU = {
   buttons: { next: "WEITER!", back: "Zurück", result: "Ergebnis ansehen", finish: "Fertig" },
   hints: { optional: "Freiwillig", required: "Bitte beantworte diese Frage.", maxChoices: "Höchstens {max} Antworten" },
   end: { claus: "Schon vorbei? Danke dir!", title: "Deine Antworten sind gespeichert." },
-  result: { title: "So haben die anderen geantwortet", mine: "Deine Antwort" },
+  result: { title: "So haben alle geantwortet", mine: "Deine Antwort" },
   thanks: { title: "Danke!", sub: "Wir lesen jede Antwort, versprochen." },
   closed: { title: "Diese Umfrage ist beendet.", sub: "Danke fürs Vorbeischauen!" },
   placeholder: { text: "Ein Satz reicht …" },

@@ -13,7 +13,7 @@ export function SaveStatus({ state, onRetry }: { state: SaveState; onRetry: () =
   }
   return (
     <span className={styles.saveStatus} role="status" aria-live="polite">
-      {state === "saved" ? <><Icon name="check" size={16} /> Gespeichert</> : "Speichert …"}
+      {state === "saved" ? <><Icon name="check" size={16} /> <span className="hide-mobile">Gespeichert</span></> : "Speichert …"}
     </span>
   );
 }

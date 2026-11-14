@@ -37,18 +37,47 @@ Die Werte sind pixelgenau aus den Prototyp-PNGs und dem InnoNord-Logo ausgelesen
   `--font-display` = **Zilla Slab** nur für Admin-Überschriften. Geladen über `next/font` in `app/layout.tsx`.
 - Größen: `--text-s` 16, `--text-m` 20 (Fragen, Optionen), `--text-l` 24 (Box-Titel), `--text-xl` 30 (Ergebnis-Titel), `--text-button` 34.
 
+## Layout-Raster der Bogen-Screens (verbindlich)
+**Jeder** Bogen-Screen (Start, Fragen, Ende, Ergebnis, Danke, Geschlossen) ist derselbe `<Screen>` mit vier Zonen (CSS-Grid):
+
+| Zone | Höhe (393 × 852) | Inhalt |
+|---|---|---|
+| Kopf | `--zone-head` 120 px | „< Zurück“ + Fortschritt (Platz bleibt reserviert, auch wenn leer) |
+| Bühne | `--space-2` + `--claus-size` 116 + `--zone-tail` 38 + `--bubble-h` 150 | Claus (wandert) + Sprechblase (fest) |
+| Inhalt | Rest (`1fr`) | Antwort-Box, Ergebnis, Texte – **scrollt in sich**, Verlauf unten zeigt Überlauf |
+| Fuß | Hinweiszeile (22 px, immer reserviert) + `--pill-h` 72 + `--foot-pad` 40 | Haupt-Button, unten verankert |
+
+- Der Haupt-Button sitzt dadurch auf jedem Screen **pixelgenau gleich hoch**; Screens ohne Button (Danke, Geschlossen) halten den Platz mit `PillSpacer`.
+- Kleine Screens (Höhe < 760 px, z. B. 375 × 667) bekommen per `@container` kompaktere Zonen; die Verhältnisse bleiben gleich.
+- Gemessen im E2E-Test (`boundingBox`, Abweichung 0 px über alle Screens):
+
+| Viewport | y Button | y Sprechblase |
+|---|---|---|
+| 393 × 852 | 740 | 282 |
+| 375 × 667 | 587 | 226 |
+| 430 × 932 | 820 | 282 |
+| 320 × 640 | 560 | 226 |
+
+## Gestalt-Regeln im Bogen
+- **Nähe:** Was zusammengehört, steht eng (Frage + Hinweis „Freiwillig“ in der Blase; Option + Beschriftung), Zonen sind durch größere Abstände getrennt (`--space-5`/`--space-6`).
+- **Ähnlichkeit:** Gleiche Rolle = gleiche Form und Farbe: alle Antworten als Radios/Kästchen gleicher Größe, ein einziger roter Button, eigene Antwort im Ergebnis immer rot.
+- **Gemeinsame Region:** Alle Antworten liegen in der türkisen Antwort-Box (2 px Rand). Bei 4+ Optionen wird der Abstand kleiner (`--space-4`), damit die Box ganz sichtbar bleibt.
+- **Ausrichtung:** Alle Zonen hängen an derselben linken/rechten Achse (`--screen-pad` 24 px); Blase, Box und Button sind mittig.
+- **Spacing-Skala:** nur `--space-1` … `--space-7` (4 · 8 · 12 · 16 · 24 · 32 · 48 px) aus `tokens.css`.
+- **Kontinuität:** Fortschritt, Blase und Button stehen auf jedem Screen an derselben Stelle; nur Claus und der Zipfel wandern (0,7 s, gleiche Kurve) – das Auge folgt der Bewegung statt neu zu suchen.
+- **Zurück überall:** Ab der ersten Frage hat jeder Screen „< Zurück“, auch Ende, Ergebnis und Danke.
+
 ## Bausteine (components/ui)
-- **Screen**: Rahmen 393 × 852 (max. 430 px breit), Hintergrund türkis, Footer mit Button unten (60 px Abstand).
-- **TopBar**: „< zurück“ (optional) + Fortschrittsbalken (34 px hoch, Pill).
-- **SpeechBubble**: Ellipse, 1 px schwarzer Rand, Zipfel `tail="up" | "down"` mit Spitze bei `tailX` (0–1).
-  Ellipse und Zipfel sind **ein SVG-Pfad** (nahtlos). Die Ellipse wird um den gemessenen Text berechnet
-  (Textbox × √2), deshalb wird nichts abgeschnitten; ab 90 Zeichen 18 px statt 20 px. Kurze Texte: mind. 250 px breit.
-- **MascotHero**: Sprechblase oben, großer Claus darunter (Start, Ende, Fertig, Geschlossen).
-- **MascotCorner**: Claus oben, Frage-Sprechblase darunter. **Auf jedem Fragen-Screen, nicht abschaltbar.**
-  Abwechselnd links/rechts (gerade Frage-Nr. links). Das Element bleibt zwischen den Fragen erhalten, Claus wandert
-  per CSS-Transition (0,7 s) mit kleinem Hüpfer, der Zipfel gleitet mit (`useTween`, gleiche Dauer). `prefers-reduced-motion` schaltet das ab.
-- **AnswerCard**: türkise Box, 2 px schwarzer Rand, Radius 18, min. 242 px hoch, optionaler Titel.
-- **PillButton**: rot, 212 × 72, Text in Großbuchstaben mit „!“. **Genau ein Button pro Screen.**
+- **Screen**: das Raster oben (Kopf · Bühne · Inhalt · Fuß), max. 430 px breit, Hintergrund türkis.
+- **TopBar**: „< Zurück“ (optional) + Fortschrittsbalken (34 px hoch, Pill) mit Label und Prozent.
+- **Stage** (`Mascot.tsx`): Claus oben, darunter die Sprechblase. **Auf jedem Screen, nicht abschaltbar.**
+  Claus steht links/rechts (Fragen abwechselnd) oder mittig (Start, Ende, Danke). Das Element bleibt über alle Screens erhalten,
+  Claus wandert per CSS-Transition (0,7 s) mit kleinem Hüpfer, der Zipfel gleitet mit (`useTween`, gleiche Dauer). `prefers-reduced-motion` schaltet das ab.
+- **SpeechBubble**: Ellipse in voller Breite mit **fester Höhe** `--bubble-h`, 1 px schwarzer Rand; Ellipse und Zipfel sind **ein SVG-Pfad** (nahtlos).
+  Die Blase steht immer an derselben Stelle; nur die Zipfelspitze wandert. Text vertikal zentriert, Schrift in Stufen
+  `--bubble-font-1` … `-5` (20 → 14 px), bis der Text ins einbeschriebene Rechteck (Breite/√2 × Höhe/√2) passt.
+- **AnswerCard**: türkise Box, 2 px schwarzer Rand, Radius 18, optionaler Titel (nur v1).
+- **PillButton**: rot, min. 212 × 72, Text in Großbuchstaben mit „!“. **Genau ein Button pro Screen**, immer im Fuß.
   Fragen-Screens haben **immer** WEITER! – kein Auto-Weiter (Teilnehmende sollen nachdenken können).
 
 ## Screens (Ablauf siehe `components/survey/flow.ts`)
@@ -56,7 +85,8 @@ Die Werte sind pixelgenau aus den Prototyp-PNGs und dem InnoNord-Logo ausgelesen
 2. **Frage** (je Frage): zurück, Fortschritt, Claus (wandert), Frage in der Sprechblase, Antwort-Box, WEITER!
 3. **Ende**: trauriger Claus, „Oh du bist ja schon fertig …“, voller Balken, ERGEBNIS! (Antworten sind hier schon gespeichert.)
 4. **Ergebnis** (je auswertbare Frage): „Frage N / Titel“, „Deine Antwort = A:“, Balken mit % aller Teilnehmenden, eigene Antwort rot.
-5. **Fertig**: froher Claus, Dank.
+5. **Fertig**: froher Claus, Dank, „< Zurück“ zum letzten Ergebnis.
+Nach dem Speichern zurückgehen und ändern ersetzt die Antworten derselben Abgabe (keine doppelte).
 
 ## Fragetypen im Look
 | Typ | Box-Titel (Standard) | Darstellung |
@@ -88,7 +118,12 @@ Fortschritt: Prozent + Label („Los geht's!“, „Halbzeit!“, „Letzte Frag
 - Frage-Karte: inaktiv = Zusammenfassung (Text, Frageart, Antworten); aktiv = Fragetext, Auswahl „Frageart“, Felder der Art, Fuß mit ↑ ↓ Duplizieren Löschen | Pflicht-Schalter.
 - **Keine Browser-Dialoge**: `confirm()`, `alert()`, `prompt()`, `beforeunload`, `required`, natives `<select>` und `title`-Tooltips sind tabu.
   Stattdessen `useDialog().confirm(...)` / `.toast(...)`, `Select`, `Switch` aus `components/admin/`, Formulare mit `noValidate` + eigener Meldung.
-- Autosave mit Statusanzeige „Speichert …“ / „Gespeichert“ in der Kopfzeile, kein Speichern-Knopf.
+- Autosave mit Statusanzeige „Speichert …“ / „Gespeichert“ in der Kopfzeile.
+- **Haupt-CTA „Speichern & abschließen“** (InnoNord-Rot, `btn primary`) in der Kopfzeile (Handy: „Abschließen“) und am Ende der Fragenliste:
+  speichert sofort (wartet auch ein laufendes Speichern ab) und öffnet den Teilen-Dialog mit „Live schalten“.
+- **„+ Frage“ / Duplizieren:** neue Karte wird aktiv, scrollt sanft in die Bildschirmmitte (`scrollIntoView({block:"center"})`),
+  Cursor im Fragetext, die Vorschau springt auf diese Frage (mit Platzhaltern, solange Text/Antworten fehlen).
+- **Vorschau „↺ Von vorne“** (Desktop und mobile Vorschau): setzt Screen und Antworten zurück (`key`-Remount des SurveyPlayer).
 
 ## Offen / folgt
 - Tonalitätsregeln → `brand/copy.ts` + Hinweise in `lib/rules.ts`

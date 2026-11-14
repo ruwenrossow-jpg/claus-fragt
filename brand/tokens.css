@@ -46,11 +46,18 @@
   --font-body: var(--font-source-sans), "Source Sans 3", "Source Sans Pro", system-ui, sans-serif;
   --font-display: var(--font-zilla-slab), "Zilla Slab", Georgia, serif;
 
+  --text-xs: 14px;
   --text-s: 16px;
   --text-m: 20px;
   --text-l: 24px;
   --text-xl: 30px;
   --text-button: 34px;
+  /* Sprechblase: Stufen, von groß nach klein, bis der Text passt (SpeechBubble.tsx) */
+  --bubble-font-1: 20px;
+  --bubble-font-2: 18px;
+  --bubble-font-3: 16px;
+  --bubble-font-4: 15px;
+  --bubble-font-5: 14px;
 
   /* Formen */
   --radius-card: 18px;
@@ -58,7 +65,26 @@
   --radius-pill: 999px;
   --border-ink: 1.5px solid var(--survey-ink);
 
+  /* Abstands-Skala (alle Abstände der Bogen-Screens kommen von hier) */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+  --space-7: 48px;
+
   /* Bildschirm (Prototyp-Raster 393 × 852) */
   --screen-max: 430px;
-  --screen-pad: 26px;
+  --screen-pad: 24px;   /* gemeinsame linke/rechte Achse aller Zonen */
+
+  /* Layout-Raster der Bogen-Screens (Höhen der festen Zonen).
+     Kleine Screens (Höhe < 760 px) überschreiben die Werte in components/ui/ui.module.css (@container). */
+  --zone-head: 120px;   /* Zurück + Fortschritt */
+  --claus-size: 116px;  /* Claus (quadratisch) */
+  --zone-tail: 38px;    /* Platz für den Zipfel */
+  --bubble-h: 150px;    /* Sprechblase: feste Höhe */
+  --pill-h: 72px;
+  --pill-font: var(--text-button);
+  --foot-pad: 40px;     /* Abstand Button → unterer Rand */
 }

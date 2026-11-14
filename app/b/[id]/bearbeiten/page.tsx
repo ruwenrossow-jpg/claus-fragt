@@ -18,7 +18,7 @@ import { START, Step } from "@/components/survey/flow";
 import { SurveyPlayer } from "@/components/survey/SurveyPlayer";
 import { formWarnings } from "@/lib/rules";
 import { STATUS_LABELS } from "@/lib/types";
-import { isAnswerable } from "@/question-types";
+import { isAnswerable, withPreviewPlaceholders } from "@/question-types";
 
 /** Editor wie Google Forms: Kopf-Karte, Fragen Schritt für Schritt hinzufügen, Autosave, Live-Vorschau im Handy-Rahmen. */
 export default function EditorPage() {
@@ -28,14 +28,21 @@ export default function EditorPage() {
   const { form, questions } = draft;
   const [step, setStep] = useState<Step>(START);
   const [activeId, setActiveId] = useState<string | null>(null);
+  /** zuletzt angelegte/duplizierte Frage → wird zentriert */
+  const [centerId, setCenterId] = useState<string | null>(null);
+  /** zählt hoch bei „Vorschau von vorne“ → SurveyPlayer wird neu aufgebaut (Antworten weg) */
+  const [previewRun, setPreviewRun] = useState(0);
   const [mobilePreview, setMobilePreview] = useState(false);
   const [sharing, setSharing] = useState(false);
+  const [finishing, setFinishing] = useState(false);
   const wantsShare = useSearchParams().get("teilen") === "1";
   useEffect(() => {
     if (wantsShare) setSharing(true);
   }, [wantsShare]);
 
-  const playable = useMemo(() => (form ? playableQuestions(form, questions) : []), [form, questions]);
+  // Vorschau: die aktive Frage erscheint auch ohne Text/Antworten (Platzhalter), damit die Vorschau sofort mitspringt
+  const previewQuestions = useMemo(() => questions.map((q) => (q.id === activeId ? withPreviewPlaceholders(q) : q)), [questions, activeId]);
+  const playable = useMemo(() => (form ? playableQuestions(form, previewQuestions) : []), [form, previewQuestions]);
   const previewIndex = playable.findIndex((q) => q.id === activeId);
   // Die Vorschau folgt der aktiven Frage, sobald sie im Bogen erscheint (Tabs bleiben frei wählbar)
   useEffect(() => {
@@ -61,7 +68,31 @@ export default function EditorPage() {
     dialog.toast("Frage gelöscht");
   }
 
-  const player = <SurveyPlayer form={form} questions={questions} step={step} onStepChange={setStep} />;
+  const focusNew = (qid: string) => {
+    setActiveId(qid);
+    setCenterId(qid);
+  };
+  /** Haupt-CTA: sofort speichern (Autosave läuft weiter) und den Teilen-Dialog mit „Live schalten“ öffnen. */
+  async function finish() {
+    setFinishing(true);
+    try {
+      await draft.saveNow();
+    } finally {
+      setFinishing(false);
+    }
+    setSharing(true);
+  }
+  const restartPreview = () => {
+    setPreviewRun((n) => n + 1);
+    setStep(START);
+  };
+
+  const player = <SurveyPlayer key={previewRun} form={form} questions={previewQuestions} step={step} onStepChange={setStep} />;
+  const restart = (
+    <button type="button" className={`btn small ${styles.restart}`} onClick={restartPreview} data-restart>
+      <Icon name="restart" size={16} /> Von vorne
+    </button>
+  );
   const tabs = <PreviewTabs step={step} count={playable.length} hasResults={playable.some(isAnswerable)} onChange={setStep} />;
 
   return (
@@ -69,7 +100,9 @@ export default function EditorPage() {
       <AdminHeader>
         <SaveStatus state={draft.saveState} onRetry={draft.retry} />
         <Link className="btn ghost" href={`/b/${id}/ergebnisse`} aria-label="Ergebnisse"><Icon name="chart" size={18} /> <span className="hide-mobile">Ergebnisse</span></Link>
-        <button type="button" className="btn primary" onClick={() => setSharing(true)}><Icon name="share" size={18} /> Teilen</button>
+        <button type="button" className="btn primary" onClick={finish} disabled={finishing} data-cta>
+          <Icon name="check" size={18} /> <span className="hide-mobile">Speichern &amp; abschließen</span><span className="only-mobile">Abschließen</span>
+        </button>
       </AdminHeader>
 
       <main className="admin-main">
@@ -92,22 +125,34 @@ export default function EditorPage() {
                 index={i}
                 count={questions.length}
                 active={q.id === activeId}
+                center={q.id === centerId}
                 onActivate={() => setActiveId(q.id)}
                 onPatch={(p) => draft.patchQuestion(q.id, p)}
                 onKind={(k) => draft.changeKind(q.id, k)}
                 onMove={(d) => draft.move(q.id, d)}
-                onDuplicate={() => setActiveId(draft.duplicateQuestion(q.id))}
+                onDuplicate={() => focusNew(draft.duplicateQuestion(q.id))}
                 onRemove={() => remove(q.id)}
               />
             ))}
 
-            <button type="button" className={styles.addQuestion} aria-label="Frage hinzufügen" onClick={() => setActiveId(draft.addQuestion("single_choice"))}>
+            <button type="button" className={styles.addQuestion} aria-label="Frage hinzufügen" onClick={() => focusNew(draft.addQuestion("single_choice"))}>
               <Icon name="plus" /> Frage
             </button>
+            {questions.length > 0 && (
+              <div className={styles.finishBar}>
+                <span className="muted">Alles drin? Speichern, live schalten und den Link holen.</span>
+                <button type="button" className="btn primary big" onClick={finish} disabled={finishing} data-cta>
+                  <Icon name="check" size={18} /> Speichern &amp; abschließen
+                </button>
+              </div>
+            )}
           </div>
 
           <aside className={styles.previewCol} aria-label="Vorschau">
-            {tabs}
+            <div className={styles.previewHead}>
+              {tabs}
+              {restart}
+            </div>
             <div className={styles.phone}>{player}</div>
           </aside>
         </div>
@@ -119,6 +164,7 @@ export default function EditorPage() {
           <div className={styles.overlay} role="dialog" aria-modal="true" aria-label="Vorschau">
             <div className={styles.overlayBar}>
               {tabs}
+              {restart}
               <button type="button" className="icon-btn" onClick={() => setMobilePreview(false)} aria-label="Vorschau schließen"><Icon name="close" /></button>
             </div>
             <div className={styles.overlayBody}>{player}</div>

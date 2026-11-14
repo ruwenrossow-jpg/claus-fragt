@@ -125,7 +125,8 @@ export async function saveForm(form: Form, questions: Question[], removedIds: st
   if (removedIds.length) unwrap(await supabase.from("questions").delete().in("id", removedIds));
   if (questions.length) {
     const rows = questions.map((q, i) => ({ ...q, position: i }));
-    unwrap(await supabase.from("questions").upsert(rows));
+    // defaultToNull: false → neue Fragen ohne created_at bekommen den DB-Standard statt null (gemischter Upsert mit geladenen Fragen)
+    unwrap(await supabase.from("questions").upsert(rows, { defaultToNull: false }));
   }
   return slug;
 }

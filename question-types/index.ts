@@ -10,6 +10,7 @@ import { scale, stars } from "./scale";
 import { longText, shortText } from "./text";
 import { yesNo } from "./yes-no";
 import { QuestionKind, QuestionTypeDef, ResultOption } from "./types";
+import { letter } from "./letters";
 
 export type { QuestionKind, QuestionTypeDef, ResultOption } from "./types";
 
@@ -80,4 +81,14 @@ export { levelScore } from "./levels";
 export function hasEnoughOptions(q: Question): boolean {
   if (q.type !== "single_choice" && q.type !== "multiple_choice") return true;
   return q.options.filter((o) => o.trim()).length >= 2;
+}
+
+/** Builder-Vorschau: die gerade bearbeitete Frage auch ohne Text/Antworten zeigen (Platzhalter statt leer). */
+export function withPreviewPlaceholders(q: Question): Question {
+  const choice = q.type === "single_choice" || q.type === "multiple_choice";
+  return {
+    ...q,
+    label: q.label.trim() ? q.label : "Deine Frage …",
+    options: choice ? q.options.map((o, i) => o.trim() || `Antwort ${letter(i)}`) : q.options,
+  };
 }

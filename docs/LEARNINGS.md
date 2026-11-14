@@ -2,6 +2,11 @@
 
 Neue Einträge oben. Format: Datum – Problem → Lösung/Regel.
 
+- 2026-11-14 (Raster): Button und Blase sprangen je nach Inhalt → ein `<Screen>` mit festen Grid-Zonen (Kopf · Bühne · Inhalt `1fr` scrollt · Fuß), Hinweiszeile und Button-Platz immer reserviert. Prüfen per Playwright-`boundingBox` über alle Screens und mehrere Viewports (Abweichung ≤ 1 px), nicht nach Augenmaß.
+- 2026-11-14 (Raster): Kleine Viewports per `@container screen (max-height: …)` statt Media Query → greift auch im verkleinerten Handy-Rahmen der Vorschau.
+- 2026-11-14: Upsert gemischter Zeilen (geladene Fragen mit `created_at`, neue ohne) setzte `created_at = null` → 400. Regel: `upsert(rows, { defaultToNull: false })`.
+- 2026-11-14: „Speichern & abschließen“ während eines laufenden Autosaves kehrte sofort zurück → `saveNow()` wartet, bis Revision = gespeicherte Revision.
+
 - 2026-11-14 (v2): Sprechblase als CSS-Ellipse + aufgesetztes Zipfel-SVG hatte Nahtstellen und schnitt lange Texte ab → Ellipse und Zipfel als EIN SVG-Pfad, Größe aus dem gemessenen Text (Textbox × √2, ResizeObserver). Maße mit `offsetWidth` lesen, das ignoriert CSS-`zoom` (Handy-Rahmen).
 - 2026-11-14 (v2): Animation zwischen zwei Screens braucht dasselbe DOM-Element → gleiche Komponente an gleicher Stelle im Baum rendern (kein `key`, kein Wechsel zwischen Varianten), Seite nur per Klasse umschalten. SVG-Pfade lassen sich nicht per CSS überblenden → Wert in JS tweenen (`useTween`), gleiche Dauer wie die CSS-Transition.
 - 2026-11-14 (v2): Hüpfer bei jedem Seitenwechsel: zwei identische Keyframes mit verschiedenen Namen (`hopLeft`/`hopRight`) – der Klassenwechsel startet die Animation neu.

@@ -1,26 +1,54 @@
 /* Bausteine der Bogen-Oberfläche. Werte ausschließlich aus brand/tokens.css. */
 
-/* ---------- Screen ---------- */
+/* ---------- Screen: festes Layout-Raster ----------
+   Kopf (--zone-head) · Bühne (Claus + Zipfel + Blase) · Inhalt (Rest, scrollt) · Fuß (Hinweis + Button).
+   Alle Zonen liegen auf derselben linken/rechten Achse (--screen-pad). */
 .screen {
-  position: relative;
-  display: flex;
-  flex-direction: column;
+  container: screen / size;
+  flex: 1;
   width: 100%;
   max-width: var(--screen-max);
-  min-height: 100%;
+  height: 100%;
   margin: 0 auto;
-  padding: 14px 0 60px;
   background: var(--survey-bg);
   color: var(--survey-ink);
   font-family: var(--font-body);
 }
-.screenBody { flex: 1; display: flex; flex-direction: column; }
-.screenFooter { display: flex; justify-content: center; padding-top: 32px; }
+.grid {
+  display: grid;
+  grid-template-rows: var(--zone-head) calc(var(--space-2) + var(--claus-size) + var(--zone-tail) + var(--bubble-h)) minmax(0, 1fr) auto;
+  height: 100%;
+}
+/* Kleine Screens (z. B. 375 × 667): alle festen Zonen kompakter, Verhältnisse bleiben gleich */
+@container screen (max-height: 760px) {
+  .grid {
+    --zone-head: 100px;
+    --claus-size: 88px;
+    --zone-tail: 30px;
+    --bubble-h: 118px;
+    --pill-h: 60px;
+    --pill-font: 28px;
+    --foot-pad: 20px;
+    --text-m: 18px;
+    --text-xl: 24px;
+  }
+}
 
-/* ---------- Kopfzeile ---------- */
+.zoneHead { padding: var(--space-3) var(--screen-pad) 0; }
+.zoneStage { padding: var(--space-2) var(--screen-pad) 0; }
+.zoneBody { min-height: 0; overflow-y: auto; padding: 0 var(--screen-pad) var(--space-4); overscroll-behavior: contain; }
+.zoneFoot { display: flex; flex-direction: column; align-items: center; padding: 0 var(--screen-pad) var(--foot-pad); }
+.note { min-height: 22px; margin: var(--space-2) 0; font-size: var(--text-s); line-height: 22px; text-align: center; }
+/* Inhalt länger als die Zone: weicher Verlauf unten zeigt, dass man scrollen kann */
+.zoneBody[data-overflow="true"] { mask-image: linear-gradient(to bottom, black calc(100% - 28px), transparent); }
+@container screen (max-height: 760px) {
+  .note { margin: var(--space-1) 0; }
+}
+
+/* ---------- Kopfzone ---------- */
 .back {
-  align-self: flex-start;
-  margin: 0 0 12px 10px;
+  display: block;
+  height: 30px;
   padding: 0;
   border: 0;
   background: none;
@@ -29,11 +57,11 @@
   color: var(--survey-ink);
   cursor: pointer;
 }
-.backPlaceholder { height: 30px; margin-bottom: 12px; }
-
+.backPlaceholder { height: 30px; }
+.notice { height: 30px; margin: 0; font-size: var(--text-s); line-height: 30px; text-align: center; opacity: 0.7; }
 .progress {
   height: 34px;
-  margin: 0 20px;
+  margin-top: var(--space-3);
   border-radius: var(--radius-pill);
   background: var(--survey-accent-light);
   overflow: hidden;
@@ -44,97 +72,93 @@
   background: var(--survey-accent);
   transition: width 0.35s ease;
 }
+.progressMeta { display: flex; justify-content: space-between; margin-top: var(--space-2); font-size: var(--text-s); font-weight: 600; }
+@container screen (max-height: 760px) {
+  .progress { height: 26px; margin-top: var(--space-2); }
+}
+
+/* ---------- Bühne: Claus + Sprechblase ---------- */
+.track { position: relative; height: var(--claus-size); }
+.mascot {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: var(--claus-size);
+  height: var(--claus-size);
+  /* Wanderung über left + translate (transform bleibt frei für den Hüpfer) */
+  transition: left 0.7s cubic-bezier(0.65, 0, 0.35, 1), translate 0.7s cubic-bezier(0.65, 0, 0.35, 1);
+}
+.left .mascot { left: 0; translate: -8px 0; animation: hopLeft 0.7s ease-in-out; }
+.center .mascot { left: 50%; translate: -50% 0; animation: hopCenter 0.7s ease-in-out; }
+.right .mascot { left: 100%; translate: calc(-100% + 8px) 0; animation: hopRight 0.7s ease-in-out; }
+/* gleiche Keyframes mit verschiedenen Namen: der Klassenwechsel startet den Hüpfer neu */
+@keyframes hopLeft { 40% { transform: translateY(-14px) rotate(-5deg); } }
+@keyframes hopCenter { 40% { transform: translateY(-14px); } }
+@keyframes hopRight { 40% { transform: translateY(-14px) rotate(5deg); } }
+@media (prefers-reduced-motion: reduce) {
+  .mascot { transition: none; animation: none !important; }
+}
+
+/* Sprechblase (Umriss = ein SVG-Pfad, siehe SpeechBubble.tsx): volle Breite, feste Höhe, Text vertikal zentriert */
+.bubble {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: var(--bubble-h);
+  margin-top: var(--zone-tail);
+  line-height: 1.22;
+}
+.bubbleShape { position: absolute; top: 0; left: 0; overflow: visible; }
+.bubbleShape path { fill: var(--survey-bubble); stroke: var(--survey-ink); stroke-width: 1; stroke-linejoin: round; }
+.bubbleText {
+  position: relative;
+  max-width: 70.7%; /* einbeschriebenes Rechteck der Ellipse: Breite / √2 */
+  text-align: center;
+  overflow-wrap: break-word;
+  text-wrap: balance;
+}
+.bubbleHelp { display: block; margin-top: var(--space-1); font-size: var(--text-s); opacity: 0.7; }
 
 /* ---------- Pill-Button ---------- */
 .pill {
   min-width: 212px;
-  height: 72px;
-  padding: 0 32px;
+  height: var(--pill-h);
+  padding: 0 var(--space-6);
   border: 0;
   border-radius: var(--radius-pill);
   background: var(--inno-red);
   color: var(--survey-on-accent);
   font: inherit;
-  font-size: var(--text-button);
+  font-size: var(--pill-font);
   letter-spacing: 0.5px;
   cursor: pointer;
   transition: transform 0.1s ease, opacity 0.2s ease;
 }
 .pill:active { transform: scale(0.97); }
 .pill:disabled { opacity: 0.45; cursor: default; }
+/* Screens ohne Button: gleicher Platz, damit nichts springt */
+.pillSpacer { height: var(--pill-h); }
 
-/* ---------- Sprechblase (Umriss = ein SVG-Pfad, siehe SpeechBubble.tsx) ---------- */
-.bubble {
-  position: relative;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 100%;
-  min-height: 104px;
-  font-size: var(--text-m);
-  line-height: 1.25;
-}
-.bubbleShape { position: absolute; top: 0; left: 0; overflow: visible; }
-.bubbleShape path { fill: var(--survey-bubble); stroke: var(--survey-ink); stroke-width: 1; stroke-linejoin: round; }
-.bubbleUp { margin-top: 40px; }
-.bubbleDown { margin-bottom: 40px; }
-.bubbleText {
-  position: relative;
-  width: max-content;
-  max-width: 70.7%; /* einbeschriebenes Rechteck der Ellipse: Breite / √2 */
-  padding: 6px 0;
-  text-align: center;
-  overflow-wrap: break-word;
-}
-.bubbleLong { font-size: 18px; line-height: 1.22; }
-.bubbleHelp { display: block; margin-top: 6px; font-size: var(--text-s); opacity: 0.75; }
-
-/* ---------- Maskottchen-Anordnungen ---------- */
-.hero { display: flex; flex-direction: column; align-items: center; padding: 48px var(--screen-pad) 0; }
-.hero .bubble { max-width: 300px; }
-.heroMascot { width: 86%; max-width: 300px; height: auto; margin-top: 10px; }
-
-/* Fragen-Screens: Claus wandert zwischen links und rechts (gleiche Dauer wie MOVE_MS in useTween.ts) */
-.corner { padding: 6px var(--screen-pad) 0; }
-.track { position: relative; height: 104px; margin: 0 -10px; }
-.cornerMascot {
-  position: absolute; top: 0; left: 0;
-  width: 116px; height: auto;
-  transition: left 0.7s cubic-bezier(0.65, 0, 0.35, 1);
-}
-.cornerRight .cornerMascot { left: calc(100% - 116px); }
-.cornerLeft .cornerMascot { animation: hopLeft 0.7s ease-in-out; }
-.cornerRight .cornerMascot { animation: hopRight 0.7s ease-in-out; }
-/* zwei gleiche Keyframes mit verschiedenen Namen: der Klassenwechsel startet den Hüpfer neu */
-@keyframes hopLeft { 40% { transform: translateY(-14px) rotate(-5deg); } }
-@keyframes hopRight { 40% { transform: translateY(-14px) rotate(5deg); } }
-@media (prefers-reduced-motion: reduce) {
-  .cornerMascot { transition: none; animation: none !important; }
-}
-
-/* ---------- Antwort-Box ---------- */
+/* ---------- Antwort-Box (gemeinsame Region) ---------- */
 .card {
   display: flex;
   flex-direction: column;
   justify-content: center;
-  min-height: 242px;
-  margin: 36px var(--screen-pad) 0;
-  padding: 22px;
+  margin-top: var(--space-5);
+  padding: var(--space-5);
   border: 2px solid var(--survey-ink);
   border-radius: var(--radius-card);
   background: var(--survey-card);
 }
-.cardTitle { margin: 0; padding-bottom: 32px; font-family: inherit; font-size: var(--text-l); font-weight: 400; color: inherit; }
+.cardTitle { margin: 0; padding-bottom: var(--space-5); font-family: inherit; font-size: var(--text-l); font-weight: 400; color: inherit; }
+@container screen (max-height: 760px) {
+  .card { margin-top: var(--space-4); padding: var(--space-4) var(--space-5); }
+}
 
-.progressMeta { display: flex; justify-content: space-between; margin: 6px 24px 0; font-size: var(--text-s); font-weight: 600; }
-
-/* ---------- Start-Screen ---------- */
-.heroSmall .heroMascot { width: 52%; margin-top: 30px; }
-.heroSmall { padding-top: 24px; }
-.intro { padding: 18px var(--screen-pad) 0; text-align: center; }
-.introTitle { margin: 0; font-family: inherit; font-size: var(--text-xl); font-weight: 700; color: inherit; }
-.introSub { margin: 8px 0 0; font-size: var(--text-m); line-height: 1.3; }
-.tags { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin-top: 14px; }
-.tag { padding: 6px 12px; border: 1px solid var(--survey-ink); border-radius: var(--radius-pill); background: var(--survey-card); font-size: var(--text-s); }
-
-
+/* ---------- Texte in der Inhaltszone (Start, Ende, Danke) ---------- */
+.intro { padding-top: var(--space-5); text-align: center; }
+.introTitle { margin: 0; font-family: inherit; font-size: var(--text-xl); font-weight: 700; line-height: 1.15; color: inherit; }
+.introSub { margin: var(--space-2) 0 0; font-size: var(--text-m); line-height: 1.3; }
+.tags { display: flex; flex-wrap: wrap; justify-content: center; gap: var(--space-2); margin-top: var(--space-4); }
+.tag { padding: 6px var(--space-3); border: 1px solid var(--survey-ink); border-radius: var(--radius-pill); background: var(--survey-card); font-size: var(--text-s); }

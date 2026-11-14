@@ -1,15 +1,15 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { Intro, MascotHero } from "@/components/ui/Mascot";
-import { PillButton } from "@/components/ui/PillButton";
+import { Intro, StageProps, Stage } from "@/components/ui/Mascot";
+import { AnswerCard } from "@/components/ui/AnswerCard";
+import { PillButton, PillSpacer } from "@/components/ui/PillButton";
 import { Screen } from "@/components/ui/Screen";
 import { TopBar } from "@/components/ui/TopBar";
 import { Answer, AnswerValue, Form, Question, isEmptyAnswer } from "@/lib/types";
-import { isAnswerable } from "@/question-types";
+import { boxTitleOf, isAnswerable, typeOf } from "@/question-types";
 import { buildSurvey } from "./context";
 import { START, Step, nextStep, prevStep, progressOf } from "./flow";
-import { QuestionScreen } from "./QuestionScreen";
 import { ResultView } from "./ResultView";
 import styles from "./survey.module.css";
 
@@ -25,7 +25,19 @@ export interface SurveyPlayerProps {
   onStepChange?: (step: Step) => void;
 }
 
-/** Spielt einen Bogen ab. Wird vom Teilnehmer-Link UND von der Builder-Vorschau genutzt. */
+/** Was ein Screen in die Zonen des Rasters legt. */
+interface Parts {
+  header?: React.ReactNode;
+  stage: Omit<StageProps, "theme">;
+  body: React.ReactNode;
+  button?: { label: string; onClick: () => void; disabled?: boolean };
+}
+
+/**
+ * Spielt einen Bogen ab. Wird vom Teilnehmer-Link UND von der Builder-Vorschau genutzt.
+ * Jeder Schritt liefert nur „Parts“; gerendert wird immer derselbe <Screen> mit derselben <Stage>.
+ * Dadurch bleiben Zonen, Button und Claus-Element über alle Screens erhalten (feste Positionen, Claus wandert animiert).
+ */
 export function SurveyPlayer({ form, questions: allQuestions, onSave, loadAnswers, step: controlledStep, onStepChange }: SurveyPlayerProps) {
   const survey = useMemo(() => buildSurvey(form, allQuestions), [form, allQuestions]);
   const { theme, copy, questions } = survey;
@@ -33,56 +45,39 @@ export function SurveyPlayer({ form, questions: allQuestions, onSave, loadAnswer
   const [values, setValues] = useState<Record<string, AnswerValue>>({});
   const [answers, setAnswers] = useState<Answer[]>([]);
   const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [hint, setHint] = useState<string | null>(null);
+  const [note, setNote] = useState<string | null>(null);
 
   const step = controlledStep ?? ownStep;
   const resultQuestions = questions.filter(isAnswerable);
   const n = questions.length;
 
   const go = (s: Step) => {
-    setHint(null);
-    setError(null);
-    if (onStepChange) return onStepChange(s);
-    setOwnStep(s);
-    window.scrollTo({ top: 0 });
+    setNote(null);
+    if (onStepChange) onStepChange(s);
+    else setOwnStep(s);
   };
   const next = () => go(nextStep(step, n, resultQuestions.length));
-  const back = prevStep(step, n);
+  const back = prevStep(step, n, resultQuestions.length);
 
   async function run(task: () => Promise<void>) {
     setBusy(true);
-    setError(null);
+    setNote(null);
     try {
       await task();
       next();
     } catch (e) {
-      setError((e as Error).message || "Da ist etwas schiefgelaufen. Bitte nochmal versuchen.");
+      setNote((e as Error).message || "Da ist etwas schiefgelaufen. Bitte nochmal versuchen.");
     } finally {
       setBusy(false);
     }
   }
 
   /** Weiter von einer Frage: Pflicht prüfen, nach der letzten Frage speichern. */
-  function leaveQuestion(index: number, snapshot: Record<string, AnswerValue>) {
+  function leaveQuestion(index: number) {
     const q = questions[index];
-    if (q.required && isEmptyAnswer(snapshot[q.id])) return setHint(copy.hints.required);
-    if (index === n - 1 && onSave) return run(() => onSave(snapshot));
+    if (q.required && isEmptyAnswer(values[q.id])) return setNote(copy.hints.required);
+    if (index === n - 1 && onSave) return run(() => onSave(values));
     next();
-  }
-
-  function answer(q: Question, v: AnswerValue) {
-    setValues((vs) => ({ ...vs, [q.id]: v }));
-    setHint(null);
-  }
-
-  if (form.status === "closed" && onSave) {
-    return (
-      <Screen header={<TopBar />}>
-        <MascotHero theme={theme} mood="sad" text={copy.closed.title} />
-        <Intro sub={copy.closed.sub} />
-      </Screen>
-    );
   }
 
   const progressLabel = (i: number) => {
@@ -91,81 +86,86 @@ export function SurveyPlayer({ form, questions: allQuestions, onSave, loadAnswer
     if (n >= 4 && i === Math.floor(n / 2)) return copy.progress.half;
     return "";
   };
-  const header = (label?: string) => (
+  const topBar = (label?: string) => (
     <TopBar onBack={back ? () => go(back) : undefined} backLabel={copy.buttons.back} progress={progressOf(step, n)} label={label} />
   );
 
-  switch (step.kind) {
-    case "start":
-      return (
-        <Screen
-          header={onSave && form.status === "draft" ? <p className={styles.notice}>Entwurf – noch nicht live</p> : <TopBar />}
-          footer={<PillButton onClick={next} disabled={!n}>{copy.start.button}</PillButton>}
-        >
-          <MascotHero theme={theme} mood="happy" size="s" text={survey.fill(copy.start.claus)} />
-          <Intro title={survey.fill(copy.start.title)} sub={form.description?.trim() || survey.fill(copy.start.sub)} tags={copy.start.chips.map(survey.fill)} />
-        </Screen>
-      );
-
-    case "question": {
-      const q = questions[step.index];
-      if (!q) return null;
-      return (
-        <QuestionScreen
-          survey={survey}
-          index={step.index}
-          header={header(progressLabel(step.index))}
-          value={values[q.id]}
-          onAnswer={(v) => answer(q, v)}
-          onNext={() => leaveQuestion(step.index, values)}
-          busy={busy}
-          hint={hint}
-          error={error}
-        />
-      );
+  function parts(): Parts | null {
+    if (form.status === "closed" && onSave) {
+      return { stage: { mood: "sad", side: "center", text: copy.closed.title }, body: <Intro sub={copy.closed.sub} /> };
     }
+    switch (step.kind) {
+      case "start":
+        return {
+          header: <TopBar notice={onSave && form.status === "draft" ? "Entwurf – noch nicht live" : undefined} />,
+          stage: { mood: "happy", side: "center", text: survey.fill(copy.start.claus) },
+          body: <Intro title={survey.fill(copy.start.title)} sub={form.description?.trim() || survey.fill(copy.start.sub)} tags={copy.start.chips.map(survey.fill)} />,
+          button: { label: copy.start.button, onClick: next, disabled: !n },
+        };
 
-    case "over": {
-      const hasResults = resultQuestions.length > 0;
-      const onNext = () =>
-        run(async () => {
-          if (hasResults && loadAnswers) setAnswers(await loadAnswers());
-        });
-      return (
-        <Screen header={header()} footer={<PillButton onClick={onNext} disabled={busy}>{busy ? "…" : hasResults ? copy.buttons.result : copy.buttons.finish}</PillButton>}>
-          <MascotHero theme={theme} mood="sad" size="s" text={copy.end.claus} />
-          <Intro title={copy.end.title} />
-          {error && <p className={styles.error}>{error}</p>}
-        </Screen>
-      );
+      case "question": {
+        const q = questions[step.index];
+        if (!q) return null;
+        const def = typeOf(q);
+        const help = [q.help_text, !q.required ? copy.hints.optional : null].filter(Boolean).join(" · ");
+        return {
+          header: topBar(progressLabel(step.index)),
+          stage: { mood: "happy", side: step.index % 2 === 0 ? "left" : "right", text: survey.labelOf(q), help },
+          body: (
+            <>
+              <AnswerCard title={boxTitleOf(q)}>
+                <def.Input question={q} value={values[q.id]} onChange={(v) => { setValues((vs) => ({ ...vs, [q.id]: v })); setNote(null); }} />
+              </AnswerCard>
+              {q.settings.maxChoices && <p className={styles.hint}>{copy.hints.maxChoices.replace("{max}", String(q.settings.maxChoices))}</p>}
+            </>
+          ),
+          button: { label: busy ? "…" : copy.buttons.next, onClick: () => leaveQuestion(step.index), disabled: busy },
+        };
+      }
+
+      case "over": {
+        const hasResults = resultQuestions.length > 0;
+        return {
+          header: topBar(),
+          stage: { mood: "sad", side: "center", text: copy.end.claus },
+          body: <Intro title={copy.end.title} />,
+          button: {
+            label: busy ? "…" : hasResults ? copy.buttons.result : copy.buttons.finish,
+            disabled: busy,
+            onClick: () => run(async () => { if (hasResults && loadAnswers) setAnswers(await loadAnswers()); }),
+          },
+        };
+      }
+
+      case "result": {
+        const q = resultQuestions[step.index];
+        if (!q) return null;
+        // Vorschau ohne Datenbank: nur die eigenen Antworten
+        const shown = loadAnswers ? answers : Object.entries(values).map(([question_id, value]) => ({ response_id: "preview", question_id, value }));
+        return {
+          header: topBar(),
+          stage: { mood: "happy", side: step.index % 2 === 0 ? "right" : "left", text: survey.labelOf(q), help: `${copy.result.title} · Frage ${questions.indexOf(q) + 1}` },
+          body: <ResultView survey={survey} question={q} own={values[q.id]} answers={shown} />,
+          button: { label: step.index === resultQuestions.length - 1 ? copy.buttons.finish : copy.buttons.next, onClick: next },
+        };
+      }
+
+      case "done":
+        return { header: topBar(), stage: { mood: "happy", side: "center", text: copy.thanks.title }, body: <Intro sub={copy.thanks.sub} /> };
     }
-
-    case "result": {
-      const q = resultQuestions[step.index];
-      if (!q) return null;
-      const isLast = step.index === resultQuestions.length - 1;
-      // Vorschau ohne Datenbank: nur die eigenen Antworten
-      const shown = loadAnswers ? answers : Object.entries(values).map(([question_id, value]) => ({ response_id: "preview", question_id, value }));
-      return (
-        <Screen footer={<PillButton onClick={next}>{isLast ? copy.buttons.finish : copy.buttons.next}</PillButton>}>
-          <ResultView
-            survey={survey}
-            question={q}
-            number={questions.indexOf(q) + 1}
-            own={values[q.id]}
-            answers={shown}
-            onBack={back ? () => go(back) : undefined}
-          />
-        </Screen>
-      );
-    }
-
-    case "done":
-      return (
-        <Screen header={<TopBar />}>
-          <MascotHero theme={theme} mood="happy" text={copy.thanks.title} />
-          <Intro sub={copy.thanks.sub} />
-        </Screen>
-      );
   }
+
+  const p = parts();
+  if (!p) return null;
+  return (
+    <Screen
+      header={p.header ?? <TopBar />}
+      stage={<Stage theme={theme} {...p.stage} />}
+      footer={p.button ? <PillButton onClick={p.button.onClick} disabled={p.button.disabled}>{p.button.label}</PillButton> : <PillSpacer />}
+      note={note}
+      bodyKey={"index" in step ? `${step.kind}-${step.index}` : step.kind}
+    >
+      {p.body}
+    </Screen>
+  );
 }

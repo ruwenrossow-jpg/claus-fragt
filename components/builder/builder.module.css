@@ -53,6 +53,8 @@
 }
 .addQuestion:hover { background: var(--admin-surface); border-color: var(--inno-navy); }
 .empty { margin: 8px 0 0; text-align: center; color: var(--admin-muted); }
+.finishBar { display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; margin-top: 10px; padding: 18px 22px; background: var(--admin-surface); border: 1px solid var(--admin-border); border-radius: var(--radius-admin); }
+@media (max-width: 640px) { .finishBar { flex-direction: column; align-items: stretch; text-align: center; } .finishBar .btn { justify-content: center; } }
 
 /* ---------- Art: Kacheln (Neuer Bogen) und Umschaltung (Editor, Status) ---------- */
 .artTiles { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
@@ -77,7 +79,9 @@
 
 /* ---------- Vorschau ---------- */
 .previewCol { position: sticky; top: 16px; }
-.previewTabs { display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 12px; }
+.previewHead { display: flex; flex-direction: column; align-items: flex-start; gap: 6px; margin-bottom: 12px; }
+.previewTabs { display: flex; flex-wrap: wrap; gap: 4px; }
+.restart { padding-left: 8px; }
 .tab { min-width: 32px; padding: 4px 10px; font: inherit; font-size: 13px; color: var(--admin-muted); background: transparent; border: 1px solid transparent; border-radius: var(--radius-pill); cursor: pointer; }
 .tab:hover { background: var(--admin-hover); }
 .tab[aria-pressed="true"] { color: var(--inno-navy); background: var(--admin-surface); border-color: var(--admin-border); font-weight: 600; }
@@ -85,7 +89,8 @@
 /* Handy-Rahmen: Prototyp-Raster 393 × 852, verkleinert */
 .phone {
   width: 393px; height: 852px; zoom: 0.86;
-  overflow-y: auto; overflow-x: hidden;
+  box-sizing: content-box; /* Inhalt exakt 393 × 852 wie das echte Handy */
+  overflow: hidden;
   border: 12px solid var(--phone-frame); border-radius: 48px;
   background: var(--survey-bg);
   display: flex;
@@ -100,8 +105,9 @@
   .mobilePreviewBtn { display: inline-flex; position: fixed; right: 16px; bottom: 16px; z-index: 5; box-shadow: var(--admin-shadow-pop); }
   .overlay { display: flex; flex-direction: column; position: fixed; inset: 0; z-index: 40; background: var(--survey-bg); }
   .overlayBar { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 8px 12px; background: var(--admin-surface); border-bottom: 1px solid var(--admin-border); }
-  .overlayBar .previewTabs { margin: 0; }
-  .overlayBody { flex: 1; overflow-y: auto; display: flex; }
+  .overlayBar .previewTabs { flex: 1; min-width: 0; flex-wrap: nowrap; overflow-x: auto; }
+  .overlayBar .restart { flex: none; }
+  .overlayBody { flex: 1; min-height: 0; display: flex; }
 }
 @media (max-width: 640px) {
   .card { padding: 18px 16px; }

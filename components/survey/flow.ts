@@ -23,8 +23,8 @@ export function nextStep(step: Step, questionCount: number, resultCount: number)
   }
 }
 
-/** null = kein „zurück“ auf diesem Screen. */
-export function prevStep(step: Step, questionCount: number): Step | null {
+/** null = kein „zurück“ (nur auf dem Start-Screen). Ab der ersten Frage geht es überall zurück, auch von Ende, Ergebnis und Fertig. */
+export function prevStep(step: Step, questionCount: number, resultCount = 0): Step | null {
   switch (step.kind) {
     case "question":
       return step.index === 0 ? START : { kind: "question", index: step.index - 1 };
@@ -32,6 +32,8 @@ export function prevStep(step: Step, questionCount: number): Step | null {
       return questionCount ? { kind: "question", index: questionCount - 1 } : START;
     case "result":
       return step.index === 0 ? { kind: "over" } : { kind: "result", index: step.index - 1 };
+    case "done":
+      return resultCount ? { kind: "result", index: resultCount - 1 } : { kind: "over" };
     default:
       return null;
   }
