@@ -1,5 +1,5 @@
 // Setzt Prototyp (docs/prototyp, links) und Screenshot aus .shots/ (rechts) nebeneinander → .shots/vergleich-<prototyp>.png
-// Aufruf: node scripts/vergleich.mjs start=10-start multiple-choice=11-frage-1 stars=11-frage-2 over=13-ende results=14-ergebnis
+// Aufruf: node scripts/vergleich.mjs start=11-start multiple-choice=11-frage-1 stars=11-frage-2 over=11-ende results=11-ergebnis-1
 // (ohne „=“ heißt der Screenshot wie der Prototyp)
 import { chromium } from "playwright-core";
 import fs from "fs";

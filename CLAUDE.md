@@ -30,7 +30,7 @@ Art (Inspirierend/Lernend): `brand/themes.ts`. Hinweise/KPI: `lib/rules.ts`, `li
 
 ## Definition of Done (jede Runde)
 1. `npx tsc --noEmit` und `npm run build` grün.
-2. `npx next dev -p 3123`, dann `node scripts/visual-test.mjs http://localhost:3123` (muss mit `errors: none` enden) und bei Design-Änderungen `node scripts/vergleich.mjs start=10-start multiple-choice=11-frage-1 stars=11-frage-2`.
+2. `npx next dev -p 3123`, dann `node scripts/visual-test.mjs http://localhost:3123` (muss mit `errors: none` enden) und bei Design-Änderungen `node scripts/vergleich.mjs start=11-start multiple-choice=11-frage-1 stars=11-frage-2`.
 3. Screenshots in `.shots/vergleich-*.png` mit `docs/prototyp/` vergleichen: Abweichungen beheben oder begründen.
 4. Learnings in `docs/LEARNINGS.md` eintragen.
 5. Branch + PR, Vercel-Preview abwarten, Preview-Link testen.

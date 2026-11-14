@@ -18,7 +18,7 @@ description: Ablauf jeder Bau-Runde im Projekt Claus fragt (Builder für Evaluat
    - `rm -rf .next && npx tsc --noEmit && npm run build`
    - `npx next dev -p 3123`, dann `node scripts/visual-test.mjs http://localhost:3123` → muss mit `errors: none` enden (native Dialoge zählen als Fehler).
    - Screenshots in `.shots/` selbst ansehen: Sprechblase sauber? Claus wandert? Editor ruhig?
-   - `node scripts/vergleich.mjs start=10-start multiple-choice=11-frage-1 stars=11-frage-2` und `.shots/vergleich-*.png` ansehen (links Prototyp, rechts Umsetzung).
+   - `node scripts/vergleich.mjs start=11-start multiple-choice=11-frage-1 stars=11-frage-2` und `.shots/vergleich-*.png` ansehen (links Prototyp, rechts Umsetzung).
    - Builder auch mobil prüfen (393 px Breite, Vorschau-Button).
    - Testdaten wieder löschen, fremde Bögen nie anfassen.
 5. **Learnings** in `docs/LEARNINGS.md` ergänzen (Problem → Regel).
