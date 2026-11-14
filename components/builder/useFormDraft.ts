@@ -134,7 +134,8 @@ export function useFormDraft(id: string) {
       changeQuestions((qs) => qs.map((q) => (q.id === qid ? { ...q, ...patch } : q)));
     },
     changeKind(qid: string, kind: QuestionKind) {
-      changeQuestions((qs) => qs.map((q) => (q.id === qid ? getType(kind).apply(q) : q)));
+      // Von der Zwischenfolie zurück zu einer echten Frage: wieder Pflicht (Standard für neue Fragen)
+      changeQuestions((qs) => qs.map((q) => (q.id === qid ? getType(kind).apply(q.settings.display === "info" && kind !== "info" ? { ...q, required: true } : q) : q)));
     },
     /** Neue Frage nach `afterId` (sonst am Ende). Gibt die neue id zurück. */
     addQuestion(kind: QuestionKind, afterId?: string): string {

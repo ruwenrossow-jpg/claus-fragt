@@ -12,7 +12,7 @@ import { loadAnswers, loadForm, loadResponses } from "@/lib/data";
 import { resultsWorkbook } from "@/lib/export";
 import { computeKpis } from "@/lib/kpi";
 import { Answer, AnswerValue, Form, Question, isTrashed } from "@/lib/types";
-import { ResultOption, average, distribution, isAnswerable, kindOf, levelScore, typeOf } from "@/question-types";
+import { ResultOption, isInfo, average, distribution, isAnswerable, kindOf, levelScore, typeOf } from "@/question-types";
 
 interface Data {
   form: Form;
@@ -184,7 +184,7 @@ export default function ResultsPage() {
               </div>
             )}
             {data.questions.length === 0 && <p className="muted">Der Bogen hat noch keine Fragen.</p>}
-            {data.questions.map((q, i) => (
+            {data.questions.filter((q) => !isInfo(q)).map((q, i) => (
               <section key={q.id} className="panel">
                 <div className="muted">Frage {i + 1} · {typeOf(q).label}</div>
                 <h2>{labelOf(q) || "(ohne Fragetext)"}</h2>

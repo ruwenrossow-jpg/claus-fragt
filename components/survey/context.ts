@@ -4,7 +4,7 @@ import { Theme, getTheme } from "@/brand/themes";
 import { legacyLabel } from "@/lib/legacy";
 import { fillVars } from "@/lib/text";
 import { Form, Question } from "@/lib/types";
-import { hasEnoughOptions } from "@/question-types";
+import { hasEnoughOptions, isInfo } from "@/question-types";
 
 export interface Survey {
   theme: Theme;
@@ -31,6 +31,6 @@ export function buildSurvey(form: Form, all: Question[]): Survey {
   const theme = getTheme(form.style);
   const copy = getCopy(form.settings?.ansprache ?? theme.ansprache, theme.emoji);
   const questions = playableQuestions(form, all);
-  const fill = (text: string) => fillVars(text, form, { anzahl: questions.length });
+  const fill = (text: string) => fillVars(text, form, { anzahl: questions.filter((q) => !isInfo(q)).length });
   return { theme, copy, questions, fill, labelOf: (q) => fill(rawLabel(q, form, theme)) };
 }

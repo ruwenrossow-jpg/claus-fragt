@@ -9,7 +9,7 @@ import { Screen } from "@/components/ui/Screen";
 import { TopBar } from "@/components/ui/TopBar";
 import { TafelState } from "@/lib/tafel";
 import { Answer, AnswerValue, Form, Question, isEmptyAnswer } from "@/lib/types";
-import { boxTitleOf, isAnswerable, typeOf } from "@/question-types";
+import { boxTitleOf, isAnswerable, isInfo, typeOf } from "@/question-types";
 import { buildSurvey } from "./context";
 import { START, Step, nextStep, prevStep, progressOf } from "./flow";
 import { ResultView } from "./ResultView";
@@ -207,6 +207,15 @@ export function SurveyPlayer({ form, questions: allQuestions, onSave, loadAnswer
       case "question": {
         const q = questions[step.index];
         if (!q) return null;
+        // Zwischenfolie: Claus sagt die Überschrift, keine Antwort-Box
+        if (isInfo(q)) {
+          return {
+            header: topBar(progressLabel(step.index)),
+            stage: { mood: "happy", side: "center", text: survey.labelOf(q), help: q.help_text },
+            body: <Intro />,
+            button: { label: busy ? copy.buttons.busy : copy.buttons.next, onClick: () => leaveQuestion(step.index), disabled: busy },
+          };
+        }
         const help = [q.help_text, !q.required ? copy.hints.optional : null].filter(Boolean).join(" · ");
         return {
           header: topBar(progressLabel(step.index)),

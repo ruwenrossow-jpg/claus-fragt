@@ -63,3 +63,8 @@ Neue Einträge oben. Format: Datum – Problem → Lösung/Regel.
 - `.xlsx` ohne Abhängigkeit: `lib/xlsx.ts` (inlineStr-Zellen, ZIP „stored“ + CRC32). Text wird nie als Formel gelesen. Prüfen lokal per `qlmanage -t` (Quick Look rendert das erste Blatt).
 - `URL.revokeObjectURL` nicht direkt nach `click()` – Safari bricht den Download sonst ab; mit kurzem Timeout.
 - Header-Buttons am Handy: Texte mit `hide-mobile` kürzen, der Test misst, ob der Haupt-Button im Bild ist.
+
+## 14.11. Zwischenfolie
+- Neue „Frageart“ ohne Migration: DB long_text + `settings.display = "info"`, `kindOf()` erkennt sie zuerst. Nicht Pflicht, nie Tafel, `isAnswerable` false → fehlt automatisch in Ergebnis-Screens und Export; Auswertungsseite filtert mit `isInfo`.
+- `{anzahl}` auf dem Start-Screen zählt nur echte Fragen. Typwechsel von der Folie zurück setzt wieder Pflicht.
+- Test: `scripts/zwischenfolie-test.mjs` (u. a. WEITER! auf gleicher Höhe wie bei Fragen).

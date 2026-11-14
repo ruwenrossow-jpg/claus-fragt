@@ -6,7 +6,7 @@ import { Select } from "@/components/admin/Select";
 import { Switch } from "@/components/admin/Switch";
 import { questionWarnings } from "@/lib/rules";
 import { Question } from "@/lib/types";
-import { QUESTION_TYPES, QuestionKind, isAnswerable, kindOf, typeOf } from "@/question-types";
+import { QUESTION_TYPES, QuestionKind, isAnswerable, isInfo, kindOf, typeOf } from "@/question-types";
 import styles from "./builder.module.css";
 
 interface Props {
@@ -32,6 +32,7 @@ const KIND_OPTIONS = QUESTION_TYPES.map((t) => ({ value: t.kind, label: t.label,
  */
 export function QuestionCard({ question: q, index, count, active, center = false, onActivate, onPatch, onKind, onMove, onDuplicate, onRemove }: Props) {
   const def = typeOf(q);
+  const info = isInfo(q);
   const card = useRef<HTMLElement>(null);
   const label = useRef<HTMLTextAreaElement>(null);
   // Aktiv geworden: Cursor direkt in den Fragetext; neue Karten zusätzlich in die Bildschirmmitte
@@ -48,7 +49,7 @@ export function QuestionCard({ question: q, index, count, active, center = false
     return (
       <button type="button" className={`${styles.card} ${styles.summary}`} onClick={onActivate} data-question={index + 1}>
         <span className={styles.summaryLabel}>
-          {q.label.trim() || <span className={styles.placeholder}>Frage ohne Text</span>}
+          {q.label.trim() || <span className={styles.placeholder}>{info ? "Zwischenfolie ohne Text" : "Frage ohne Text"}</span>}
           {q.required && <span className={styles.required} aria-label="Pflicht"> *</span>}
         </span>
         <span className={styles.summaryMeta}>
@@ -68,7 +69,7 @@ export function QuestionCard({ question: q, index, count, active, center = false
           ref={label}
           className={styles.labelInput}
           value={q.label}
-          placeholder="Frage"
+          placeholder={info ? "Überschrift (sagt Claus)" : "Frage"}
           aria-label="Fragetext"
           rows={1}
           onChange={(e) => onPatch({ label: e.target.value })}
@@ -102,10 +103,14 @@ export function QuestionCard({ question: q, index, count, active, center = false
         <button type="button" className="icon-btn" onClick={() => onMove(1)} disabled={index === count - 1} aria-label="Nach unten"><Icon name="down" /></button>
         <button type="button" className="icon-btn" onClick={onDuplicate} aria-label="Duplizieren"><Icon name="copy" /></button>
         <button type="button" className="icon-btn" onClick={onRemove} aria-label="Löschen"><Icon name="trash" /></button>
-        <span className={styles.footDivider} />
-        <Switch label="An der Tafel" checked={Boolean(q.settings.tafel)} onChange={(on) => onPatch({ settings: { ...q.settings, tafel: on || undefined } })} />
-        <span className={styles.footDivider} />
-        <Switch label="Pflicht" checked={q.required} onChange={(required) => onPatch({ required })} />
+        {!info && (
+          <>
+            <span className={styles.footDivider} />
+            <Switch label="An der Tafel" checked={Boolean(q.settings.tafel)} onChange={(on) => onPatch({ settings: { ...q.settings, tafel: on || undefined } })} />
+            <span className={styles.footDivider} />
+            <Switch label="Pflicht" checked={q.required} onChange={(required) => onPatch({ required })} />
+          </>
+        )}
       </footer>
     </section>
   );

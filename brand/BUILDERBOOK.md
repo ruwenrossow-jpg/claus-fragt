@@ -104,6 +104,7 @@ Nach dem Speichern zurückgehen und ändern ersetzt die Antworten derselben Abga
 | Sterne | – | 3–6 Sterne gelb/grau |
 | Skala | – | Zahlen-Chips, gewählt = rot, Beschriftung links/rechts |
 | Ja / Nein, Text (kurz), Text (Absatz) | – | gleiche Bausteine; Freitext max. 300 / 2000 Zeichen |
+| Zwischenfolie | – | keine Antwort-Box: Claus (mittig) sagt die Überschrift, WEITER! wie immer; DB long_text + display "info", nicht in Auswertung/Export |
 | Skala mit ≥ 8 Stufen (z. B. 0–10) | – | Zahlenfelder 40 px in zwei Reihen statt Überlauf |
 Box-Überschriften gibt es nur noch bei v1-Bögen (`settings.boxTitle`), neu werden keine angelegt.
 

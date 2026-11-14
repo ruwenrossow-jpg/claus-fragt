@@ -11,15 +11,19 @@ import { longText, shortText } from "./text";
 import { yesNo } from "./yes-no";
 import { QuestionKind, QuestionTypeDef, ResultOption } from "./types";
 import { letter } from "./letters";
+import { info, isInfo } from "./info";
+
+export { isInfo } from "./info";
 
 export type { QuestionKind, QuestionTypeDef, ResultOption } from "./types";
 
 /** Reihenfolge = Reihenfolge in der Auswahl „Frageart“ im Builder. */
-export const QUESTION_TYPES: QuestionTypeDef[] = [singleChoice, multipleChoice, levels, stars, scale, yesNo, shortText, longText];
+export const QUESTION_TYPES: QuestionTypeDef[] = [singleChoice, multipleChoice, levels, stars, scale, yesNo, shortText, longText, info];
 
 const BY_KIND = Object.fromEntries(QUESTION_TYPES.map((t) => [t.kind, t])) as Record<QuestionKind, QuestionTypeDef>;
 
 export function kindOf(q: Question): QuestionKind {
+  if (isInfo(q)) return "info";
   if (q.type === "scale" && q.settings.display === "stars") return "stars";
   if (q.type === "single_choice" && q.settings.display === "levels") return "levels";
   return q.type;

@@ -5,7 +5,7 @@ import { AnswerValue, Question } from "@/lib/types";
  * Fragetyp in der Oberfläche. Meist identisch mit dem DB-Typ, außer "stars"
  * (= DB-Typ "scale" mit settings.display = "stars") und "levels" (= "single_choice" mit display = "levels").
  */
-export type QuestionKind = "single_choice" | "levels" | "multiple_choice" | "scale" | "stars" | "long_text" | "short_text" | "yes_no";
+export type QuestionKind = "single_choice" | "levels" | "multiple_choice" | "scale" | "stars" | "long_text" | "short_text" | "yes_no" | "info";
 
 export interface InputProps {
   question: Question;

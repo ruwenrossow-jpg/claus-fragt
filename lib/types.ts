@@ -55,7 +55,7 @@ export interface QuestionSettings {
   minLabel?: string;
   maxLabel?: string;
   /** Darstellung: "stars" = Skala als Sterne, "levels" = Einfachauswahl als Stufen (score = Position 1–4) */
-  display?: "numbers" | "stars" | "levels";
+  display?: "numbers" | "stars" | "levels" | "info";
   /** Framework (v1): Platz-id und KPI. Bleiben im Datenmodell für ein späteres Framework-Konzept, ohne UI. */
   slotId?: string;
   kpi?: "transfer" | "ziel" | "teach";
