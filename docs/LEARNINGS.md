@@ -68,3 +68,9 @@ Neue Einträge oben. Format: Datum – Problem → Lösung/Regel.
 - Neue „Frageart“ ohne Migration: DB long_text + `settings.display = "info"`, `kindOf()` erkennt sie zuerst. Nicht Pflicht, nie Tafel, `isAnswerable` false → fehlt automatisch in Ergebnis-Screens und Export; Auswertungsseite filtert mit `isInfo`.
 - `{anzahl}` auf dem Start-Screen zählt nur echte Fragen. Typwechsel von der Folie zurück setzt wieder Pflicht.
 - Test: `scripts/zwischenfolie-test.mjs` (u. a. WEITER! auf gleicher Höhe wie bei Fragen).
+
+## 14.11. Abmelden am Handy
+- Mit Login kam ein Knopf in die Kopfzeile → im Editor am Handy 430 px breit, „Abschließen“ lag über „Abmelden“. Jetzt: Konto-Menü (Person-Symbol) mit E-Mail, am Handy zusätzlich Ergebnisse/Tafel, und Abmelden.
+- `.hide-mobile` wirkte auf `.btn` nicht (`.btn` steht später in globals.css) → jetzt `!important`.
+- `signOut()` fällt bei Server-Fehler auf `scope: "local"` zurück, damit Abmelden immer klappt.
+- Login lässt sich lokal testen: Fake-Sitzung in `localStorage` (`sb-<ref>-auth-token`) + REST-Aufrufe per Route auf den Publishable Key umschreiben → `scripts/abmelden-test.mjs`.

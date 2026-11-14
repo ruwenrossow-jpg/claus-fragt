@@ -85,3 +85,22 @@
 .login h2 { margin-top: 0; }
 .login p { line-height: 1.45; }
 .loginMascot { display: block; width: 96px; height: auto; margin: 0 auto 8px; }
+
+/* ---------- Konto-Menü (Kopfzeile) ---------- */
+.account { position: relative; }
+.accountPop {
+  position: absolute; top: calc(100% + 6px); right: 0; z-index: 30; width: max-content; min-width: 220px; max-width: calc(100vw - 24px);
+  padding: 6px; background: var(--admin-surface); border: 1px solid var(--admin-border); border-radius: var(--radius-admin);
+  box-shadow: var(--admin-shadow-pop); animation: rise 0.14s ease;
+}
+.accountWho { margin: 0; padding: 8px 10px 10px; font-size: 13px; color: var(--admin-muted); border-bottom: 1px solid var(--admin-border); }
+.accountWho strong { display: block; font-size: 15px; color: var(--admin-text); font-weight: 600; overflow-wrap: anywhere; }
+.accountItem, .accountMobile a {
+  display: flex; align-items: center; gap: 10px; width: 100%; padding: 10px; margin-top: 2px;
+  font: inherit; font-size: 15px; color: var(--admin-text); text-align: left; text-decoration: none;
+  background: none; border: 0; border-radius: var(--radius-admin-s); cursor: pointer;
+}
+.accountItem:hover, .accountMobile a:hover { background: var(--admin-hover); }
+.accountItem:disabled { opacity: 0.6; cursor: default; }
+.accountMobile { display: none; padding-bottom: 2px; border-bottom: 1px solid var(--admin-border); }
+@media (max-width: 640px) { .accountMobile { display: block; } }

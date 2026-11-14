@@ -32,8 +32,10 @@ export async function sendLoginLink(email: string, next: string): Promise<void> 
   throw new Error(`Das hat nicht geklappt (${msg}).`);
 }
 
+/** Abmelden. Klappt der Server-Aufruf nicht (z. B. Netz weg), wird trotzdem auf diesem Gerät abgemeldet. */
 export async function signOut(): Promise<void> {
-  await supabase.auth.signOut();
+  const { error } = await supabase.auth.signOut().catch((e: Error) => ({ error: e }));
+  if (error) await supabase.auth.signOut({ scope: "local" });
 }
 
 /** Nur lokal für den E2E-Test: ohne echte E-Mail an die Admin-Seiten (localStorage „claus-e2e“). Auf Vercel wirkungslos. */

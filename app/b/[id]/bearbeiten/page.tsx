@@ -19,6 +19,7 @@ import { playableQuestions } from "@/components/survey/context";
 import { START, Step } from "@/components/survey/flow";
 import { SurveyPlayer } from "@/components/survey/SurveyPlayer";
 import { formWarnings } from "@/lib/rules";
+import { useSession } from "@/lib/auth";
 import { STATUS_LABELS, isTrashed } from "@/lib/types";
 import { isAnswerable, withPreviewPlaceholders } from "@/question-types";
 
@@ -27,6 +28,7 @@ export default function EditorPage() {
   const { id } = useParams<{ id: string }>();
   const dialog = useDialog();
   const draft = useFormDraft(id);
+  const signedIn = Boolean(useSession());
   const { form, questions } = draft;
   const [step, setStep] = useState<Step>(START);
   const [activeId, setActiveId] = useState<string | null>(null);
@@ -101,12 +103,20 @@ export default function EditorPage() {
 
   return (
     <>
-      <AdminHeader>
+      <AdminHeader
+        menu={
+          <>
+            <Link href={`/b/${id}/ergebnisse`}><Icon name="chart" size={18} /> Ergebnisse</Link>
+            {tafelCount > 0 && <a href={`/b/${id}/tafel/steuerung`} target="_blank" rel="noreferrer"><Icon name="board" size={18} /> Tafel starten</a>}
+          </>
+        }
+      >
         <SaveStatus state={draft.saveState} onRetry={draft.retry} />
         <Link className="btn ghost" href="/meine-boegen" aria-label="Meine Bögen" data-header-list><Icon name="list" size={18} /> <span className="hide-mobile">Meine Bögen</span></Link>
-        <Link className="btn ghost hide-xs" href={`/b/${id}/ergebnisse`} aria-label="Ergebnisse"><Icon name="chart" size={18} /> <span className="hide-mobile">Ergebnisse</span></Link>
+        {/* Angemeldet am Handy wandern Ergebnisse + Tafel ins Konto-Menü, sonst passt die Kopfzeile nicht */}
+        <Link className={`btn ghost hide-xs ${signedIn ? "hide-mobile" : ""}`} href={`/b/${id}/ergebnisse`} aria-label="Ergebnisse"><Icon name="chart" size={18} /> <span className="hide-mobile">Ergebnisse</span></Link>
         {tafelCount > 0 && (
-          <a className="btn ghost" href={`/b/${id}/tafel/steuerung`} target="_blank" rel="noreferrer" aria-label="Tafel starten" data-header-tafel><Icon name="board" size={18} /> <span className="hide-mobile">Tafel</span></a>
+          <a className={`btn ghost ${signedIn ? "hide-mobile" : ""}`} href={`/b/${id}/tafel/steuerung`} target="_blank" rel="noreferrer" aria-label="Tafel starten" data-header-tafel><Icon name="board" size={18} /> <span className="hide-mobile">Tafel</span></a>
         )}
         <button type="button" className="btn" onClick={() => setSharing(true)} aria-label="Teilen" data-share><Icon name="share" size={18} /> <span className="hide-mobile">Teilen</span></button>
         <button type="button" className="btn primary" onClick={finish} disabled={finishing} data-cta>

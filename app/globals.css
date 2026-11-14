@@ -28,7 +28,7 @@ a { color: var(--inno-navy); }
   .admin-header > .row { flex-wrap: nowrap; gap: 2px; min-width: 0; }
   .admin-header .btn { padding: 8px 9px; }
   .admin-header .btn.primary { padding: 8px 12px; }
-  .hide-mobile { display: none; }
+  .hide-mobile { display: none !important; }
   .only-mobile { display: inline; }
   .admin-brand img { height: 32px; }
   .admin-brand span { display: none; }
