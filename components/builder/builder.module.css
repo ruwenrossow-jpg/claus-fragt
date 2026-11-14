@@ -3,6 +3,7 @@
 .layout { display: grid; grid-template-columns: minmax(0, 1fr) 360px; gap: 40px; align-items: start; }
 .cards { display: flex; flex-direction: column; gap: 14px; min-width: 0; }
 .topLine { display: flex; align-items: center; gap: 12px; margin-bottom: 18px; }
+.trashNotice { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin: 0 0 18px; }
 
 /* ---------- Karten ---------- */
 .card {

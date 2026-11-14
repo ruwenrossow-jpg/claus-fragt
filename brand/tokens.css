@@ -58,6 +58,8 @@
   --bubble-font-3: 16px;
   --bubble-font-4: 15px;
   --bubble-font-5: 14px;
+  --bubble-font-6: 13px; /* nur für sehr lange Fragen (Editor warnt ab ~110 Zeichen) */
+  --bubble-font-7: 12px;
 
   /* Formen */
   --radius-card: 18px;

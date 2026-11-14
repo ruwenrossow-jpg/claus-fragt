@@ -21,6 +21,9 @@
   font: inherit; font-size: var(--text-l); cursor: pointer;
 }
 .chipOn { background: var(--inno-red); border-color: var(--survey-ink); }
+/* Viele Stufen (z. B. 0–10): zwei Reihen mit gleich großen Feldern statt Überlauf */
+.chips:has(> :nth-child(8)) { flex-wrap: wrap; justify-content: center; gap: var(--space-2); }
+.chips:has(> :nth-child(8)) .chip { flex: 0 0 40px; height: 40px; font-size: var(--text-m); }
 
 .stars { display: flex; justify-content: space-between; }
 .star { padding: 0; border: 0; background: none; cursor: pointer; line-height: 0; }
@@ -43,3 +46,7 @@
   .scaleLabels { margin-top: var(--space-4); }
 }
 .option[aria-checked="true"] { font-weight: 600; }
+.optionLabel { min-width: 0; overflow-wrap: anywhere; }
+.option:focus-visible, .chip:focus-visible, .star:focus-visible { outline: 3px solid var(--survey-ink); outline-offset: 3px; border-radius: 10px; }
+/* 0–10 (11 Stufen): 6 + 5 statt 5 + 5 + 1 */
+.chips:has(> :nth-child(11)) .chip { flex-basis: calc((100% - 5 * var(--space-2)) / 6); max-width: 48px; }

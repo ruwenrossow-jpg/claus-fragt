@@ -18,7 +18,7 @@ export interface Theme {
   mascot: { happy: string; sad: string; alt: string };
 }
 
-const CLAUS = { happy: "/brand/claus-froh.png", sad: "/brand/claus-traurig.png", alt: "Claus, das Maskottchen" };
+const CLAUS = { happy: "/brand/claus-froh.webp", sad: "/brand/claus-traurig.webp", alt: "Claus, das Maskottchen" };
 
 export const THEMES: Theme[] = [
   { id: "inspire", name: "Inspirierend", hint: "Lust auf mehr machen – z. B. Ausstellung, Schulklasse, Hackathon", ansprache: "du", emoji: true, mascot: CLAUS },
@@ -33,4 +33,6 @@ export function getTheme(id: string | null | undefined): Theme {
 
 export const BRAND_ASSETS = {
   logo: "/brand/innonord-logo.jpg", // weißer Hintergrund → nur auf weißen Flächen verwenden
+  /** Link-Vorschau (Open Graph), 1200 × 630, erzeugt mit scripts/bilder.mjs */
+  og: { url: "/brand/og.png", width: 1200, height: 630, alt: "Claus, das Maskottchen von InnoNord, mit dem Schriftzug „Claus fragt“" },
 } as const;

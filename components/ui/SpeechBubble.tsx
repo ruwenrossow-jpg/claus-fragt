@@ -12,8 +12,8 @@ interface Props {
 }
 
 const SQRT2 = Math.SQRT2;
-/** Schriftgrößen-Stufen (--bubble-font-1 … -5): die größte, bei der der Text ins einbeschriebene Rechteck passt, gewinnt. */
-const FONT_STEPS = 5;
+/** Schriftgrößen-Stufen (--bubble-font-1 … -7): die größte, bei der der Text ins einbeschriebene Rechteck passt, gewinnt. */
+const FONT_STEPS = 7;
 
 /**
  * Ovale Sprechblase mit Zipfel nach oben. Größe kommt aus dem Layout-Raster (volle Breite, feste Höhe --bubble-h),
@@ -59,7 +59,7 @@ export function SpeechBubble({ tailX, children, help }: Props) {
           <path d={bubblePath(size.w, size.h, size.tail, x)} />
         </svg>
       )}
-      <div ref={text} className={styles.bubbleText} style={{ fontSize: `var(--bubble-font-${step + 1})` }}>
+      <div ref={text} className={`${styles.bubbleText} ${step === FONT_STEPS - 1 ? styles.bubbleTextWide : ""}`} style={{ fontSize: `var(--bubble-font-${step + 1})` }}>
         {children}
         {help && <small className={styles.bubbleHelp}>{help}</small>}
       </div>

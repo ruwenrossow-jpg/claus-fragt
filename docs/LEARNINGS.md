@@ -2,6 +2,16 @@
 
 Neue Einträge oben. Format: Datum – Problem → Lösung/Regel.
 
+- 2026-11-14 (Nacht-Runde, Datenschutz): Bögen waren verschwunden, weil „Löschen“ hart löschte und Tests mit breiten Filtern hätten aufräumen können → Soft-Delete (`settings.geloescht`) + Papierkorb, Testbögen nur mit `settings.test`, hartes Löschen nur per REST mit Test-Filter UND exakter id; Sicherung vor jedem Testlauf und Vergleich am Ende.
+- 2026-11-14 (Nacht-Runde): Fehler beim Speichern einer Abgabe erzeugte beim „nochmal“ eine zweite, leere Abgabe (neue id) → id einmal pro Seite erzeugen, Abgabe per Upsert (`ignoreDuplicates`), Antworten ersetzen. Regel: Schreibvorgänge, die der Nutzer wiederholen kann, müssen idempotent sein.
+- 2026-11-14 (Nacht-Runde): Doppeltipp auf WEITER! übersprang die nächste Frage (zweiter Klick traf den neuen Screen) → 400 ms nach jedem Screen-Wechsel Klicks am Haupt-Button ignorieren; laufendes Speichern per Ref sperren (State ist zu spät).
+- 2026-11-14 (Nacht-Runde): `.single()` bei unbekanntem Slug liefert HTTP 406 (Konsolenfehler), kaputte ids HTTP 400 → `.maybeSingle()` + id-Prüfung vor der Abfrage, eigener `DataError` mit `kind` für passende Screens.
+- 2026-11-14 (Nacht-Runde): Skala 0–10 lief am Handy rechts aus der Box, sehr lange Fragen sprengten die Sprechblase → bei ≥ 8 Stufen zwei Reihen, zwei zusätzliche Schriftstufen + Editor-Warnung ab 110 Zeichen. Randfälle (lange Texte, viele Optionen) gehören in den E2E-Test.
+- 2026-11-14 (Nacht-Runde): Beamer-Seite: langer Titel brach das Flex-Layout um, der QR-Code lag unter dem sichtbaren Bereich → Grid mit QR-Breite `min(520px, 76vh, 44vw)`.
+- 2026-11-14 (Nacht-Runde): `openGraph` in einem Layout ersetzt die Bilder des Eltern-Segments komplett (flaches Mergen) → Bild explizit in jedem `openGraph` setzen (`BRAND_ASSETS.og`).
+- 2026-11-14 (Nacht-Runde): Next 16: `error.tsx` bekommt `retry` (nicht `reset`); Client-Seiten mit `useSearchParams` brauchen `<Suspense>`; Metadaten für Client-Seiten über ein `layout.tsx` mit `generateMetadata` (params ist ein Promise).
+- 2026-11-14 (Nacht-Runde): Playwright `:text-is()` trifft Optionen mit verschachteltem `<span>` nicht → `locator(sel, { hasText: /^…$/ })` oder Tastatur. Am Handy ist „Gespeichert“ nur ein Icon → Tests warten auf `[data-save=saved]`.
+
 - 2026-11-14 (Raster): Button und Blase sprangen je nach Inhalt → ein `<Screen>` mit festen Grid-Zonen (Kopf · Bühne · Inhalt `1fr` scrollt · Fuß), Hinweiszeile und Button-Platz immer reserviert. Prüfen per Playwright-`boundingBox` über alle Screens und mehrere Viewports (Abweichung ≤ 1 px), nicht nach Augenmaß.
 - 2026-11-14 (Raster): Kleine Viewports per `@container screen (max-height: …)` statt Media Query → greift auch im verkleinerten Handy-Rahmen der Vorschau.
 - 2026-11-14: Upsert gemischter Zeilen (geladene Fragen mit `created_at`, neue ohne) setzte `created_at = null` → 400. Regel: `upsert(rows, { defaultToNull: false })`.

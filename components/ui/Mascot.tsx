@@ -26,7 +26,7 @@ export function Stage({ theme, mood, side, text, help }: StageProps) {
   return (
     <div className={`${styles.stage} ${styles[side]}`}>
       <div className={styles.track}>
-        <img className={styles.mascot} src={theme.mascot[mood]} alt={theme.mascot.alt} />
+        <img className={styles.mascot} src={theme.mascot[mood]} alt={theme.mascot.alt} width={440} height={440} decoding="async" />
       </div>
       <SpeechBubble tailX={TAIL_X[side]} help={help}>
         {text}

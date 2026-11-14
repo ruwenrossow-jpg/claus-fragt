@@ -25,12 +25,26 @@ interface Props<V extends string | number> {
 export function Select<V extends string | number>({ value, options, onChange, label, className }: Props<V>) {
   const [open, setOpen] = useState(false);
   const root = useRef<HTMLDivElement>(null);
+  const button = useRef<HTMLButtonElement>(null);
   const current = options.find((o) => o.value === value);
 
   useEffect(() => {
     if (!open) return;
+    // Tastatur: gewählte Option bekommt den Fokus, Pfeiltasten wandern, Esc schließt und kehrt zum Knopf zurück
+    const items = () => Array.from(root.current?.querySelectorAll<HTMLElement>("[role=option]") ?? []);
+    (items().find((el) => el.getAttribute("aria-selected") === "true") ?? items()[0])?.focus({ preventScroll: false });
     const onDown = (e: MouseEvent) => !root.current?.contains(e.target as Node) && setOpen(false);
-    const onKey = (e: KeyboardEvent) => e.key === "Escape" && setOpen(false);
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        setOpen(false);
+        button.current?.focus();
+      } else if (e.key === "ArrowDown" || e.key === "ArrowUp") {
+        e.preventDefault();
+        const list = items();
+        const i = list.indexOf(document.activeElement as HTMLElement);
+        list[Math.min(list.length - 1, Math.max(0, i + (e.key === "ArrowDown" ? 1 : -1)))]?.focus();
+      } else if (e.key === "Tab") setOpen(false);
+    };
     document.addEventListener("mousedown", onDown);
     document.addEventListener("keydown", onKey);
     return () => {
@@ -41,7 +55,7 @@ export function Select<V extends string | number>({ value, options, onChange, la
 
   return (
     <div className={`${styles.select} ${className ?? ""}`} ref={root}>
-      <button type="button" className={styles.selectButton} aria-haspopup="listbox" aria-expanded={open} aria-label={label} onClick={() => setOpen(!open)}>
+      <button ref={button} type="button" className={styles.selectButton} aria-haspopup="listbox" aria-expanded={open} aria-label={label} onClick={() => setOpen(!open)}>
         <span>{current?.label ?? "Auswählen"}</span>
         <Icon name="chevron" size={18} />
       </button>
@@ -58,6 +72,7 @@ export function Select<V extends string | number>({ value, options, onChange, la
                 onClick={() => {
                   onChange(o.value);
                   setOpen(false);
+                  button.current?.focus();
                 }}
               >
                 <span>

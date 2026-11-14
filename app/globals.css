@@ -11,7 +11,6 @@ a { color: var(--inno-navy); }
 
 /* ---------- Bogen-Seite (Teilnehmende) ---------- */
 .survey-page { height: 100dvh; display: flex; background: var(--survey-bg); }
-.survey-message { margin: 0; min-height: 100dvh; padding: 40px; text-align: center; background: var(--survey-bg); font-family: var(--font-body); }
 
 /* ---------- Admin: Rahmen ---------- */
 .admin-header {
@@ -102,10 +101,16 @@ td, th { padding: 7px 6px; text-align: left; font-size: 14px; border-bottom: 1px
 .kpi-label { font-size: 14px; font-weight: 600; line-height: 1.3; }
 .kpi-value { font-family: var(--font-display); font-size: 30px; font-weight: 700; color: var(--inno-navy); }
 
-/* ---------- Beamer / QR-Vollbild ---------- */
-.beamer { min-height: 100dvh; display: flex; align-items: center; justify-content: center; gap: 6vw; padding: 4vw; background: var(--survey-bg); font-family: var(--font-body); flex-wrap: wrap; }
-.beamer h1 { margin: 0; font-family: var(--font-display); font-size: clamp(32px, 5vw, 72px); color: var(--inno-navy); }
-.beamer p { font-size: clamp(18px, 2.4vw, 34px); }
-.beamer-url { font-weight: 700; color: var(--inno-red); }
-.beamer-qr { width: min(520px, 70vw); height: auto; border: 3px solid var(--survey-ink); border-radius: 24px; }
-.beamer-mascot { width: min(220px, 30vw); height: auto; }
+/* ---------- Beamer / QR-Vollbild: alles ohne Scrollen sichtbar (QR richtet sich nach der Höhe) ---------- */
+.beamer { min-height: 100dvh; display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 5vw; padding: 4vh 6vw; background: var(--survey-bg); font-family: var(--font-body); }
+.beamer h1 { margin: 0; font-family: var(--font-display); font-size: clamp(32px, 4.5vw, 72px); line-height: 1.1; color: var(--inno-navy); overflow-wrap: anywhere; }
+.beamer p { margin: 2vh 0 0; font-size: clamp(18px, 2.2vw, 34px); }
+.beamer-url { min-height: 1.2em; font-weight: 700; color: var(--inno-red); overflow-wrap: anywhere; }
+.beamer-hint { font-size: clamp(16px, 1.6vw, 22px) !important; color: var(--admin-danger); }
+.beamer-qr { display: block; width: min(520px, 76vh, 44vw); height: auto; aspect-ratio: 1; border: 3px solid var(--survey-ink); border-radius: 24px; background: var(--admin-surface); }
+.beamer-mascot { display: block; width: min(200px, 22vh); height: auto; margin-top: 3vh; }
+@media (max-width: 700px) { .beamer { grid-template-columns: 1fr; justify-items: center; text-align: center; } .beamer-qr { width: min(420px, 84vw); } .beamer-mascot { margin-inline: auto; } }
+
+/* Tastatur-Fokus im Admin sichtbar (Maus-Klicks bleiben ruhig) */
+.btn:focus-visible, .icon-btn:focus-visible, .back-link:focus-visible, .admin-brand:focus-visible { outline: 2px solid var(--inno-navy); outline-offset: 2px; }
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }

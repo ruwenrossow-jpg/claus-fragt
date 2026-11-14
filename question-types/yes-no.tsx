@@ -13,8 +13,8 @@ export const yesNo: QuestionTypeDef = {
   hint: "Zwei feste Antworten",
   defaultBoxTitle: "",
   apply: (q) => ({ ...q, type: "yes_no", options: [], settings: commonSettings(q) }),
-  Input: ({ value, onChange }) => (
-    <ChoiceList items={ITEMS} isOn={(k) => ITEMS.find((i) => i.key === k)?.value === value} onToggle={(k) => onChange(ITEMS.find((i) => i.key === k)!.value)} />
+  Input: ({ label, value, onChange }) => (
+    <ChoiceList label={label} items={ITEMS} isOn={(k) => ITEMS.find((i) => i.key === k)?.value === value} onToggle={(k) => onChange(ITEMS.find((i) => i.key === k)!.value)} />
   ),
   resultOptions: () => [
     { value: true, label: "Ja", short: "Ja" },

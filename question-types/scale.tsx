@@ -1,4 +1,4 @@
-import { COPY_DEFAULT as COPY } from "@/brand/copy";
+import { COPY_DEFAULT as COPY, Copy, plural } from "@/brand/copy";
 import { Question } from "@/lib/types";
 import { commonSettings } from "./settings";
 import { EditorProps, InputProps, QuestionTypeDef } from "./types";
@@ -6,32 +6,32 @@ import { Select } from "@/components/admin/Select";
 import styles from "./inputs.module.css";
 import ed from "./editors.module.css";
 
-export function scaleRange(q: Question): number[] {
+function scaleRange(q: Question): number[] {
   const min = q.settings.min ?? 1;
   const max = q.settings.max ?? 5;
   return Array.from({ length: Math.max(0, max - min + 1) }, (_, i) => min + i);
 }
 
-function Labels({ question }: { question: Question }) {
+function Labels({ question, copy }: { question: Question; copy: Copy }) {
   return (
     <div className={styles.scaleLabels}>
-      <span>{question.settings.minLabel ?? COPY.scale.min}</span>
-      <span>{question.settings.maxLabel ?? COPY.scale.max}</span>
+      <span>{question.settings.minLabel || copy.scale.min}</span>
+      <span>{question.settings.maxLabel || copy.scale.max}</span>
     </div>
   );
 }
 
-function NumberInput({ question, value, onChange }: InputProps) {
+function NumberInput({ question, label, copy, value, onChange }: InputProps) {
   return (
     <>
-      <div className={styles.chips} role="radiogroup">
+      <div className={styles.chips} role="radiogroup" aria-label={label}>
         {scaleRange(question).map((n) => (
           <button key={n} type="button" role="radio" aria-checked={value === n} className={`${styles.chip} ${value === n ? styles.chipOn : ""}`} onClick={() => onChange(n)}>
             {n}
           </button>
         ))}
       </div>
-      <Labels question={question} />
+      <Labels question={question} copy={copy} />
     </>
   );
 }
@@ -50,18 +50,18 @@ function Star({ on }: { on: boolean }) {
   );
 }
 
-function StarInput({ question, value, onChange }: InputProps) {
+function StarInput({ question, label, copy, value, onChange }: InputProps) {
   const current = typeof value === "number" ? value : 0;
   return (
     <>
-      <div className={styles.stars} role="radiogroup">
+      <div className={styles.stars} role="radiogroup" aria-label={label}>
         {scaleRange(question).map((n) => (
-          <button key={n} type="button" role="radio" aria-checked={value === n} aria-label={`${n} Sterne`} className={styles.star} onClick={() => onChange(n)}>
+          <button key={n} type="button" role="radio" aria-checked={value === n} aria-label={plural(n, copy.aria.stars)} className={styles.star} onClick={() => onChange(n)}>
             <Star on={n <= current} />
           </button>
         ))}
       </div>
-      <Labels question={question} />
+      <Labels question={question} copy={copy} />
     </>
   );
 }

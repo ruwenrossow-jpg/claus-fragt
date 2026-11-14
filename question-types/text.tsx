@@ -24,17 +24,23 @@ function PlaceholderEditor({ question, onChange }: EditorProps) {
   );
 }
 
+/** Obergrenzen gegen versehentliche Romane/Spam (Zeichen). */
+const MAX_LONG = 2000;
+const MAX_SHORT = 300;
+
 export const longText: QuestionTypeDef = {
   kind: "long_text",
   label: "Text (Absatz)",
   hint: "Freie Antwort, mehrere Zeilen",
   defaultBoxTitle: "",
   apply: (q) => ({ ...q, type: "long_text", options: [], settings: textSettings(q) }),
-  Input: ({ question, value, onChange }) => (
+  Input: ({ question, label, copy, value, onChange }) => (
     <textarea
       className={`${styles.field} ${styles.textarea}`}
+      aria-label={label}
+      maxLength={MAX_LONG}
       value={typeof value === "string" ? value : ""}
-      placeholder={question.settings.placeholder || COPY.placeholder.text}
+      placeholder={question.settings.placeholder || copy.placeholder.text}
       onChange={(e) => onChange(e.target.value)}
     />
   ),
@@ -48,12 +54,15 @@ export const shortText: QuestionTypeDef = {
   hint: "Freie Antwort, eine Zeile",
   defaultBoxTitle: "",
   apply: (q) => ({ ...q, type: "short_text", options: [], settings: textSettings(q) }),
-  Input: ({ question, value, onChange }) => (
+  Input: ({ question, label, copy, value, onChange }) => (
     <input
       type="text"
       className={styles.field}
+      aria-label={label}
+      maxLength={MAX_SHORT}
+      enterKeyHint="done"
       value={typeof value === "string" ? value : ""}
-      placeholder={question.settings.placeholder || COPY.placeholder.text}
+      placeholder={question.settings.placeholder || copy.placeholder.text}
       onChange={(e) => onChange(e.target.value)}
     />
   ),

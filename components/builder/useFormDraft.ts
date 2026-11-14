@@ -22,7 +22,11 @@ export function useFormDraft(id: string) {
   const [questions, setQuestions] = useState<Question[]>([]);
   const [responseCount, setResponseCount] = useState(0);
   const [saveState, setSaveState] = useState<SaveState>("saved");
+  /** Fehler beim Speichern (Text) */
   const [error, setError] = useState<string | null>(null);
+  /** Fehler beim Laden (DataError: nicht gefunden / offline) */
+  const [loadError, setLoadError] = useState<unknown>(null);
+  const [reloadKey, setReloadKey] = useState(0);
 
   // Aktueller Stand für das Speichern außerhalb des Render-Zyklus
   const latest = useRef<{ form: Form | null; questions: Question[]; removed: string[] }>({ form: null, questions: [], removed: [] });
@@ -44,12 +48,12 @@ export function useFormDraft(id: string) {
         setQuestions(qs);
         setResponseCount(count);
       },
-      (e: Error) => !cancelled && setError(e.message)
+      (e: unknown) => !cancelled && setLoadError(e)
     );
     return () => {
       cancelled = true;
     };
-  }, [id]);
+  }, [id, reloadKey]);
 
   const flush = useCallback(async () => {
     clearTimeout(timer.current);
@@ -104,6 +108,12 @@ export function useFormDraft(id: string) {
     responseCount,
     saveState,
     error,
+    loadError,
+    /** Laden erneut versuchen */
+    reload() {
+      setLoadError(null);
+      setReloadKey((k) => k + 1);
+    },
     /** Bogen-Felder ändern; now = sofort speichern (z. B. Live schalten) */
     patchForm(patch: Partial<Form>, now = false) {
       if (latest.current.form) touch({ form: { ...latest.current.form, ...patch } }, now);
@@ -161,4 +171,3 @@ export function useFormDraft(id: string) {
   };
 }
 
-export type FormDraft = ReturnType<typeof useFormDraft>;

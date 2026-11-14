@@ -5,7 +5,7 @@
 Evaluationsbögen für InnoNord: Ein **Builder** (Admin) erstellt Bögen, Teilnehmende füllen sie per Link im
 Claus-Look (Figma-Prototyp „van der Stein“) aus, und die Ergebnisse dienen dazu, den Wissenstransfer von Event zu Event zu verbessern.
 
-Routen: `/meine-boegen`, `/neu`, `/b/<id>/bearbeiten`, `/b/<id>/ergebnisse`, `/f/<slug>`, `/f/<slug>/qr`.
+Routen: `/meine-boegen` (`?papierkorb=1`, `?tests=1`), `/neu`, `/b/<id>/bearbeiten`, `/b/<id>/ergebnisse`, `/f/<slug>`, `/f/<slug>/qr`.
 Art (Inspirierend/Lernend): `brand/themes.ts`. Hinweise/KPI: `lib/rules.ts`, `lib/kpi.ts`. v1-Kompatibilität: `lib/legacy.ts`.
 
 ## Zuerst lesen
@@ -15,6 +15,16 @@ Art (Inspirierend/Lernend): `brand/themes.ts`. Hinweise/KPI: `lib/rules.ts`, `li
 4. Skills in `.claude/skills/`: `claus-fragt-bauen` (Ablauf jeder Bau-Runde), `neuer-fragetyp`.
 
 ## Harte Regeln
+- **Daten von Ruwen sind heilig.** Bögen sind schon einmal verschwunden. Vor jedem Testlauf und am Ende einer Runde
+  `~/Developer/ruwen-projekte/_sicherung/sichern.sh` ausführen (JSON außerhalb des Repos, nie ins Repo kopieren) und
+  am Ende mit der ersten Sicherung des Tages vergleichen. Fremde Bögen nie im Editor öffnen, ändern oder löschen.
+- **Soft-Delete:** In der App wird kein Bogen hart gelöscht. „Löschen“ = Papierkorb (`settings.geloescht` = Zeitstempel,
+  `trashForm`/`restoreForm` in `lib/data.ts`). Gelöschte Bögen: nicht in der Liste, im Papierkorb mit „Wiederherstellen“,
+  ihr Link zeigt „gibt es nicht mehr“. Eine Funktion zum harten Löschen von Bögen gibt es nicht und kommt nicht dazu.
+  Fragen im Editor entfernen ist normales Bearbeiten.
+- **Testdaten:** Testbögen entstehen nur über `/neu?test=1` (`settings.test = true`) mit Namen „E2E …“; sie sind in der Liste
+  ausgeblendet (sichtbar mit `?tests=1`). Hart löschen nur per REST mit `settings->>test=eq.true` **und** exakter `id=eq.<uuid>`,
+  nie mit breiten Filtern. `scripts/visual-test.mjs` macht das am Ende automatisch.
 - **Farben, Radien, Schriftgrößen nur über `brand/tokens.css`.** Keine Hex-Werte in Komponenten.
 - **Texte für Teilnehmende nur über `brand/copy.ts`** (Tonalität kommt später zentral dazu).
 - **Datenbank nur über `lib/data.ts`.** Seiten/Komponenten importieren nie `supabase` direkt.

@@ -1,3 +1,4 @@
+import type { Copy } from "@/brand/copy";
 import { AnswerValue, Question } from "@/lib/types";
 
 /**
@@ -8,6 +9,10 @@ export type QuestionKind = "single_choice" | "levels" | "multiple_choice" | "sca
 
 export interface InputProps {
   question: Question;
+  /** Fragetext mit ersetzten Platzhaltern (Name des Eingabefelds für Screenreader) */
+  label: string;
+  /** Texte des Bogens (du/Sie) – Platzhalter, Skalen-Beschriftung */
+  copy: Copy;
   value: AnswerValue | undefined;
   onChange: (value: AnswerValue) => void;
 }

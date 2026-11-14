@@ -1,64 +1,100 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { Suspense, useCallback, useEffect, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { getTheme } from "@/brand/themes";
 import { AdminHeader } from "@/components/AdminHeader";
 import { useDialog } from "@/components/admin/Dialog";
 import { Icon } from "@/components/admin/icons";
-import { deleteForm, duplicateForm, listForms, listResponseCounts } from "@/lib/data";
-import { Form, STATUS_LABELS } from "@/lib/types";
+import { duplicateForm, listForms, listResponseCounts, restoreForm, trashForm } from "@/lib/data";
+import { Form, STATUS_LABELS, isTestForm, isTrashed } from "@/lib/types";
 import styles from "./list.module.css";
 
-export default function MyFormsPage() {
+const dateDe = (iso: string) => new Date(iso).toLocaleDateString("de-DE", { day: "numeric", month: "long", year: "numeric" });
+const answersLabel = (n: number) => `${n} ${n === 1 ? "Antwort" : "Antworten"}`;
+
+/**
+ * Meine Bögen + Papierkorb (?papierkorb=1). Löschen = Papierkorb (Soft-Delete), Wiederherstellen jederzeit.
+ * Testbögen (settings.test) sind ausgeblendet, sichtbar mit ?tests=1.
+ */
+function MyForms() {
   const router = useRouter();
   const dialog = useDialog();
+  const params = useSearchParams();
+  const trashView = params.get("papierkorb") === "1";
+  const showTests = params.get("tests") === "1";
   const [forms, setForms] = useState<Form[] | null>(null);
   const [counts, setCounts] = useState<Record<string, number>>({});
   const [error, setError] = useState<string | null>(null);
+  /** Bogen, an dem gerade gearbeitet wird (Doppelklick-Schutz) */
+  const [busyId, setBusyId] = useState<string | null>(null);
 
-  const load = useCallback(
-    () =>
-      Promise.all([listForms(), listResponseCounts()]).then(
-        ([f, c]) => {
-          setForms(f);
-          setCounts(c);
-        },
-        (e: Error) => setError(e.message)
-      ),
-    []
-  );
+  const load = useCallback(() => {
+    setError(null);
+    return Promise.all([listForms(), listResponseCounts()]).then(
+      ([f, c]) => {
+        setForms(f);
+        setCounts(c);
+      },
+      (e: Error) => setError(e.message)
+    );
+  }, []);
   useEffect(() => {
     load();
   }, [load]);
 
-  async function duplicate(f: Form) {
+  const visible = (forms ?? []).filter((f) => showTests || !isTestForm(f));
+  const shown = visible.filter((f) => isTrashed(f) === trashView);
+  const trashCount = visible.filter(isTrashed).length;
+  const query = (trash: boolean) => {
+    const q = new URLSearchParams();
+    if (trash) q.set("papierkorb", "1");
+    if (showTests) q.set("tests", "1");
+    const s = q.toString();
+    return s ? `/meine-boegen?${s}` : "/meine-boegen";
+  };
+
+  async function act(f: Form, task: () => Promise<void>) {
+    if (busyId) return;
+    setBusyId(f.id);
     try {
-      const copy = await duplicateForm(f.id);
-      router.push(`/b/${copy.id}/bearbeiten`);
+      await task();
     } catch (e) {
       dialog.toast((e as Error).message, "error");
+    } finally {
+      setBusyId(null);
     }
   }
 
-  async function remove(f: Form) {
+  const duplicate = (f: Form) =>
+    act(f, async () => {
+      const copy = await duplicateForm(f.id);
+      router.push(`/b/${copy.id}/bearbeiten`);
+    });
+
+  async function trash(f: Form) {
     const n = counts[f.id] ?? 0;
     const ok = await dialog.confirm({
-      title: `„${f.title}“ löschen?`,
-      text: n === 1 ? "Der Bogen und seine Antwort werden endgültig gelöscht." : n ? `Der Bogen und alle ${n} Antworten werden endgültig gelöscht.` : "Der Bogen wird endgültig gelöscht.",
-      confirmLabel: "Löschen",
+      title: `„${f.title || "Ohne Namen"}“ löschen?`,
+      text: `Der Bogen kommt in den Papierkorb und sein Link zeigt dann „gibt es nicht mehr“. Fragen${n ? ` und ${answersLabel(n)}` : ""} bleiben erhalten – du kannst ihn jederzeit wiederherstellen.`,
+      confirmLabel: "In den Papierkorb",
       danger: true,
     });
     if (!ok) return;
-    try {
-      await deleteForm(f.id);
-      dialog.toast("Bogen gelöscht");
-      load();
-    } catch (e) {
-      dialog.toast((e as Error).message, "error");
-    }
+    await act(f, async () => {
+      await trashForm(f.id);
+      await load();
+      dialog.toast("In den Papierkorb gelegt", "ok", { label: "Rückgängig", onClick: () => restore(f) });
+    });
   }
+
+  const restore = (f: Form) =>
+    act(f, async () => {
+      await restoreForm(f.id);
+      await load();
+      dialog.toast(`„${f.title || "Ohne Namen"}“ ist wieder da`);
+    });
 
   return (
     <>
@@ -66,37 +102,75 @@ export default function MyFormsPage() {
         <Link href="/neu" className="btn primary"><Icon name="plus" size={18} /> Neuer Bogen</Link>
       </AdminHeader>
       <main className="admin-main admin-narrow">
-        <h1>Meine Bögen</h1>
-        {error && <p className="error">{error}</p>}
+        {trashView && <Link href={query(false)} className="back-link"><Icon name="back" size={18} /> Meine Bögen</Link>}
+        <h1 style={trashView ? { marginTop: 12 } : undefined}>{trashView ? "Papierkorb" : "Meine Bögen"}</h1>
+        {trashView && <p className="muted">Gelöschte Bögen mit allen Fragen und Antworten. Ihre Links sind aus, bis du sie wiederherstellst.</p>}
+        {error && (
+          <div className="warn" role="alert">
+            {error} <button type="button" className="btn small" onClick={load}>Nochmal versuchen</button>
+          </div>
+        )}
         {!forms ? (
-          <p className="muted">Lädt …</p>
-        ) : forms.length === 0 ? (
+          !error && <p className="muted" role="status">Lädt …</p>
+        ) : shown.length === 0 ? (
           <div className={styles.empty}>
-            <p>Noch keine Bögen.</p>
-            <Link href="/neu" className="btn primary big"><Icon name="plus" size={18} /> Ersten Bogen anlegen</Link>
+            {trashView ? (
+              <p>Der Papierkorb ist leer.</p>
+            ) : (
+              <>
+                <p>Noch keine Bögen.</p>
+                <Link href="/neu" className="btn primary big"><Icon name="plus" size={18} /> Ersten Bogen anlegen</Link>
+              </>
+            )}
           </div>
         ) : (
           <ul className={styles.list}>
-            {forms.map((f) => (
+            {shown.map((f) => (
               <li key={f.id} className={styles.item} data-form={f.title}>
-                <Link href={`/b/${f.id}/bearbeiten`} className={styles.main}>
+                <Link href={trashView ? `/b/${f.id}/ergebnisse` : `/b/${f.id}/bearbeiten`} className={styles.main}>
                   <strong>{f.title || "Ohne Namen"}</strong>
                   <span className={styles.meta}>
-                    <span className={`status-pill status-${f.status}`}>{STATUS_LABELS[f.status]}</span>
-                    {counts[f.id] ?? 0} {counts[f.id] === 1 ? "Antwort" : "Antworten"} · {getTheme(f.style).name}
+                    {trashView ? (
+                      <span>Gelöscht am {dateDe(f.settings!.geloescht!)}</span>
+                    ) : (
+                      <span className={`status-pill status-${f.status}`}>{STATUS_LABELS[f.status]}</span>
+                    )}
+                    {isTestForm(f) && <span className="status-pill">Test</span>}
+                    <span>{answersLabel(counts[f.id] ?? 0)} · {getTheme(f.style).name}</span>
                   </span>
                 </Link>
                 <div className={styles.actions}>
-                  <Link className="btn small ghost" href={`/b/${f.id}/bearbeiten?teilen=1`}>Teilen</Link>
-                  <Link className="btn small ghost" href={`/b/${f.id}/ergebnisse`}>Ergebnisse</Link>
-                  <button type="button" className="icon-btn" onClick={() => duplicate(f)} aria-label="Duplizieren"><Icon name="copy" /></button>
-                  <button type="button" className="icon-btn danger" onClick={() => remove(f)} aria-label="Löschen"><Icon name="trash" /></button>
+                  {trashView ? (
+                    <button type="button" className="btn small" onClick={() => restore(f)} disabled={busyId === f.id}>
+                      <Icon name="restart" size={16} /> Wiederherstellen
+                    </button>
+                  ) : (
+                    <>
+                      <Link className="btn small ghost" href={`/b/${f.id}/bearbeiten?teilen=1`}>Teilen</Link>
+                      <Link className="btn small ghost" href={`/b/${f.id}/ergebnisse`}>Ergebnisse</Link>
+                      <button type="button" className="icon-btn" onClick={() => duplicate(f)} disabled={busyId === f.id} aria-label="Duplizieren"><Icon name="copy" /></button>
+                      <button type="button" className="icon-btn danger" onClick={() => trash(f)} disabled={busyId === f.id} aria-label="Löschen"><Icon name="trash" /></button>
+                    </>
+                  )}
                 </div>
               </li>
             ))}
           </ul>
         )}
+        {!trashView && forms && (
+          <p className={styles.trashLink}>
+            <Link href={query(true)} className="back-link"><Icon name="trash" size={16} /> Papierkorb{trashCount ? ` (${trashCount})` : ""}</Link>
+          </p>
+        )}
       </main>
     </>
+  );
+}
+
+export default function MyFormsPage() {
+  return (
+    <Suspense fallback={null}>
+      <MyForms />
+    </Suspense>
   );
 }

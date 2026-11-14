@@ -1,3 +1,4 @@
+import { plural } from "@/brand/copy";
 import { AnswerCard } from "@/components/ui/AnswerCard";
 import { distribution, typeOf } from "@/question-types";
 import { Answer, AnswerValue, Question } from "@/lib/types";
@@ -24,7 +25,7 @@ export function ResultView({ survey, question, own, answers }: Props) {
     <AnswerCard>
       <p className={styles.yourAnswer}>
         {copy.result.mine} = {ownShorts.length ? ownShorts.join(", ") : "–"}
-        <span className={styles.total}> · {total} {total === 1 ? "Antwort" : "Antworten"}</span>
+        <span className={styles.total}> · {plural(total, copy.result.answers)}</span>
       </p>
       <div className={styles.rows}>
         {rows.map(({ option, share }) => {

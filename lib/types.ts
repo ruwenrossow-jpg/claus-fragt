@@ -24,6 +24,10 @@ export interface FormSettings {
   eventName?: string;
   /** v1: ersetzt {thema} */
   thema?: string;
+  /** Soft-Delete: Zeitpunkt (ISO), seit dem der Bogen im Papierkorb liegt. Gelöscht wird in der App nie hart. */
+  geloescht?: string | null;
+  /** Testbogen (E2E): in „Meine Bögen“ ausgeblendet, nur mit ?tests=1 sichtbar. Darf per REST hart gelöscht werden. */
+  test?: boolean;
 }
 
 export interface Form {
@@ -87,6 +91,16 @@ export const STATUS_LABELS: Record<FormStatus, string> = {
   published: "Live",
   closed: "Geschlossen",
 };
+
+/** Liegt der Bogen im Papierkorb? */
+export function isTrashed(form: Pick<Form, "settings">): boolean {
+  return Boolean(form.settings?.geloescht);
+}
+
+/** Eigener Testbogen (E2E)? */
+export function isTestForm(form: Pick<Form, "settings">): boolean {
+  return form.settings?.test === true;
+}
 
 export function isEmptyAnswer(v: AnswerValue | undefined): boolean {
   return v === undefined || v === null || v === "" || (Array.isArray(v) && v.length === 0);

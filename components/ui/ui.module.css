@@ -58,7 +58,6 @@
   cursor: pointer;
 }
 .backPlaceholder { height: 30px; }
-.notice { height: 30px; margin: 0; font-size: var(--text-s); line-height: 30px; text-align: center; opacity: 0.7; }
 .progress {
   height: 34px;
   margin-top: var(--space-3);
@@ -118,6 +117,8 @@
   overflow-wrap: break-word;
   text-wrap: balance;
 }
+/* letzte Stufe (sehr lange Frage): etwas breiter als das einbeschriebene Rechteck, die Ellipse ist in der Mitte breit genug */
+.bubbleTextWide { max-width: 84%; line-height: 1.15; }
 .bubbleHelp { display: block; margin-top: var(--space-1); font-size: var(--text-s); opacity: 0.7; }
 
 /* ---------- Pill-Button ---------- */
@@ -136,6 +137,7 @@
   transition: transform 0.1s ease, opacity 0.2s ease;
 }
 .pill:active { transform: scale(0.97); }
+.pill:focus-visible, .back:focus-visible { outline: 3px solid var(--survey-ink); outline-offset: 3px; }
 .pill:disabled { opacity: 0.45; cursor: default; }
 /* Screens ohne Button: gleicher Platz, damit nichts springt */
 .pillSpacer { height: var(--pill-h); }

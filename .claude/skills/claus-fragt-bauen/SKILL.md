@@ -5,6 +5,7 @@ description: Ablauf jeder Bau-Runde im Projekt Claus fragt (Builder für Evaluat
 
 # Bau-Runde Claus fragt
 
+0. **Sicherung:** `~/Developer/ruwen-projekte/_sicherung/sichern.sh` vor jedem Testlauf und am Ende (Vergleich mit der ersten Sicherung des Tages).
 1. **Kontext laden:** `CLAUDE.md`, `brand/BUILDERBOOK.md`, `docs/ARCHITEKTUR.md`, `docs/LEARNINGS.md`.
 2. **Branch:** von `main` (oder dem offenen Feature-Branch) einen neuen `feature/<thema>` anlegen.
 3. **Bauen nach Regeln:**
@@ -20,7 +21,8 @@ description: Ablauf jeder Bau-Runde im Projekt Claus fragt (Builder für Evaluat
    - Screenshots in `.shots/` selbst ansehen: Sprechblase sauber? Claus wandert? Editor ruhig?
    - `node scripts/vergleich.mjs start=11-start multiple-choice=11-frage-1 stars=11-frage-2` und `.shots/vergleich-*.png` ansehen (links Prototyp, rechts Umsetzung).
    - Builder auch mobil prüfen (393 px Breite, Vorschau-Button).
-   - Testdaten wieder löschen, fremde Bögen nie anfassen.
+   - Testdaten: nur über `/neu?test=1` (settings.test), hart löschen nur per REST mit `settings->>test=eq.true` UND exakter id. Fremde Bögen nie anfassen.
+   - Löschen in der App ist immer Soft-Delete (Papierkorb) – nie ein hartes `delete` auf `forms` einbauen.
 5. **Learnings** in `docs/LEARNINGS.md` ergänzen (Problem → Regel).
 6. **PR** über die GitHub-API, Vercel-Preview abwarten und den Preview-Link mit `visual-test.mjs <preview-url>` testen.
 7. **Rückmeldung an Ruwen** (WhatsApp, max. 5 Zeilen): Ergebnis, offene Punkte, Branch, PR, Preview.

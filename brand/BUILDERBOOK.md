@@ -8,10 +8,11 @@ bestimmt, liegt hier zentral, damit jede Erweiterung gleich aussieht.
 | `brand/tokens.css` | Alle Farben, Schriften, Größen, Radien als CSS-Variablen |
 | `brand/copy.ts` | Alle Texte für Teilnehmende (Platzhalter für die Tonalitätsregeln) |
 | `brand/themes.ts` | Art des Events: Inspirierend / Lernend (Ton, Emojis, Maskottchen) + Logo-Pfad |
-| `public/brand/` | Logo, Maskottchen (froh/traurig, freigestellt) |
+| `public/brand/` | Logo, Maskottchen (froh/traurig, freigestellt, WebP in Anzeigegröße), Link-Vorschau `og.png` |
 | `docs/prototyp/` | Figma-Prototyp als Referenz-Screens (393 × 852) |
 | `components/ui/` | Bogen-Bausteine: Screen, TopBar, SpeechBubble, Mascot, AnswerCard, PillButton |
-| `components/admin/` | Admin-Bausteine: Dialog/Toast (`useDialog`), Select, Switch, Icons |
+| `components/admin/` | Admin-Bausteine: Dialog/Toast (`useDialog`), Select, Switch, Icons, PageState |
+| `components/survey/SurveyMessage.tsx` | Hinweis-Screen im Bogen-Raster (Laden, gibt es nicht mehr, keine Verbindung, 404, Fehler) |
 
 ## Farben
 | Token | Wert | Verwendung |
@@ -75,7 +76,8 @@ Die Werte sind pixelgenau aus den Prototyp-PNGs und dem InnoNord-Logo ausgelesen
   Claus wandert per CSS-Transition (0,7 s) mit kleinem Hüpfer, der Zipfel gleitet mit (`useTween`, gleiche Dauer). `prefers-reduced-motion` schaltet das ab.
 - **SpeechBubble**: Ellipse in voller Breite mit **fester Höhe** `--bubble-h`, 1 px schwarzer Rand; Ellipse und Zipfel sind **ein SVG-Pfad** (nahtlos).
   Die Blase steht immer an derselben Stelle; nur die Zipfelspitze wandert. Text vertikal zentriert, Schrift in Stufen
-  `--bubble-font-1` … `-5` (20 → 14 px), bis der Text ins einbeschriebene Rechteck (Breite/√2 × Höhe/√2) passt.
+  `--bubble-font-1` … `-7` (20 → 12 px), bis der Text ins einbeschriebene Rechteck (Breite/√2 × Höhe/√2) passt.
+  Die Stufen 6–7 (und etwas mehr Breite) sind nur die Notbremse für sehr lange Fragen; der Editor warnt ab 110 Zeichen.
 - **AnswerCard**: türkise Box, 2 px schwarzer Rand, Radius 18, optionaler Titel (nur v1).
 - **PillButton**: rot, min. 212 × 72, Text in Großbuchstaben mit „!“. **Genau ein Button pro Screen**, immer im Fuß.
   Fragen-Screens haben **immer** WEITER! – kein Auto-Weiter (Teilnehmende sollen nachdenken können).
@@ -86,6 +88,11 @@ Die Werte sind pixelgenau aus den Prototyp-PNGs und dem InnoNord-Logo ausgelesen
 3. **Ende**: trauriger Claus, „Oh du bist ja schon fertig …“, voller Balken, ERGEBNIS! (Antworten sind hier schon gespeichert.)
 4. **Ergebnis** (je auswertbare Frage): „Frage N / Titel“, „Deine Antwort = A:“, Balken mit % aller Teilnehmenden, eigene Antwort rot.
 5. **Fertig**: froher Claus, Dank, „< Zurück“ zum letzten Ergebnis.
+6. **Hinweis-Screens** (gleiches Raster, Button-Platz bleibt): Entwurf („noch nicht live“), Geschlossen, Gelöscht/falscher Link
+   („gibt es nicht mehr“), Laden („Einen Moment …“), keine Verbindung (mit „Nochmal“), 404 („Hier ist nichts.“), Fehlerseite.
+   Live-Link nimmt nur bei Status Live Antworten an; die Builder-Vorschau zeigt den Bogen immer.
+- **Doppeltipp-Schutz:** 400 ms nach jedem Screen-Wechsel ignoriert der Haupt-Button Klicks; Speichern ist zusätzlich gesperrt, solange es läuft.
+- **Fehler beim Speichern:** Hinweis über dem Button („Speichern ging nicht …“), Screen bleibt, erneut WEITER! tippen speichert dieselbe Abgabe.
 Nach dem Speichern zurückgehen und ändern ersetzt die Antworten derselben Abgabe (keine doppelte).
 
 ## Fragetypen im Look
@@ -96,11 +103,14 @@ Nach dem Speichern zurückgehen und ändern ersetzt die Antworten derselben Abga
 | Stufen | – | 4 Zeilen mit Signalbalken rechts |
 | Sterne | – | 3–6 Sterne gelb/grau |
 | Skala | – | Zahlen-Chips, gewählt = rot, Beschriftung links/rechts |
-| Ja / Nein, Text (kurz), Text (Absatz) | – | gleiche Bausteine |
+| Ja / Nein, Text (kurz), Text (Absatz) | – | gleiche Bausteine; Freitext max. 300 / 2000 Zeichen |
+| Skala mit ≥ 8 Stufen (z. B. 0–10) | – | Zahlenfelder 40 px in zwei Reihen statt Überlauf |
 Box-Überschriften gibt es nur noch bei v1-Bögen (`settings.boxTitle`), neu werden keine angelegt.
 
 ## Assets
 - Maskottchen als freigestellte PNGs: `claus-froh.png`, `claus-traurig.png` (mit `scripts/freistellen.mjs` aus den JPGs).
+  Im Bogen werden die **WebP-Varianten** (440 px, ≈ 25 KB) geladen; neu erzeugen mit `node scripts/bilder.mjs`
+  (auch Logo 360 px, `app/apple-icon.png`, `public/brand/og.png` für die Link-Vorschau).
   Das frohe Bild stammt aus einem 500-px-JPG, deshalb sind am Rand leichte Reste möglich. **Besser: PNG mit Transparenz direkt aus Figma exportieren.**
 - Logo `innonord-logo.jpg` hat einen weißen Hintergrund und gehört deshalb nur auf weiße Flächen (Admin-Kopfzeile).
 
@@ -118,7 +128,11 @@ Fortschritt: Prozent + Label („Los geht's!“, „Halbzeit!“, „Letzte Frag
 - Frage-Karte: inaktiv = Zusammenfassung (Text, Frageart, Antworten); aktiv = Fragetext, Auswahl „Frageart“, Felder der Art, Fuß mit ↑ ↓ Duplizieren Löschen | Pflicht-Schalter.
 - **Keine Browser-Dialoge**: `confirm()`, `alert()`, `prompt()`, `beforeunload`, `required`, natives `<select>` und `title`-Tooltips sind tabu.
   Stattdessen `useDialog().confirm(...)` / `.toast(...)`, `Select`, `Switch` aus `components/admin/`, Formulare mit `noValidate` + eigener Meldung.
-- Autosave mit Statusanzeige „Speichert …“ / „Gespeichert“ in der Kopfzeile.
+- Autosave mit Statusanzeige „Speichert …“ / „Gespeichert“ in der Kopfzeile (`data-save` für Tests).
+- **Meine Bögen:** Löschen = „In den Papierkorb“ (eigener Dialog, Toast mit „Rückgängig“). Papierkorb unter `?papierkorb=1`
+  mit „Wiederherstellen“; Testbögen nur mit `?tests=1` (graues „Test“-Etikett).
+- **Seitenzustände** (`PageState`): Laden, „Diesen Bogen gibt es nicht.“, Fehler mit „Nochmal versuchen“ – immer mit Kopfzeile und Weg zurück.
+- **Tastatur:** Dialoge halten den Fokus und geben ihn zurück; `Select` mit Pfeiltasten/Enter/Esc; sichtbarer Fokus (`:focus-visible`).
 - **Haupt-CTA „Speichern & abschließen“** (InnoNord-Rot, `btn primary`) in der Kopfzeile (Handy: „Abschließen“) und am Ende der Fragenliste:
   speichert sofort (wartet auch ein laufendes Speichern ab) und öffnet den Teilen-Dialog mit „Live schalten“.
 - **„+ Frage“ / Duplizieren:** neue Karte wird aktiv, scrollt sanft in die Bildschirmmitte (`scrollIntoView({block:"center"})`),

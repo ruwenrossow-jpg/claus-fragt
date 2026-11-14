@@ -6,6 +6,7 @@ import { useParams, useSearchParams } from "next/navigation";
 import { AdminHeader } from "@/components/AdminHeader";
 import { useDialog } from "@/components/admin/Dialog";
 import { Icon } from "@/components/admin/icons";
+import { PageState } from "@/components/admin/PageState";
 import { FormHeadCard } from "@/components/builder/FormHeadCard";
 import { PreviewTabs } from "@/components/builder/PreviewTabs";
 import { QuestionCard } from "@/components/builder/QuestionCard";
@@ -17,7 +18,7 @@ import { playableQuestions } from "@/components/survey/context";
 import { START, Step } from "@/components/survey/flow";
 import { SurveyPlayer } from "@/components/survey/SurveyPlayer";
 import { formWarnings } from "@/lib/rules";
-import { STATUS_LABELS } from "@/lib/types";
+import { STATUS_LABELS, isTrashed } from "@/lib/types";
 import { isAnswerable, withPreviewPlaceholders } from "@/question-types";
 
 /** Editor wie Google Forms: Kopf-Karte, Fragen Schritt für Schritt hinzufügen, Autosave, Live-Vorschau im Handy-Rahmen. */
@@ -49,7 +50,7 @@ export default function EditorPage() {
     if (previewIndex >= 0) setStep({ kind: "question", index: previewIndex });
   }, [activeId, previewIndex]);
 
-  if (!form) return <main className="admin-main">{draft.error ? <p className="error">{draft.error}</p> : <p className="muted">Lädt …</p>}</main>;
+  if (!form) return <PageState error={draft.loadError} onRetry={draft.reload} />;
 
   async function remove(qid: string) {
     if (draft.responseCount > 0) {
@@ -74,6 +75,7 @@ export default function EditorPage() {
   };
   /** Haupt-CTA: sofort speichern (Autosave läuft weiter) und den Teilen-Dialog mit „Live schalten“ öffnen. */
   async function finish() {
+    if (finishing) return;
     setFinishing(true);
     try {
       await draft.saveNow();
@@ -111,7 +113,15 @@ export default function EditorPage() {
           <span className={`status-pill status-${form.status}`}>{STATUS_LABELS[form.status]}</span>
           {draft.responseCount > 0 && <span className="muted">{draft.responseCount} {draft.responseCount === 1 ? "Antwort" : "Antworten"}</span>}
         </div>
-        {draft.error && <p className="error">{draft.error}</p>}
+        {draft.error && <p className="warn" role="alert">{draft.error}</p>}
+        {isTrashed(form) && (
+          <div className={`warn ${styles.trashNotice}`} role="status">
+            <span>Dieser Bogen liegt im Papierkorb. Sein Link ist aus, bis du ihn wiederherstellst.</span>
+            <button type="button" className="btn small" onClick={() => draft.patchForm({ settings: { ...form.settings, geloescht: null } }, true)}>
+              <Icon name="restart" size={16} /> Wiederherstellen
+            </button>
+          </div>
+        )}
 
         <div className={styles.layout}>
           <div className={styles.cards}>

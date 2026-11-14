@@ -14,8 +14,8 @@ function withOptions(q: Question, type: Question["type"]): Question {
   return { ...q, type, settings: commonSettings(q), options: q.options.length ? q.options : DEFAULT_OPTIONS };
 }
 
-/** Leere Antworten (noch nicht ausgefüllt) erscheinen nicht im Bogen. */
-const filled = (q: Question) => q.options.filter((o) => o.trim());
+/** Leere Antworten (noch nicht ausgefüllt) erscheinen nicht im Bogen; doppelte nur einmal (gespeichert wird der Text). */
+const filled = (q: Question) => [...new Set(q.options.filter((o) => o.trim()))];
 
 function resultOptions(q: Question): ResultOption[] {
   return filled(q).map((o, i) => ({ value: o, label: o, short: letter(i) }));
@@ -27,8 +27,9 @@ export const singleChoice: QuestionTypeDef = {
   hint: "Eine Antwort aus einer Liste",
   defaultBoxTitle: "",
   apply: (q) => withOptions(q, "single_choice"),
-  Input: ({ question, value, onChange }) => (
+  Input: ({ question, label, value, onChange }) => (
     <ChoiceList
+      label={label}
       items={filled(question).map((o) => ({ key: o, label: o }))}
       isOn={(k) => value === k}
       onToggle={(k) => onChange(k)}
@@ -63,12 +64,13 @@ export const multipleChoice: QuestionTypeDef = {
     const next = withOptions(q, "multiple_choice");
     return q.settings.maxChoices ? { ...next, settings: { ...next.settings, maxChoices: q.settings.maxChoices } } : next;
   },
-  Input: ({ question, value, onChange }) => {
+  Input: ({ question, label, value, onChange }) => {
     const arr = Array.isArray(value) ? value : [];
     const max = question.settings.maxChoices;
     return (
       <ChoiceList
         square
+        label={label}
         items={filled(question).map((o) => ({ key: o, label: o }))}
         isOn={(k) => arr.includes(k)}
         onToggle={(k) => {

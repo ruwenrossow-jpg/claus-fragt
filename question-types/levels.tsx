@@ -35,9 +35,10 @@ export const levels: QuestionTypeDef = {
     options: q.options.length === 4 ? q.options : DEFAULT_LEVELS,
     settings: { ...commonSettings(q), display: "levels" },
   }),
-  Input: ({ question, value, onChange }) => (
+  Input: ({ question, label, value, onChange }) => (
     <ChoiceList
-      items={question.options.map((o, i) => ({ key: o, label: o, suffix: <LevelIcon level={i + 1} of={question.options.length} /> }))}
+      label={label}
+      items={question.options.map((o, i) => ({ key: o, label: o.trim() || `Stufe ${i + 1}`, suffix: <LevelIcon level={i + 1} of={question.options.length} /> }))}
       isOn={(k) => value === k}
       onToggle={(k) => onChange(k)}
     />

@@ -6,14 +6,14 @@ import styles from "./builder.module.css";
 export function SaveStatus({ state, onRetry }: { state: SaveState; onRetry: () => void }) {
   if (state === "error") {
     return (
-      <button type="button" className={`${styles.saveStatus} ${styles.saveError}`} onClick={onRetry}>
+      <button type="button" className={`${styles.saveStatus} ${styles.saveError}`} onClick={onRetry} data-save={state}>
         <Icon name="alert" size={16} /> Nicht gespeichert<span className="hide-mobile"> – erneut versuchen</span>
       </button>
     );
   }
   return (
-    <span className={styles.saveStatus} role="status" aria-live="polite">
-      {state === "saved" ? <><Icon name="check" size={16} /> <span className="hide-mobile">Gespeichert</span></> : "Speichert …"}
+    <span className={styles.saveStatus} role="status" aria-live="polite" data-save={state}>
+      {state === "saved" ? <><Icon name="check" size={16} /> <span className="hide-mobile">Gespeichert</span><span className="only-mobile sr-only">Gespeichert</span></> : "Speichert …"}
     </span>
   );
 }

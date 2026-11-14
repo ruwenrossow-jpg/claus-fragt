@@ -5,11 +5,12 @@ import Link from "next/link";
 import { useParams } from "next/navigation";
 import { AdminHeader } from "@/components/AdminHeader";
 import { Icon } from "@/components/admin/icons";
+import { PageState } from "@/components/admin/PageState";
 import { Select, SelectOption } from "@/components/admin/Select";
 import { buildSurvey } from "@/components/survey/context";
 import { loadAnswers, loadForm, loadResponses } from "@/lib/data";
 import { computeKpis } from "@/lib/kpi";
-import { Answer, AnswerValue, Form, Question } from "@/lib/types";
+import { Answer, AnswerValue, Form, Question, isTrashed } from "@/lib/types";
 import { ResultOption, average, distribution, isAnswerable, kindOf, levelScore, typeOf } from "@/question-types";
 
 interface Data {
@@ -57,19 +58,20 @@ function Summary({ q, answers, responseCount }: { q: Question; answers: Answer[]
 export default function ResultsPage() {
   const { id } = useParams<{ id: string }>();
   const [data, setData] = useState<Data | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<unknown>(null);
   const [filter, setFilter] = useState("");
+  const [reloadKey, setReloadKey] = useState(0);
 
   useEffect(() => {
     let cancelled = false;
     Promise.all([loadForm(id), loadResponses(id), loadAnswers(id)]).then(
       ([f, responses, answers]) => !cancelled && setData({ form: f.form, questions: f.questions, responses, answers }),
-      (e: Error) => !cancelled && setError(e.message)
+      (e: unknown) => !cancelled && setError(e)
     );
     return () => {
       cancelled = true;
     };
-  }, [id]);
+  }, [id, reloadKey]);
 
   const labelOf = useMemo(() => (data ? buildSurvey(data.form, data.questions).labelOf : () => ""), [data]);
 
@@ -97,7 +99,11 @@ export default function ResultsPage() {
     if (!data) return;
     const qById = new Map(data.questions.map((q, i) => [q.id, { q, nr: i + 1 }]));
     const time = new Map(data.responses.map((r) => [r.id, r.created_at]));
-    const esc = (s: string | number) => `"${String(s).replace(/"/g, '""')}"`;
+    // Anführungszeichen verdoppeln; Formel-Anfänge (= + - @) entschärfen, damit Excel nichts ausführt
+    const esc = (s: string | number) => {
+      const t = String(s);
+      return `"${(typeof s === "string" && /^[=+\-@\t\r]/.test(t) ? `'${t}` : t).replace(/"/g, '""')}"`;
+    };
     const lines = [["zeitpunkt", "antwort_id", "frage_nr", "frage", "frageart", "antwort", "score", "step", "slot_id", "kpi"].map(esc).join(";")];
     for (const a of data.answers) {
       const entry = qById.get(a.question_id);
@@ -113,28 +119,32 @@ export default function ResultsPage() {
     const url = URL.createObjectURL(new Blob(["﻿" + lines.join("\n")], { type: "text/csv;charset=utf-8" }));
     const link = document.createElement("a");
     link.href = url;
-    link.download = `${data.form.title || "auswertung"}.csv`;
+    link.download = `${(data.form.title || "auswertung").replace(/[\\/:*?"<>|]+/g, "-").trim()}.csv`;
     link.click();
     URL.revokeObjectURL(url);
   }
 
   const kpis = data && view ? computeKpis(data.questions, view.answers, labelOf) : [];
+  if (!data || !view) return <PageState error={error} onRetry={() => { setError(null); setReloadKey((k) => k + 1); }} />;
 
   return (
     <>
       <AdminHeader>
         <Link className="btn ghost" href={`/b/${id}/bearbeiten`}><Icon name="edit" size={18} /> Zum Editor</Link>
-        <button type="button" className="btn primary" onClick={exportCsv} disabled={!data?.answers.length}>CSV exportieren</button>
+        <button type="button" className="btn primary" onClick={exportCsv} disabled={!data.answers.length}>CSV exportieren</button>
       </AdminHeader>
       <main className="admin-main admin-narrow">
         <Link href="/meine-boegen" className="back-link"><Icon name="back" size={18} /> Meine Bögen</Link>
-        {error && <p className="error">{error}</p>}
-        {!data || !view ? (
-          !error && <p className="muted">Lädt …</p>
-        ) : (
-          <>
+        <>
             <h1 style={{ marginTop: 12 }}>{data.form.title}</h1>
-            <div className="row spread">
+            {isTrashed(data.form) && <div className="warn">Dieser Bogen liegt im Papierkorb – die Ergebnisse bleiben erhalten.</div>}
+            {data.responses.length === 0 && (
+              <div className="panel">
+                <h2>Noch keine Antworten</h2>
+                <p className="muted">Sobald jemand den Bogen ausfüllt, erscheinen hier Kennzahlen und die Auswertung je Frage. Den Link findest du im Editor unter „Speichern &amp; abschließen“.</p>
+              </div>
+            )}
+            {data.responses.length > 0 && <div className="row spread">
               <p><strong>{view.responses.length}</strong> {view.responses.length === 1 ? "Antwort" : "Antworten"}</p>
               {filterOptions.length > 1 && (
                 <div className="row" style={{ minWidth: 260 }}>
@@ -144,7 +154,7 @@ export default function ResultsPage() {
                   </div>
                 </div>
               )}
-            </div>
+            </div>}
             {view.responses.length > 0 && view.responses.length < 10 && <div className="warn">Wenige Antworten – nur eine Tendenz.</div>}
             {kpis.length > 0 && (
               <div className="kpis">
@@ -165,8 +175,7 @@ export default function ResultsPage() {
                 <Summary q={q} answers={view.answers} responseCount={view.responses.length} />
               </section>
             ))}
-          </>
-        )}
+        </>
       </main>
     </>
   );
