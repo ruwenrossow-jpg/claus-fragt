@@ -5,7 +5,7 @@
 Evaluationsbögen für InnoNord: Ein **Builder** (Admin) erstellt Bögen, Teilnehmende füllen sie per Link im
 Claus-Look (Figma-Prototyp „van der Stein“) aus, und die Ergebnisse dienen dazu, den Wissenstransfer von Event zu Event zu verbessern.
 
-Routen: `/meine-boegen` (`?papierkorb=1`, `?tests=1`), `/neu`, `/b/<id>/bearbeiten`, `/b/<id>/ergebnisse`, `/b/<id>/tafel`, `/b/<id>/tafel/steuerung`, `/f/<slug>`, `/f/<slug>/qr`.
+Routen: `/anmelden`, `/meine-boegen` (`?papierkorb=1`, `?tests=1`), `/neu`, `/b/<id>/bearbeiten`, `/b/<id>/ergebnisse`, `/b/<id>/tafel`, `/b/<id>/tafel/steuerung`, `/f/<slug>`, `/f/<slug>/qr`.
 Art (Inspirierend/Lernend): `brand/themes.ts`. Hinweise/KPI: `lib/rules.ts`, `lib/kpi.ts`. v1-Kompatibilität: `lib/legacy.ts`.
 
 ## Zuerst lesen
@@ -36,6 +36,7 @@ Art (Inspirierend/Lernend): `brand/themes.ts`. Hinweise/KPI: `lib/rules.ts`, `li
 - `SurveyPlayer` ist die einzige Darstellung des Bogens (Live-Link **und** Builder-Vorschau).
 - Schema-Änderungen nur als neue Datei in `supabase/migrations/`, Ruwen spielt sie ein. Lieber `settings` (jsonb) nutzen als neue Spalten.
 - Admin-CSS (`app/globals.css`) wirkt nur in `.admin-main > h1` und `.panel`, damit die Vorschau nicht beeinflusst wird.
+- Admin-Seiten nur mit Login (`RequireLogin` in den Layouts, `lib/auth.ts`); `/f/*` bleibt ohne Login. Tests überspringen den Login nur auf localhost (`localStorage.claus-e2e`).
 - Keine Secrets ins Repo. Publishable Key + URL sind öffentlich (stehen als Fallback in `next.config.ts`).
 
 ## Definition of Done (jede Runde)

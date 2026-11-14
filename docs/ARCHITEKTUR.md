@@ -20,6 +20,7 @@ components/admin/         Bausteine der Admin-Oberfläche: Dialog/Toast (useDial
 components/survey/        SurveyPlayer (Ablauf), flow.ts (Screen-Logik), context.ts (spielbare Fragen, Texte), ResultView
 components/builder/       QuestionCard, FormHeadCard, ArtChoice, SaveStatus, ShareDialog, PreviewTabs, useFormDraft (Autosave)
 question-types/           Fragetyp-Registry: je Typ Input, Editor, Auswertung, Format
+lib/auth.ts               Anmelden per E-Mail-Link (useSession, sendLoginLink, signOut); RequireLogin + AccountMenu in components/admin
 lib/tafel.ts              Tafel-Abgleich über Supabase Realtime (Broadcast + Presence, keine Tabelle): hostTafel / joinTafel
 lib/wordcloud.ts          Freitext → Begriffe mit Häufigkeit (≤ 3 Wörter = ein Begriff, sonst Wörter ohne Füllwörter)
 components/tafel/         WordCloud + Beamer-Styles

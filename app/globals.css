@@ -47,7 +47,7 @@ a { color: var(--inno-navy); }
 .error { color: var(--admin-danger); }
 .field-label { display: block; margin: 12px 0 6px; font-size: 13px; font-weight: 600; color: var(--admin-muted); }
 
-.panel :is(input[type="text"], textarea) {
+.panel :is(input[type="text"], input[type="email"], textarea) {
   width: 100%; padding: 10px 12px; font: inherit; color: inherit;
   border: 1px solid var(--admin-border); border-radius: var(--radius-admin-s); background: var(--admin-surface);
 }

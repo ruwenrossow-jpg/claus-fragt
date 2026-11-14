@@ -79,3 +79,9 @@
 .pageState :global(.row) { justify-content: center; }
 /* Handy/Tablet: Hinweise über dem „Vorschau“-Knopf des Editors, nicht darauf */
 @media (max-width: 1000px) { .toasts { bottom: 84px; width: calc(100% - 32px); } .toast { max-width: 100%; } }
+
+/* Anmelden */
+.login { max-width: 460px; margin: 32px auto 0; text-align: left; }
+.login h2 { margin-top: 0; }
+.login p { line-height: 1.45; }
+.loginMascot { display: block; width: 96px; height: auto; margin: 0 auto 8px; }

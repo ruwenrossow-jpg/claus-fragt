@@ -7,7 +7,8 @@ import { getTheme } from "@/brand/themes";
 import { AdminHeader } from "@/components/AdminHeader";
 import { useDialog } from "@/components/admin/Dialog";
 import { Icon } from "@/components/admin/icons";
-import { duplicateForm, listForms, listResponseCounts, restoreForm, trashForm } from "@/lib/data";
+import { useSession } from "@/lib/auth";
+import { claimForms, duplicateForm, listForms, listResponseCounts, restoreForm, trashForm } from "@/lib/data";
 import { Form, STATUS_LABELS, isTestForm, isTrashed } from "@/lib/types";
 import styles from "./list.module.css";
 
@@ -44,7 +45,11 @@ function MyForms() {
     load();
   }, [load]);
 
-  const visible = (forms ?? []).filter((f) => showTests || !isTestForm(f));
+  const uid = useSession()?.user.id;
+  // Mit Login (Spalte owner_id vorhanden): nur eigene Bögen; Bögen von vor dem Login lassen sich übernehmen
+  const owned = (forms ?? []).some((f) => "owner_id" in f);
+  const unclaimed = owned && uid ? (forms ?? []).filter((f) => f.owner_id === null && !isTestForm(f)) : [];
+  const visible = (forms ?? []).filter((f) => (showTests || !isTestForm(f)) && (!owned || !uid || f.owner_id === uid || (showTests && isTestForm(f))));
   const shown = visible.filter((f) => isTrashed(f) === trashView);
   const trashCount = visible.filter(isTrashed).length;
   const query = (trash: boolean) => {
@@ -54,6 +59,20 @@ function MyForms() {
     const s = q.toString();
     return s ? `/meine-boegen?${s}` : "/meine-boegen";
   };
+
+  async function claim() {
+    if (!uid || busyId) return;
+    setBusyId("claim");
+    try {
+      await claimForms(unclaimed.map((f) => f.id), uid);
+      await load();
+      dialog.toast(unclaimed.length === 1 ? "1 Bogen gehört jetzt zu deinem Konto" : `${unclaimed.length} Bögen gehören jetzt zu deinem Konto`);
+    } catch (e) {
+      dialog.toast((e as Error).message, "error");
+    } finally {
+      setBusyId(null);
+    }
+  }
 
   async function act(f: Form, task: () => Promise<void>) {
     if (busyId) return;
@@ -110,6 +129,12 @@ function MyForms() {
             {error} <button type="button" className="btn small" onClick={load}>Nochmal versuchen</button>
           </div>
         )}
+        {!trashView && unclaimed.length > 0 && (
+          <div className={`warn ${styles.claim}`} data-claim>
+            <span>{unclaimed.length === 1 ? "1 Bogen ist" : `${unclaimed.length} Bögen sind`} von vor dem Login und noch keinem Konto zugeordnet ({unclaimed.map((f) => `„${f.title || "Ohne Namen"}“`).join(", ")}).</span>
+            <button type="button" className="btn small" onClick={claim} disabled={busyId === "claim"}>Zu meinem Konto</button>
+          </div>
+        )}
         {!forms ? (
           !error && <p className="muted" role="status">Lädt …</p>
         ) : shown.length === 0 ? (
@@ -148,6 +173,7 @@ function MyForms() {
                     <>
                       <Link className="btn small ghost" href={`/b/${f.id}/bearbeiten?teilen=1`}>Teilen</Link>
                       <Link className="btn small ghost" href={`/b/${f.id}/ergebnisse`}>Ergebnisse</Link>
+                      <Link className="btn small ghost hide-mobile" href={`/b/${f.id}/tafel/steuerung`}>Tafel</Link>
                       <button type="button" className="icon-btn" onClick={() => duplicate(f)} disabled={busyId === f.id} aria-label="Duplizieren"><Icon name="copy" /></button>
                       <button type="button" className="icon-btn danger" onClick={() => trash(f)} disabled={busyId === f.id} aria-label="Löschen"><Icon name="trash" /></button>
                     </>

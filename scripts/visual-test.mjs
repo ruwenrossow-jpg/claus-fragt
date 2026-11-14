@@ -75,8 +75,11 @@ const watch = (p) => {
   });
 };
 const ctx = (viewport, mobile = false) => browser.newContext({ viewport, isMobile: mobile, hasTouch: mobile, deviceScaleFactor: 2, acceptDownloads: true });
-const page = async (viewport, mobile) => {
-  const p = await (await ctx(viewport, mobile)).newPage();
+/** Admin-Seiten brauchen Login; lokal überspringt der Test ihn (localStorage „claus-e2e“, wirkt nur auf localhost). */
+const page = async (viewport, mobile, login = true) => {
+  const c = await ctx(viewport, mobile);
+  if (login) await c.addInitScript(() => localStorage.setItem("claus-e2e", "1"));
+  const p = await c.newPage();
   watch(p);
   return p;
 };
@@ -100,6 +103,22 @@ async function measureMessage(p, name) {
 
 let admin, link, formId, kpis;
 try {
+  // ======================= Login =======================
+  {
+    const p = await page({ width: 1280, height: 900 }, false, false);
+    await p.goto(`${BASE}/b/00000000-0000-4000-8000-000000000000/tafel/steuerung`);
+    await p.waitForURL(/\/anmelden\?weiter=/);
+    check("ohneLoginZumAnmelden", decodeURIComponent(p.url()).includes("weiter=/b/00000000-0000-4000-8000-000000000000/tafel/steuerung"));
+    await p.waitForSelector("text=Link schicken");
+    await p.click("button:has-text('Link schicken')");
+    await p.waitForSelector("text=Bitte gib deine E-Mail-Adresse ein.");
+    check("loginValidierung", await p.evaluate(() => document.activeElement?.id === "email"));
+    await p.screenshot({ path: OUT + "00a-anmelden.png" });
+    await p.setViewportSize(PHONE);
+    await p.screenshot({ path: OUT + "00a-anmelden-handy.png" });
+    await p.close();
+  }
+
   // ======================= Ersteller:in (Desktop) =======================
   admin = await page({ width: 1280, height: 900 });
 

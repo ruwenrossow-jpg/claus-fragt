@@ -1,6 +1,6 @@
 # Plan: Login und Konten für Ersteller:innen
 
-Stand 14.11.2026. **Noch nicht umgesetzt.** Dafür braucht es Ruwens Supabase-Einstellungen und eine Migration.
+Stand 14.11.2026. **Teil 1 umgesetzt:** Anmelden per E-Mail-Link, Admin-Seiten nur mit Login, `owner_id` + „Zu meinem Konto“ (Einrichtung: `docs/LOGIN-EINRICHTEN.md`). **Offen:** RLS-Policies und RPCs unten. Dafür braucht es Ruwens Supabase-Einstellungen und eine Migration.
 Der SQL-Entwurf liegt bewusst in `docs/login-entwurf.sql` (nicht in `supabase/migrations/`), damit ihn niemand versehentlich ausführt.
 
 ## Ziel

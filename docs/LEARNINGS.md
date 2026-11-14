@@ -2,6 +2,8 @@
 
 Neue Einträge oben. Format: Datum – Problem → Lösung/Regel.
 
+- 2026-11-14 (Login): Magic Link mit supabase-js ohne Server: implizite Sitzung aus der Adresse (funktioniert auch, wenn der Link auf einem anderen Gerät geöffnet wird); `emailRedirectTo` muss in Supabase unter Redirect URLs stehen. App bleibt vor der Migration lauffähig: Besitz nur auswerten, wenn `owner_id` in den Zeilen vorkommt.
+
 - 2026-11-14 (Tafel v2): Beamer-Seite mit `height: 100dvh; overflow: hidden` war am Handy kaputt (Knöpfe über dem QR) → unter 700 px Breite/520 px Höhe scrollt die Seite, Leiste klebt unten, QR zuerst. Getrennte Steuerung (Fernbedienung) statt Knöpfen auf dem Beamer; der Beamer bleibt Host, damit auch ein einzelner Bildschirm reicht.
 - 2026-11-14: CSS-Module hashen auch `.btn` → globale Klassen in Modulen nur über `:global(.btn)` ansprechen.
 - 2026-11-14: `page.tsx` darf im App Router nur erlaubte Exporte haben → Hilfsfunktionen in `lib/`.

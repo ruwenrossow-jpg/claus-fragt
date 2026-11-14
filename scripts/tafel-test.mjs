@@ -32,7 +32,9 @@ const watch = (p) => {
   });
 };
 const page = async (viewport, mobile = false) => {
-  const p = await (await browser.newContext({ viewport, isMobile: mobile, hasTouch: mobile, deviceScaleFactor: 2 })).newPage();
+  const c = await browser.newContext({ viewport, isMobile: mobile, hasTouch: mobile, deviceScaleFactor: 2 });
+  await c.addInitScript(() => localStorage.setItem("claus-e2e", "1")); // Login lokal überspringen (wirkt nur auf localhost)
+  const p = await c.newPage();
   watch(p);
   return p;
 };

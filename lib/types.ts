@@ -42,6 +42,8 @@ export interface Form {
   style: string | null;
   settings?: FormSettings | null;
   public_slug?: string | null;
+  /** Konto der Ersteller:in (Migration 20261114120000_besitzer). Fehlt die Spalte noch, ist das Feld undefined. null = Bogen von vor dem Login. */
+  owner_id?: string | null;
   created_at: string;
   updated_at: string;
 }

@@ -109,6 +109,13 @@ export async function duplicateForm(id: string): Promise<Form> {
   });
 }
 
+/** Bögen von vor dem Login dem angemeldeten Konto zuordnen (nur solche ohne Besitzer:in). */
+export async function claimForms(ids: string[], ownerId: string): Promise<void> {
+  ids.forEach(assertId);
+  if (!ids.length) return;
+  unwrap(await supabase.from("forms").update({ owner_id: ownerId }).in("id", ids).is("owner_id", null));
+}
+
 /** Liest die aktuellen settings frisch aus der DB und ergänzt sie (nichts anderes wird überschrieben). */
 async function patchSettings(id: string, patch: Partial<FormSettings>): Promise<void> {
   assertId(id);

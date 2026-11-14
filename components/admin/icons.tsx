@@ -16,6 +16,8 @@ const PATHS = {
   edit: "M4 20h4L19 9l-4-4L4 16v4z",
   board: "M3 4h18v12H3zM12 16v4M8 20h8",
   list: "M8 6h12M8 12h12M8 18h12M4 6h.01M4 12h.01M4 18h.01",
+  logout: "M15 4h4v16h-4M10 8l-4 4 4 4M6 12h10",
+  mail: "M3 6h18v12H3zM3 7l9 6 9-6",
   restart: "M4 12a8 8 0 1 0 2.4-5.7M4 4v5h5",
 } as const;
 
