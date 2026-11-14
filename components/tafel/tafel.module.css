@@ -1,0 +1,60 @@
+/* Tafel (Beamer, Moderation). Groß, ruhig, ohne Scrollen: alles richtet sich nach der Fensterhöhe. Werte aus brand/tokens.css. */
+.page {
+  height: 100dvh; display: grid; grid-template-rows: auto minmax(0, 1fr) auto; gap: 2vh;
+  padding: 3vh 4vw; overflow: hidden;
+  background: var(--survey-bg); color: var(--survey-ink); font-family: var(--font-body);
+}
+.top { display: flex; align-items: center; justify-content: space-between; gap: 2vw; font-size: clamp(16px, 1.6vw, 26px); }
+.title { margin: 0; font-family: var(--font-display); font-size: clamp(18px, 1.8vw, 30px); font-weight: 700; color: var(--inno-navy); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.people { display: inline-flex; align-items: center; gap: 0.5em; padding: 0.3em 0.9em; font-weight: 700; color: var(--inno-navy); background: var(--survey-card); border-radius: var(--radius-pill); white-space: nowrap; }
+.people::before { content: ""; width: 0.55em; height: 0.55em; border-radius: 50%; background: var(--admin-ok); }
+
+.center { min-height: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3vh; text-align: center; }
+.question { margin: 0; max-width: 28ch; font-family: var(--font-display); font-size: clamp(28px, 4.2vw, 76px); line-height: 1.12; color: var(--inno-navy); overflow-wrap: anywhere; }
+.count { margin: 0; font-size: clamp(18px, 2vw, 34px); }
+.count strong { font-family: var(--font-display); font-size: 1.6em; color: var(--inno-red); }
+.hidden { margin: 0; font-size: clamp(16px, 1.6vw, 26px); opacity: 0.7; }
+
+/* Lobby: QR + Aufforderung */
+.lobby { min-height: 0; display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 5vw; }
+.lobby h2 { margin: 0; font-family: var(--font-display); font-size: clamp(30px, 4.5vw, 80px); line-height: 1.1; color: var(--inno-navy); }
+.lobby p { margin: 2vh 0 0; font-size: clamp(18px, 2.2vw, 36px); }
+.url { font-weight: 700; color: var(--inno-red); overflow-wrap: anywhere; }
+.warn { display: flex; align-items: center; gap: 1em; flex-wrap: wrap; font-size: clamp(15px, 1.5vw, 22px) !important; color: var(--admin-danger); }
+.qr { display: block; width: min(500px, 62vh, 40vw); height: auto; aspect-ratio: 1; border: 3px solid var(--survey-ink); border-radius: 24px; background: var(--admin-surface); }
+.mascot { display: block; width: min(170px, 18vh); height: auto; margin-top: 3vh; }
+
+/* Steuerung unten: Zurück · Zeigen · Weiter (auch per Pfeiltasten / Presenter-Klicker) */
+.controls { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+.controls .group { display: flex; gap: 10px; align-items: center; }
+.step { font-size: clamp(14px, 1.3vw, 20px); opacity: 0.75; }
+
+/* Wortwolke */
+.cloud {
+  --unit: clamp(16px, 1.9vw, 34px);
+  display: flex; flex-wrap: wrap; align-items: center; align-content: center; justify-content: center;
+  gap: 0.2em 0.9em; max-width: 92vw; max-height: 52vh; overflow: hidden;
+  font-family: var(--font-display); font-weight: 700; line-height: 1.05;
+}
+.word { font-size: calc(var(--unit) * var(--scale, 1)); transition: font-size 0.6s ease; animation: grow 0.6s ease both; white-space: nowrap; }
+.tone1 { color: var(--inno-navy); }
+.tone2 { color: var(--inno-red); }
+.tone3 { color: var(--survey-accent); }
+.tone4 { color: var(--admin-text); }
+@keyframes grow { from { opacity: 0; transform: scale(0.4); } to { opacity: 1; transform: scale(1); } }
+@media (prefers-reduced-motion: reduce) { .word { animation: none; transition: none; } }
+
+/* Balken (Auswahl, Sterne, Skala, Ja/Nein) */
+.bars { display: flex; flex-direction: column; gap: 1.6vh; width: min(1100px, 86vw); font-size: clamp(16px, 1.8vw, 30px); text-align: left; }
+.barRow { display: grid; grid-template-columns: minmax(0, 14em) 1fr 4.5em; align-items: center; gap: 1em; }
+.barLabel { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.barTrack { height: 1.1em; border-radius: var(--radius-pill); background: var(--survey-card); overflow: hidden; }
+.barFill { height: 100%; border-radius: var(--radius-pill); background: var(--inno-navy); transition: width 0.6s ease; }
+.barPct { text-align: right; font-weight: 700; }
+
+@media (max-width: 700px) {
+  .lobby { grid-template-columns: 1fr; justify-items: center; text-align: center; }
+  .qr { width: min(360px, 80vw); }
+  .mascot { margin-inline: auto; }
+  .barRow { grid-template-columns: minmax(0, 7em) 1fr 3.5em; }
+}

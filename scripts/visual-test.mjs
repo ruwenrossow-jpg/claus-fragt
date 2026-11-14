@@ -193,7 +193,7 @@ try {
   await active().locator("button[aria-label='Antwort D entfernen']").click();
   check("optionEntfernt", (await active().locator("input[aria-label^='Antwort ']").count()) === 3);
   await active().locator("[role=switch]:has-text('Pflicht')").click();
-  check("pflichtAn", (await active().locator("[role=switch]").getAttribute("aria-checked")) === "true");
+  check("pflichtAn", (await active().locator("[role=switch]:has-text('Pflicht')").getAttribute("aria-checked")) === "true");
   // Typwechsel Auswahl → Mehrfachauswahl → Auswahl: Antworten bleiben
   await setKind("Mehrfachauswahl");
   await setKind("Auswahl");
@@ -262,8 +262,17 @@ try {
   await admin.screenshot({ path: OUT + "07-teilen-live.png" });
   check("qrPng", ((await admin.locator("a:has-text('QR-Code als PNG')").getAttribute("href")) ?? "").startsWith("data:image/png"));
   const beamerHref = await admin.locator("a:has-text('Vollbild für den Beamer')").getAttribute("href");
+  check("teilenZuMeinenBoegen", await admin.locator("[role=dialog] [data-to-list]").isVisible());
   await admin.keyboard.press("Escape");
   check("dialogSchliesstMitEsc", (await admin.locator("[role=dialog]").count()) === 0);
+  // Eigener Teilen-Button und „Meine Bögen“ in der mitwandernden Kopfzeile (auch weit unten gescrollt)
+  await admin.mouse.wheel(0, 4000);
+  await admin.waitForTimeout(300);
+  check("kopfzeileMeineBoegenSichtbar", await admin.locator("header [data-header-list]").isVisible());
+  await admin.click("header [data-share]");
+  await admin.waitForSelector("[role=dialog] [role=radiogroup][aria-label=Status]");
+  await admin.screenshot({ path: OUT + "07c-teilen-button.png" });
+  await admin.keyboard.press("Escape");
   await admin.waitForSelector("[data-save=saved]", { timeout: 10000 });
 
   // Beamer-Seite
@@ -410,6 +419,13 @@ try {
       await p.click("button:has-text('Fertig')");
       await p.waitForSelector("text=Wir lesen jede Antwort");
     }
+    // Abschluss: „Schließen“ → Tschüss-Screen (Raster gleich, Zurück vorhanden)
+    await p.waitForTimeout(500);
+    await p.click("button:has-text('Schließen')");
+    await p.waitForSelector("text=Du kannst dieses Fenster jetzt schließen");
+    await measure("tschuess");
+    if (!(await p.locator("[data-back]").count())) errors.push(`${prefix}: kein Zurück auf Tschüss`);
+    if (shots) await p.screenshot({ path: OUT + "16-tschuess.png" });
     await p.close();
     const spread = (k, filter = () => true) => {
       const ys = rows.filter(filter).map((r) => r[k]).filter((y) => y !== null);

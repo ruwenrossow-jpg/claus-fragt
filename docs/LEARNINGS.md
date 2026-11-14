@@ -2,6 +2,11 @@
 
 Neue Einträge oben. Format: Datum – Problem → Lösung/Regel.
 
+- 2026-11-14 (Tafel): Live-Abgleich ohne Migration: Supabase Realtime Broadcast + Presence funktioniert mit dem Publishable Key ohne Tabelle. Spät Hinzukommende bekommen den Stand über einen Herzschlag (alle 2 s) plus „hello“ → sofortige Antwort; Abbruch der Moderation erkennt das Handy am ausbleibenden Herzschlag.
+- 2026-11-14 (Tafel): Den Tafel-Stand NICHT in `forms.settings` legen – der offene Editor schreibt `settings` komplett und würde ihn überschreiben.
+- 2026-11-14 (Tafel): Wortwolke zählt nur Abgaben ab Tafel-Start (Filter auf `responses.created_at` per `!inner`-Join), sonst erscheinen Antworten früherer Events.
+- 2026-11-14: Kopfzeile am 320-px-Handy lief über → `scrollWidth` der `.admin-header` im Test messen; sehr schmale Screens blenden „Ergebnisse“ aus (`hide-xs`).
+
 - 2026-11-14 (Nacht-Runde, Datenschutz): Bögen waren verschwunden, weil „Löschen“ hart löschte und Tests mit breiten Filtern hätten aufräumen können → Soft-Delete (`settings.geloescht`) + Papierkorb, Testbögen nur mit `settings.test`, hartes Löschen nur per REST mit Test-Filter UND exakter id; Sicherung vor jedem Testlauf und Vergleich am Ende.
 - 2026-11-14 (Nacht-Runde): Fehler beim Speichern einer Abgabe erzeugte beim „nochmal“ eine zweite, leere Abgabe (neue id) → id einmal pro Seite erzeugen, Abgabe per Upsert (`ignoreDuplicates`), Antworten ersetzen. Regel: Schreibvorgänge, die der Nutzer wiederholen kann, müssen idempotent sein.
 - 2026-11-14 (Nacht-Runde): Doppeltipp auf WEITER! übersprang die nächste Frage (zweiter Klick traf den neuen Screen) → 400 ms nach jedem Screen-Wechsel Klicks am Haupt-Button ignorieren; laufendes Speichern per Ref sperren (State ist zu spät).

@@ -18,11 +18,22 @@ const DU = {
     button: "Los geht's",
   },
   progress: { first: "Los geht's!", half: "Halbzeit!", last: "Letzte Frage!" },
-  buttons: { next: "WEITER!", back: "Zurück", result: "Ergebnis ansehen", finish: "Fertig", retry: "Nochmal", busy: "Moment …" },
+  buttons: { next: "WEITER!", back: "Zurück", result: "Ergebnis ansehen", finish: "Fertig", retry: "Nochmal", busy: "Moment …", send: "Abschicken", change: "Ändern", close: "Schließen" },
   hints: { optional: "Freiwillig", required: "Bitte beantworte diese Frage.", maxChoices: "Höchstens {max} Antworten" },
   end: { claus: "Schon vorbei? Danke dir!", title: "Deine Antworten sind gespeichert." },
   result: { title: "So haben alle geantwortet", mine: "Deine Antwort", question: "Frage {n}", answers: ["Antwort", "Antworten"] },
   thanks: { title: "Danke!", sub: "Wir lesen jede Antwort, versprochen." },
+  bye: { title: "Tschüss, bis bald!", sub: "Du bist fertig. Du kannst dieses Fenster jetzt schließen." },
+  /** Tafel-Modus (gemeinsam am Beamer) */
+  tafel: {
+    wait: "Schau nach vorne – gleich geht's los!",
+    waitSub: "Die nächsten Fragen beantworten alle gleichzeitig. Sobald eine kommt, erscheint sie hier.",
+    sent: "Angekommen! Schau an die Tafel.",
+    sentSub: "Gleich kommt die nächste Frage. Du kannst deine Antwort noch ändern.",
+    over: "Das war der gemeinsame Teil!",
+    overSub: "Jetzt bist du allein dran: noch {rest}.",
+    overSubNone: "Mehr Fragen gibt's nicht. Tipp auf WEITER!",
+  },
   closed: { title: "Diese Umfrage ist beendet.", sub: "Danke fürs Vorbeischauen!" },
   draft: { title: "Dieser Bogen ist noch nicht live.", sub: "Schau etwas später nochmal vorbei!" },
   gone: { title: "Diesen Bogen gibt es nicht mehr.", sub: "Vielleicht hat sich der Link geändert. Frag am besten dort nach, wo du ihn bekommen hast." },
@@ -49,6 +60,16 @@ const SIE: Copy = {
   end: { claus: "Schon vorbei? Danke Ihnen!", title: "Ihre Antworten sind gespeichert." },
   result: { ...DU.result, mine: "Ihre Antwort" },
   thanks: { ...DU.thanks, sub: "Wir lesen jede Antwort, versprochen." },
+  bye: { title: "Auf Wiedersehen!", sub: "Sie sind fertig. Sie können dieses Fenster jetzt schließen." },
+  tafel: {
+    ...DU.tafel,
+    wait: "Schauen Sie nach vorne – gleich geht's los!",
+    waitSub: "Die nächsten Fragen beantworten alle gleichzeitig. Sobald eine kommt, erscheint sie hier.",
+    sent: "Angekommen! Schauen Sie an die Tafel.",
+    sentSub: "Gleich kommt die nächste Frage. Sie können Ihre Antwort noch ändern.",
+    overSub: "Jetzt sind Sie allein dran: noch {rest}.",
+    overSubNone: "Mehr Fragen gibt es nicht. Bitte auf WEITER! tippen.",
+  },
   draft: { ...DU.draft, sub: "Schauen Sie etwas später nochmal vorbei!" },
   gone: { ...DU.gone, sub: "Vielleicht hat sich der Link geändert. Fragen Sie am besten dort nach, wo Sie ihn bekommen haben." },
   errors: {
@@ -64,6 +85,8 @@ function withEmoji(c: Copy): Copy {
     start: { ...c.start, claus: c.start.claus.replace("!", "! 👋") },
     progress: { ...c.progress, half: `${c.progress.half} 💪`, last: `${c.progress.last} 🏁` },
     thanks: { ...c.thanks, title: `${c.thanks.title} 🎉` },
+    bye: { ...c.bye, title: `${c.bye.title} 👋` },
+    tafel: { ...c.tafel, wait: `${c.tafel.wait} 👀`, sent: `${c.tafel.sent} 👀` },
   };
 }
 

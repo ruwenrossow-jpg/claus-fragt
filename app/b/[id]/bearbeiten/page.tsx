@@ -50,6 +50,7 @@ export default function EditorPage() {
     if (previewIndex >= 0) setStep({ kind: "question", index: previewIndex });
   }, [activeId, previewIndex]);
 
+  const tafelCount = playable.filter((q) => q.settings.tafel).length;
   if (!form) return <PageState error={draft.loadError} onRetry={draft.reload} />;
 
   async function remove(qid: string) {
@@ -89,7 +90,7 @@ export default function EditorPage() {
     setStep(START);
   };
 
-  const player = <SurveyPlayer key={previewRun} form={form} questions={previewQuestions} step={step} onStepChange={setStep} />;
+  const player = <SurveyPlayer key={previewRun} form={form} questions={previewQuestions} step={step} onStepChange={setStep} onExit={restartPreview} />;
   const restart = (
     <button type="button" className={`btn small ${styles.restart}`} onClick={restartPreview} data-restart>
       <Icon name="restart" size={16} /> Von vorne
@@ -101,7 +102,12 @@ export default function EditorPage() {
     <>
       <AdminHeader>
         <SaveStatus state={draft.saveState} onRetry={draft.retry} />
-        <Link className="btn ghost" href={`/b/${id}/ergebnisse`} aria-label="Ergebnisse"><Icon name="chart" size={18} /> <span className="hide-mobile">Ergebnisse</span></Link>
+        <Link className="btn ghost" href="/meine-boegen" aria-label="Meine Bögen" data-header-list><Icon name="list" size={18} /> <span className="hide-mobile">Meine Bögen</span></Link>
+        <Link className="btn ghost hide-xs" href={`/b/${id}/ergebnisse`} aria-label="Ergebnisse"><Icon name="chart" size={18} /> <span className="hide-mobile">Ergebnisse</span></Link>
+        {tafelCount > 0 && (
+          <a className="btn ghost" href={`/b/${id}/tafel`} target="_blank" rel="noreferrer" aria-label="Tafel starten" data-header-tafel><Icon name="board" size={18} /> <span className="hide-mobile">Tafel</span></a>
+        )}
+        <button type="button" className="btn" onClick={() => setSharing(true)} aria-label="Teilen" data-share><Icon name="share" size={18} /> <span className="hide-mobile">Teilen</span></button>
         <button type="button" className="btn primary" onClick={finish} disabled={finishing} data-cta>
           <Icon name="check" size={18} /> <span className="hide-mobile">Speichern &amp; abschließen</span><span className="only-mobile">Abschließen</span>
         </button>
@@ -186,6 +192,7 @@ export default function EditorPage() {
             warnings={formWarnings(questions, playable.length)}
             onStatus={(status) => draft.patchForm({ status }, true)}
             onClose={() => setSharing(false)}
+            tafelCount={tafelCount}
           />
         )}
       </main>

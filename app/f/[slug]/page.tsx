@@ -6,6 +6,7 @@ import { COPY_DEFAULT } from "@/brand/copy";
 import { SurveyMessage } from "@/components/survey/SurveyMessage";
 import { SurveyPlayer } from "@/components/survey/SurveyPlayer";
 import { DataError, loadAnswers, loadPublicForm, newResponseId, saveResponse } from "@/lib/data";
+import { TafelState, joinTafel } from "@/lib/tafel";
 import { AnswerValue, Form, Question, isTrashed } from "@/lib/types";
 
 type State = { kind: "loading" } | { kind: "ready"; form: Form; questions: Question[] } | { kind: "gone" } | { kind: "offline" };
@@ -16,6 +17,10 @@ export default function FillPage() {
   const [state, setState] = useState<State>({ kind: "loading" });
   // Eine Abgabe = eine feste id: erneutes Speichern (Doppelklick, Fehler, zurück + ändern) ersetzt statt zu verdoppeln
   const responseId = useRef(newResponseId());
+  const [tafel, setTafel] = useState<TafelState | null>(null);
+  // Tafel-Modus: nur Bögen mit Tafel-Fragen hören auf die Moderation
+  const formId = state.kind === "ready" && state.form.status === "published" && state.questions.some((q) => q.settings?.tafel) ? state.form.id : null;
+  useEffect(() => (formId ? joinTafel(formId, setTafel) : undefined), [formId]);
 
   const load = useCallback(() => {
     let cancelled = false;
@@ -43,6 +48,7 @@ export default function FillPage() {
         questions={questions}
         onSave={(values: Record<string, AnswerValue>) => saveResponse(form.id, values, responseId.current)}
         loadAnswers={(ids) => loadAnswers(form.id, ids)}
+        tafel={tafel}
       />
     </div>
   );

@@ -14,7 +14,8 @@ Stand 14.11.2026 (Nacht-Runde Builder v2). ✅ fertig · ⚠️ teilweise · ❌
 | ✅ Barrierefreiheit (Grundlagen) | Fragen als Gruppen-Name für Screenreader, Felder mit Namen, Fokus im Dialog gefangen und zurückgegeben, Auswahllisten mit Pfeiltasten, sichtbarer Tastatur-Fokus |
 | ✅ Metadaten | Seitentitel je Seite, Link-Vorschau (Open Graph) mit Bogen-Name, Favicon + Apple-Icon, `noindex` |
 | ✅ Performance | Maskottchen als WebP in Anzeigegröße (≈ 25 statt 220–400 KB), Logo 20 statt 107 KB |
-| ✅ Tests | `scripts/visual-test.mjs`: alle Journeys, Raster-Messung (0 px Abweichung), Testbögen markiert und sauber aufgeräumt |
+| ✅ Tafel (Menti) | Fragen gemeinsam am Beamer: QR, „Handys dabei“, Antwortzähler, Zeigen, Wortwolke/Balken, Presenter-Klicker; ohne Tafel normale Fragen |
+| ✅ Tests | `scripts/visual-test.mjs` + `scripts/tafel-test.mjs` (3 Handys gleichzeitig): alle Journeys, Raster-Messung (0 px Abweichung), Testbögen markiert und sauber aufgeräumt |
 
 ## Fehlt noch
 | Bereich | Was | Wer / wie |

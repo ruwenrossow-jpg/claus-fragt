@@ -62,6 +62,8 @@ export interface QuestionSettings {
   /** v1: Überschrift in der Antwort-Box (wird noch angezeigt, aber nicht mehr bearbeitet) */
   boxTitle?: string;
   placeholder?: string;
+  /** Tafel-Modus (wie Menti): Frage wird gemeinsam am Beamer beantwortet (Freitext = Wortwolke). Ohne laufende Tafel normal im Bogen. */
+  tafel?: boolean;
 }
 
 export interface Question {

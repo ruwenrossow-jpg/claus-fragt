@@ -44,8 +44,10 @@
 .kind { margin-top: -21px; }
 .cardBody { margin-top: 14px; }
 .hints { margin: 12px 0 0; padding: 8px 12px 8px 28px; font-size: 14px; color: var(--admin-warn-text); background: var(--admin-warn-bg); border-radius: var(--radius-admin-s); }
+.tafelNote { margin: 12px 0 0; padding: 8px 12px; font-size: 14px; color: var(--inno-navy); background: var(--admin-navy-soft); border-radius: var(--radius-admin-s); }
 .cardFoot { display: flex; align-items: center; justify-content: flex-end; gap: 4px; margin-top: 18px; padding-top: 12px; border-top: 1px solid var(--admin-border); }
 .footDivider { width: 1px; height: 26px; margin: 0 12px; background: var(--admin-border); }
+@media (max-width: 640px) { .cardFoot { flex-wrap: wrap; } .footDivider { margin: 0 6px; } }
 
 .addQuestion {
   display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; padding: 16px;
@@ -133,3 +135,5 @@
 .qr { border: 1px solid var(--admin-border); border-radius: var(--radius-admin-s); }
 .qrActions { display: flex; flex-direction: column; gap: 8px; flex: 1; min-width: 200px; }
 .qrActions .btn { justify-content: center; }
+.shareTafel { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-top: 18px; padding: 12px 14px; background: var(--admin-navy-soft); border-radius: var(--radius-admin-s); }
+.shareFoot { display: flex; justify-content: space-between; gap: 10px; flex-wrap: wrap; margin-top: 22px; padding-top: 16px; border-top: 1px solid var(--admin-border); }

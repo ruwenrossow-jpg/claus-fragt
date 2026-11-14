@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { Modal, useDialog } from "@/components/admin/Dialog";
 import { Icon } from "@/components/admin/icons";
 import { QrCode, useQrDataUrl } from "@/components/QrCode";
@@ -12,10 +13,12 @@ interface Props {
   warnings: Warning[];
   onStatus: (status: FormStatus) => void;
   onClose: () => void;
+  /** Anzahl der Tafel-Fragen (0 = kein Tafel-Hinweis) */
+  tafelCount?: number;
 }
 
 /** Teilen wie bei Google Forms: Live schalten → kurzer Link + QR-Code (PNG, Beamer-Vollbild) → Status. */
-export function ShareDialog({ form, warnings, onStatus, onClose }: Props) {
+export function ShareDialog({ form, warnings, onStatus, onClose, tafelCount = 0 }: Props) {
   const dialog = useDialog();
   const slug = form.public_slug ?? form.id;
   const url = `${typeof window !== "undefined" ? window.location.origin : ""}/f/${slug}`;
@@ -74,6 +77,18 @@ export function ShareDialog({ form, warnings, onStatus, onClose }: Props) {
             <a className="btn ghost" href={`/f/${slug}`} target="_blank" rel="noreferrer" tabIndex={isDraft ? -1 : 0}>Bogen öffnen</a>
           </div>
         </div>
+      </div>
+
+      {tafelCount > 0 && (
+        <div className={styles.shareTafel}>
+          <span>{tafelCount === 1 ? "1 Frage läuft" : `${tafelCount} Fragen laufen`} gemeinsam an der Tafel.</span>
+          <a className="btn" href={`/b/${form.id}/tafel`} target="_blank" rel="noreferrer" data-tafel-open>Tafel starten</a>
+        </div>
+      )}
+
+      <div className={styles.shareFoot}>
+        <button type="button" className="btn ghost" onClick={onClose}>Weiter bearbeiten</button>
+        <Link className="btn primary" href="/meine-boegen" data-to-list><Icon name="back" size={18} /> Zu meinen Bögen</Link>
       </div>
     </Modal>
   );

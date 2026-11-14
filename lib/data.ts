@@ -221,6 +221,27 @@ export async function loadAnswers(formId: string, questionIds?: string[]): Promi
   });
 }
 
+/** Tafel: Antworten auf diese Fragen aus Abgaben ab `since` (ISO) – ältere Events tauchen in der Wortwolke nicht auf. */
+export async function loadAnswersSince(formId: string, questionIds: string[], since: string): Promise<Answer[]> {
+  assertId(formId);
+  if (!questionIds.length) return [];
+  return fetchAll<Answer>((a, b) =>
+    supabase
+      .from("answers")
+      .select("response_id, question_id, value, responses!inner(form_id, created_at)")
+      .eq("responses.form_id", formId)
+      .gte("responses.created_at", since)
+      .in("question_id", questionIds)
+      .range(a, b)
+  );
+}
+
+/** Nur den Status setzen (z. B. „Live schalten“ von der Tafel aus), ohne Fragen oder settings anzufassen. */
+export async function setFormStatus(id: string, status: Form["status"]): Promise<void> {
+  assertId(id);
+  unwrap(await supabase.from("forms").update({ status }).eq("id", id));
+}
+
 // ---------- Metadaten (Server: Seitentitel, Link-Vorschau) ----------
 
 /** Titel + Beschreibung für Seitentitel und Open-Graph-Vorschau. null = nicht gefunden, im Papierkorb oder Fehler. */

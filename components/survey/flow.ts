@@ -1,16 +1,22 @@
-/** Ablauf eines Bogens als reine Daten – keine UI. Reihenfolge laut Prototyp: Start → Fragen → Ende → Ergebnisse → Fertig. */
+/**
+ * Ablauf eines Bogens als reine Daten – keine UI. Reihenfolge laut Prototyp: Start → Fragen → Ende → Ergebnisse → Fertig → Tschüss.
+ * Läuft eine Tafel (Menti-Modus), kommt nach dem Start der gemeinsame Teil („tafel“), danach die übrigen Fragen.
+ */
 export type Step =
   | { kind: "start" }
+  | { kind: "tafel" }
   | { kind: "question"; index: number }
   | { kind: "over" }
   | { kind: "result"; index: number }
-  | { kind: "done" };
+  | { kind: "done" }
+  | { kind: "bye" };
 
 export const START: Step = { kind: "start" };
 
 export function nextStep(step: Step, questionCount: number, resultCount: number): Step {
   switch (step.kind) {
     case "start":
+    case "tafel":
       return questionCount ? { kind: "question", index: 0 } : { kind: "over" };
     case "question":
       return step.index + 1 < questionCount ? { kind: "question", index: step.index + 1 } : { kind: "over" };
@@ -19,21 +25,30 @@ export function nextStep(step: Step, questionCount: number, resultCount: number)
     case "result":
       return step.index + 1 < resultCount ? { kind: "result", index: step.index + 1 } : { kind: "done" };
     case "done":
+      return { kind: "bye" };
+    case "bye":
       return step;
   }
 }
 
-/** null = kein „zurück“ (nur auf dem Start-Screen). Ab der ersten Frage geht es überall zurück, auch von Ende, Ergebnis und Fertig. */
-export function prevStep(step: Step, questionCount: number, resultCount = 0): Step | null {
+/**
+ * null = kein „zurück“ (Start und der gemeinsame Tafel-Teil, den die Moderation steuert).
+ * Ab der ersten Frage geht es überall zurück, auch von Ende, Ergebnis, Fertig und Tschüss.
+ * viaTafel: der Bogen lief über die Tafel → vor der ersten eigenen Frage liegt der Tafel-Screen.
+ */
+export function prevStep(step: Step, questionCount: number, resultCount = 0, viaTafel = false): Step | null {
+  const before: Step = viaTafel ? { kind: "tafel" } : START;
   switch (step.kind) {
     case "question":
-      return step.index === 0 ? START : { kind: "question", index: step.index - 1 };
+      return step.index === 0 ? before : { kind: "question", index: step.index - 1 };
     case "over":
-      return questionCount ? { kind: "question", index: questionCount - 1 } : START;
+      return questionCount ? { kind: "question", index: questionCount - 1 } : before;
     case "result":
       return step.index === 0 ? { kind: "over" } : { kind: "result", index: step.index - 1 };
     case "done":
       return resultCount ? { kind: "result", index: resultCount - 1 } : { kind: "over" };
+    case "bye":
+      return { kind: "done" };
     default:
       return null;
   }

@@ -9,6 +9,8 @@ app/                      Next.js-Seiten (nur Zusammenbau, keine Logik)
   b/[id]/ergebnisse       Kennzahlen (nur wenn passende Daten da sind), Filter nach Antwort, Auswertung je Frage, CSV
   f/[slug]                Öffentlicher Link (alte /f/<uuid>-Links gehen weiter)
   f/[slug]/qr             QR-Vollbild für den Beamer
+  b/[id]/tafel            Tafel (Menti-Modus) für den Beamer: QR + Zähler „Handys dabei“ → Frage für alle → Antwortzähler →
+                          „Zeigen“ → Wortwolke (Freitext) / Balken → nächste Frage; Steuerung auch per Pfeiltasten/Presenter-Klicker
   */layout.tsx            nur Metadaten (Seitentitel, Link-Vorschau) per generateMetadata → formMeta() in lib/data.ts
   not-found, error, global-error   Hinweis-Screens im Claus-Raster (SurveyMessage)
 brand/                    Builder-Box: tokens.css, copy.ts, themes.ts (Inspirierend/Lernend), BUILDERBOOK.md
@@ -17,6 +19,9 @@ components/admin/         Bausteine der Admin-Oberfläche: Dialog/Toast (useDial
 components/survey/        SurveyPlayer (Ablauf), flow.ts (Screen-Logik), context.ts (spielbare Fragen, Texte), ResultView
 components/builder/       QuestionCard, FormHeadCard, ArtChoice, SaveStatus, ShareDialog, PreviewTabs, useFormDraft (Autosave)
 question-types/           Fragetyp-Registry: je Typ Input, Editor, Auswertung, Format
+lib/tafel.ts              Tafel-Abgleich über Supabase Realtime (Broadcast + Presence, keine Tabelle): hostTafel / joinTafel
+lib/wordcloud.ts          Freitext → Begriffe mit Häufigkeit (≤ 3 Wörter = ein Begriff, sonst Wörter ohne Füllwörter)
+components/tafel/         WordCloud + Beamer-Styles
 lib/data.ts               EINZIGER Datenbankzugriff (Supabase); DataError (not_found | offline | other), trashForm/restoreForm
 lib/types.ts              Datentypen (Spiegel der Tabellen)
 lib/text.ts               fillVars ({event}, {thema}, {anzahl}), wordCount
@@ -60,7 +65,16 @@ Live schalten / Status ändern speichert sofort (`patchForm(patch, true)`). „S
 | Neuer Screen im Ablauf | `components/survey/flow.ts` + Fall in `SurveyPlayer` |
 
 ## Ablauf Teilnehmende
-Start → Fragen (jeweils WEITER!) → (Speichern) → Ende → Ergebnisse (eigene Antwort vs. alle) → Fertig.
+Start → Fragen (jeweils WEITER!) → (Speichern) → Ende → Ergebnisse (eigene Antwort vs. alle) → Fertig → „Schließen“ → Tschüss.
+„Schließen“ versucht `window.close()` (geht nur bei per Skript geöffneten Fenstern) und zeigt sonst den Tschüss-Screen; in der Builder-Vorschau startet es von vorne.
+
+### Tafel-Modus (Menti)
+Fragen mit `settings.tafel = true` laufen gemeinsam, **wenn** die Moderation `/b/<id>/tafel` offen hat. Die Tafel sendet alle 2 s ihren Stand
+(Lobby · Frage x · Ende) über den Realtime-Kanal `tafel-<formId>`; Handys zählen per Presence. Handys, die 7 s nichts hören, gelten als „Tafel aus“.
+Handy: Start → Screen „tafel“ (warten · Frage + „Abschicken“ · „Angekommen“ + „Ändern“) → bei Ende/Tafel weg: „Das war der gemeinsame Teil“ + WEITER!
+→ übrige Fragen allein (+ verpasste Pflichtfragen der Tafel) → Ende … Jedes „Abschicken“ speichert die Abgabe (idempotent, gleiche Abgabe-id).
+Ohne laufende Tafel sind Tafel-Fragen ganz normale Fragen. Die Tafel zählt nur Abgaben ab ihrem Start (`loadAnswersSince`), alte Events tauchen nicht auf.
+Ihr Stand liegt im localStorage der Moderation („Neu starten“ setzt ihn zurück).
 Ab der ersten Frage hat jeder Screen „Zurück“ (`prevStep` in `flow.ts`, auch Ende/Ergebnis/Fertig).
 Die Seite erzeugt **einmal** eine Abgabe-id (`newResponseId`); `saveResponse` ist idempotent (Upsert der Abgabe, Antworten ersetzen).
 Dadurch erzeugen Zurück + Ändern, Doppeltipp und „nochmal versuchen“ nach einem Netzfehler nie eine zweite Abgabe.
