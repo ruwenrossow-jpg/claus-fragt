@@ -51,3 +51,9 @@ Neue Einträge oben. Format: Datum – Problem → Lösung/Regel.
 - 2026-11-13: Repo war beim Anlegen des Vercel-Projekts leer, Preset stand auf „Other“ → `vercel.json` mit `framework: nextjs`.
 - 2026-11-13: Bilder/Dateien aus WhatsApp kommen beim Agenten nicht an → Ruwen lädt sie als Kommentar im PR hoch, der Agent holt sie per GitHub-API.
 - 2026-11-13: Prototyp-Farben nicht schätzen, sondern per Canvas aus den PNGs auslesen (`getImageData`).
+
+## 14.11. Ablauf-Idee (Hover-Vorschläge + Schiene)
+- Hover am Handy: `onPointerEnter` nur bei `pointerType === "mouse"` öffnen, sonst feuert iOS beim Tippen erst Hover, dann Klick → Popover geht sofort wieder zu. Klick öffnet immer, Tippen außerhalb schließt.
+- Popover braucht ein transparentes Polster zum Feld (Brücke), sonst schließt `pointerleave` beim Rüberfahren.
+- Sticky-Schiene per IntersectionObserver (`!isIntersecting && top < 0`); Desktop in der 40-px-Lücke zwischen Karten und Handy-Vorschau, damit sie nichts verdeckt.
+- Screenshots von Popovers erst nach der Einblend-Animation (300 ms warten), sonst wirken sie durchsichtig.

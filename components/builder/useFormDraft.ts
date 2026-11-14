@@ -145,6 +145,16 @@ export function useFormDraft(id: string) {
       });
       return q.id;
     },
+    /** Vorschlag aus der Ablauf-Idee: vor der ersten Frage eines späteren Bereichs einfügen, sonst ans Ende. */
+    addSuggested(kind: QuestionKind, patch: Partial<Question>): string {
+      const base = newQuestion(id, kind);
+      const q: Question = { ...base, ...patch, settings: { ...base.settings, ...patch.settings } };
+      changeQuestions((qs) => {
+        const i = q.step == null ? -1 : qs.findIndex((x) => x.step != null && x.step > q.step!);
+        return i < 0 ? [...qs, q] : [...qs.slice(0, i), q, ...qs.slice(i)];
+      });
+      return q.id;
+    },
     removeQuestion(qid: string) {
       touch({ questions: latest.current.questions.filter((q) => q.id !== qid), removed: [...latest.current.removed, qid] });
     },

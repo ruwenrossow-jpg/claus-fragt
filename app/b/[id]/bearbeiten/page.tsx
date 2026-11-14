@@ -7,6 +7,7 @@ import { AdminHeader } from "@/components/AdminHeader";
 import { useDialog } from "@/components/admin/Dialog";
 import { Icon } from "@/components/admin/icons";
 import { PageState } from "@/components/admin/PageState";
+import { AblaufIdee } from "@/components/builder/AblaufIdee";
 import { FormHeadCard } from "@/components/builder/FormHeadCard";
 import { PreviewTabs } from "@/components/builder/PreviewTabs";
 import { QuestionCard } from "@/components/builder/QuestionCard";
@@ -132,6 +133,20 @@ export default function EditorPage() {
         <div className={styles.layout}>
           <div className={styles.cards}>
             <FormHeadCard form={form} onPatch={(p) => draft.patchForm(p)} />
+            <AblaufIdee
+              style={form.style}
+              questions={questions}
+              onAdd={(v, step) =>
+                focusNew(
+                  draft.addSuggested(v.kind, {
+                    label: v.label,
+                    step,
+                    ...(v.options && { options: [...v.options] }),
+                    ...((v.kpi || v.maxChoices) && { settings: { ...(v.kpi && { kpi: v.kpi }), ...(v.maxChoices && { maxChoices: v.maxChoices }) } }),
+                  })
+                )
+              }
+            />
 
             {questions.length === 0 && <p className={styles.empty}>Noch keine Fragen. Füge die erste hinzu – Schritt für Schritt.</p>}
             {questions.map((q, i) => (

@@ -1,6 +1,6 @@
 # Plan: Framework und Tonalität als stille Begleitung im Editor
 
-Stand 14.11.2026. Nur Plan, noch nichts gebaut. Ruwens Vorgabe: „intuitiv und ohne Eingriff in das Handeln – nur als simple Begleitung
+Stand 14.11.2026. **Gebaut (Ruwens Wunsch 14.11.):** „Ablauf-Idee“ unter der Kopf-Karte – 5 Schritte mit typischer Frageart, Drüberfahren/Antippen zeigt Vorschläge, Klick legt die Frage an (`questions.step`); weggescrollt sitzt sie als kleine Schiene am rechten Rand. Inhalte in `lib/ablauf.ts` (Platzhalter aus v1, bis Ruwens 5 Bereiche da sind). Test: `scripts/ablauf-test.mjs`. Ruwens Vorgabe: „intuitiv und ohne Eingriff in das Handeln – nur als simple Begleitung
 in den Erstellprozess integrieren“. Dazu: „inspirierend oder lernend hat noch keinen spürbaren Impact“.
 
 ## Grundsätze

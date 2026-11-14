@@ -1,0 +1,76 @@
+/* Ablauf-Idee: Leiste unter der Kopf-Karte + kleine Schiene am rechten Rand beim Scrollen. Werte aus brand/tokens.css. */
+
+.strip { padding: 14px 18px 16px; background: var(--admin-surface); border: 1px solid var(--admin-border); border-radius: var(--radius-admin); }
+.head { margin: 0 0 10px; font-size: 14px; color: var(--admin-muted); }
+.head strong { color: var(--inno-navy); font-weight: 700; margin-right: 4px; }
+
+.list, .railList { list-style: none; margin: 0; padding: 0; }
+.list { position: relative; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 8px; }
+.item { position: static; min-width: 0; }
+
+/* Feld: Nummer + Bereich + Frageart; Linie verbindet die Schritte */
+.field {
+  position: relative; display: flex; align-items: center; gap: 8px; width: 100%; padding: 8px 10px;
+  font: inherit; text-align: left; color: var(--admin-text); cursor: default;
+  background: var(--admin-hover); border: 1.5px solid transparent; border-radius: var(--radius-admin-s);
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+.list .item:not(:last-child) .field::after {
+  content: ""; position: absolute; top: 50%; right: -9px; width: 8px; height: 1.5px; background: var(--admin-border);
+}
+.field:hover, .field[aria-expanded="true"] { border-color: var(--inno-navy); background: var(--admin-navy-soft); }
+.field:focus-visible { outline: 2px solid var(--inno-navy); outline-offset: 2px; }
+.no {
+  flex: none; display: inline-grid; place-items: center; width: 24px; height: 24px;
+  font-size: 13px; font-weight: 700; color: var(--inno-navy); background: var(--admin-surface); border-radius: 50%;
+}
+.field[data-done] .no { color: var(--admin-surface); background: var(--inno-navy); }
+.text { display: flex; flex-direction: column; min-width: 0; line-height: 1.2; }
+.text strong { font-size: 14px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.text span { font-size: 12px; color: var(--admin-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+/* Vorschläge: in der Leiste unter den Feldern, an der Schiene links daneben. Polster = Brücke für die Maus. */
+.popWrap { position: absolute; z-index: 20; top: 100%; left: 0; width: min(380px, 100%); padding-top: 8px; animation: pop 0.14s ease-out; }
+.pop { padding: 14px 14px 10px; background: var(--admin-surface); border: 1px solid var(--admin-border); border-radius: var(--radius-admin); box-shadow: var(--admin-shadow-pop); }
+.popHead { margin: 0; font-size: 15px; color: var(--inno-navy); }
+.popHead span { margin-left: 6px; font-size: 13px; color: var(--admin-muted); }
+.warum { margin: 4px 0 8px; font-size: 13px; color: var(--admin-muted); }
+.vorschlaege { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 2px; }
+.vorschlag {
+  display: flex; align-items: center; justify-content: space-between; gap: 10px; width: 100%; padding: 8px 10px;
+  font: inherit; font-size: 15px; text-align: left; color: var(--admin-text); cursor: pointer;
+  background: none; border: 0; border-radius: var(--radius-admin-s);
+}
+.vorschlag small { display: block; font-size: 12px; color: var(--admin-muted); }
+.vorschlag svg { flex: none; color: var(--inno-navy); }
+.vorschlag:hover, .vorschlag:focus-visible { background: var(--admin-navy-soft); outline: none; }
+@keyframes pop { from { opacity: 0; transform: translateY(-4px); } }
+
+/* Schiene: klein, mittig am rechten Rand. Breit: in der Lücke zwischen Karten und Handy-Vorschau. */
+.rail {
+  position: fixed; z-index: 6; top: 50%; right: 8px; transform: translateY(-50%);
+  padding: 6px; background: var(--admin-surface); border: 1px solid var(--admin-border); border-radius: var(--radius-pill);
+  box-shadow: var(--admin-shadow); animation: railIn 0.18s ease-out;
+}
+@media (min-width: 1001px) { .rail { right: calc(max(0px, (100vw - 1180px) / 2) + 20px + 360px + 20px); transform: translate(50%, -50%); } }
+.railList { display: flex; flex-direction: column; gap: 6px; }
+.rail .item { position: relative; }
+.rail .field { justify-content: center; width: 32px; height: 32px; padding: 0; border-radius: 50%; background: transparent; }
+.rail .field:hover, .rail .field[aria-expanded="true"] { background: var(--admin-navy-soft); }
+.rail .no { background: var(--admin-hover); }
+.rail .field[data-done] .no { background: var(--inno-navy); }
+.rail .popWrap { top: -10px; left: auto; right: 100%; width: 320px; max-width: calc(100vw - 70px); padding: 0 12px 0 0; }
+@keyframes railIn { from { opacity: 0; } }
+
+@media (max-width: 640px) {
+  .strip { padding: 12px 10px 12px; }
+  .list { gap: 6px; }
+  .field { flex-direction: column; align-items: center; gap: 4px; padding: 8px 2px; text-align: center; }
+  .text { align-items: center; max-width: 100%; }
+  .text strong { font-size: 12px; white-space: normal; overflow-wrap: anywhere; line-height: 1.15; }
+  .text span { font-size: 11px; }
+  .list .item:not(:last-child) .field::after { right: -7px; width: 6px; }
+  .popWrap { width: 100%; }
+  .rail { right: 4px; padding: 4px; }
+  .rail .field { width: 28px; height: 28px; }
+}
