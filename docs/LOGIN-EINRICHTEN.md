@@ -11,6 +11,7 @@ verlangen die Anmeldung; der Teilnehmer-Link `/f/<slug>` und der QR-Code brauche
 
 Hinweise
 - Ohne Schritt 1 führt der Link in der Mail ins Leere (Supabase leitet sonst auf die Site URL, z. B. localhost).
+- **Passwort:** Nach der ersten Anmeldung per Link im Konto-Menü (oben rechts) „Passwort festlegen“ – danach „Mit Passwort“ ohne Mail. Supabase schickt ohne SMTP nur ~2 Mails pro Stunde.
 - Ohne Schritt 2 funktioniert der Login trotzdem, nur sieht dann jede angemeldete Person alle Bögen.
 - Supabase verschickt ohne eigenen Mail-Versand nur wenige Mails pro Stunde und nur an Mitglieder des Supabase-Teams.
   Für weitere Ersteller:innen: **Authentication → Emails → SMTP** (z. B. InnoNord-Postfach).

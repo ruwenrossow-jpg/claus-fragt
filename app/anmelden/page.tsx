@@ -7,18 +7,41 @@ import { getTheme } from "@/brand/themes";
 import { AdminHeader } from "@/components/AdminHeader";
 import { Icon } from "@/components/admin/icons";
 import styles from "@/components/admin/admin.module.css";
-import { sendLoginLink, useSession } from "@/lib/auth";
+import b from "@/components/builder/builder.module.css";
+import { sendLoginLink, signInWithPassword, useSession } from "@/lib/auth";
 
 /** Nur eigene Seiten als Ziel (kein Weiterleiten auf fremde Adressen). */
 const safeNext = (v: string | null) => (v && v.startsWith("/") && !v.startsWith("//") ? v : "/meine-boegen");
 
-/** Anmelden per E-Mail-Link: Adresse eingeben → Link in der Mail öffnen (auf jedem Gerät) → angemeldet, zurück zur gewünschten Seite. */
+/**
+ * Anmelden: mit Passwort (sofort, ohne Mail) oder per E-Mail-Link (erstes Mal / Passwort vergessen).
+ * Supabase verschickt ohne eigenen Mail-Versand nur wenige Mails pro Stunde – daher Passwort als Standard, sobald eins gesetzt ist.
+ * Das Passwort legt man angemeldet im Konto-Menü fest.
+ */
+type Mode = "passwort" | "link";
+const MODE_KEY = "claus-login-mode";
 function Login() {
   const router = useRouter();
   const params = useSearchParams();
   const next = safeNext(params.get("weiter"));
   const session = useSession();
   const [email, setEmail] = useState("");
+  const [password, setPw] = useState("");
+  const [mode, setModeState] = useState<Mode>("link");
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem(MODE_KEY);
+      if (saved === "passwort" || saved === "link") setModeState(saved);
+      setEmail(localStorage.getItem("claus-login-email") ?? "");
+    } catch {}
+  }, []);
+  const setMode = (m: Mode) => {
+    setModeState(m);
+    setError(null);
+    try {
+      localStorage.setItem(MODE_KEY, m);
+    } catch {}
+  };
   const [state, setState] = useState<"idle" | "busy" | "sent">("idle");
   const [error, setError] = useState<string | null>(null);
   const input = useRef<HTMLInputElement>(null);
@@ -36,9 +59,21 @@ function Login() {
       input.current?.focus();
       return;
     }
+    if (mode === "passwort" && !password) {
+      setError("Bitte gib dein Passwort ein.");
+      return;
+    }
     setError(null);
     setState("busy");
     try {
+      localStorage.setItem("claus-login-email", email.trim());
+    } catch {}
+    try {
+      if (mode === "passwort") {
+        await signInWithPassword(email, password);
+        setState("idle"); // Sitzung da → useEffect leitet weiter
+        return;
+      }
       await sendLoginLink(email, next);
       setState("sent");
     } catch (err) {
@@ -65,12 +100,30 @@ function Login() {
           ) : (
             <form onSubmit={submit} noValidate>
               <h2>Anmelden</h2>
-              <p>Mit deiner E-Mail kommst du auf jedem Gerät an deine Bögen. Kein Passwort – du bekommst einen Link.</p>
+              <div className={b.segmented} role="radiogroup" aria-label="Anmelden mit" style={{ marginBottom: 14 }}>
+                <button type="button" role="radio" aria-checked={mode === "passwort"} className={b.segment} onClick={() => setMode("passwort")} data-mode-passwort>Mit Passwort</button>
+                <button type="button" role="radio" aria-checked={mode === "link"} className={b.segment} onClick={() => setMode("link")} data-mode-link>Link per Mail</button>
+              </div>
+              <p>
+                {mode === "passwort"
+                  ? "Sofort drin, ohne Mail. Das Passwort legst du einmal im Konto-Menü fest (oben rechts, nach der Anmeldung per Link)."
+                  : "Du bekommst einen Link per Mail – gut fürs erste Mal oder wenn du das Passwort vergessen hast."}
+              </p>
               <label className="field-label" htmlFor="email">E-Mail</label>
-              <input ref={input} id="email" type="email" inputMode="email" autoComplete="email" value={email} onChange={(e) => { setEmail(e.target.value); setError(null); }} placeholder="name@beispiel.de" aria-invalid={Boolean(error)} aria-describedby={error ? "login-error" : undefined} />
+              <input ref={input} id="email" type="email" inputMode="email" autoComplete={mode === "passwort" ? "username" : "email"} value={email} onChange={(e) => { setEmail(e.target.value); setError(null); }} placeholder="name@beispiel.de" aria-invalid={Boolean(error)} aria-describedby={error ? "login-error" : undefined} />
+              {mode === "passwort" && (
+                <>
+                  <label className="field-label" htmlFor="password">Passwort</label>
+                  <input id="password" type="password" autoComplete="current-password" value={password} onChange={(e) => { setPw(e.target.value); setError(null); }} />
+                </>
+              )}
               {error && <p id="login-error" className="error" role="alert">{error}</p>}
               <button type="submit" className="btn primary big wide" disabled={state === "busy"} style={{ marginTop: 16 }}>
-                <Icon name="mail" size={18} /> {state === "busy" ? "Schicke …" : "Link schicken"}
+                {mode === "passwort" ? (
+                  <><Icon name="check" size={18} /> {state === "busy" ? "Melde an …" : "Anmelden"}</>
+                ) : (
+                  <><Icon name="mail" size={18} /> {state === "busy" ? "Schicke …" : "Link schicken"}</>
+                )}
               </button>
             </form>
           )}

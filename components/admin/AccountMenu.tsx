@@ -2,7 +2,8 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { signOut, useSession } from "@/lib/auth";
+import { MIN_PASSWORD, setPassword, signOut, useSession } from "@/lib/auth";
+import { useDialog } from "./Dialog";
 import { Icon } from "./icons";
 import styles from "./admin.module.css";
 
@@ -15,6 +16,7 @@ export function AccountMenu({ menu }: { menu?: React.ReactNode }) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [pwOpen, setPwOpen] = useState(false);
   const box = useRef<HTMLDivElement>(null);
   const email = session?.user.email;
 
@@ -42,6 +44,9 @@ export function AccountMenu({ menu }: { menu?: React.ReactNode }) {
             Angemeldet als<strong>{email}</strong>
           </p>
           {menu && <div className={styles.accountMobile}>{menu}</div>}
+          <button type="button" className={styles.accountItem} role="menuitem" data-set-password onClick={() => { setOpen(false); setPwOpen(true); }}>
+            <Icon name="key" size={18} /> Passwort festlegen
+          </button>
           <button
             type="button"
             className={styles.accountItem}
@@ -60,6 +65,59 @@ export function AccountMenu({ menu }: { menu?: React.ReactNode }) {
           </button>
         </div>
       )}
+      {pwOpen && <PasswordDialog email={email} onClose={() => setPwOpen(false)} />}
+    </div>
+  );
+}
+
+/** Passwort festlegen/ändern – danach geht die Anmeldung ohne Mail (kein Mail-Limit). */
+function PasswordDialog({ email, onClose }: { email: string; onClose: () => void }) {
+  const dialog = useDialog();
+  const [pw, setPw] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const field = useRef<HTMLInputElement>(null);
+  useEffect(() => {
+    field.current?.focus();
+    const esc = (e: KeyboardEvent) => e.key === "Escape" && onClose();
+    document.addEventListener("keydown", esc);
+    return () => document.removeEventListener("keydown", esc);
+  }, [onClose]);
+
+  async function save(e: React.FormEvent) {
+    e.preventDefault();
+    if (busy) return;
+    setBusy(true);
+    setError(null);
+    try {
+      await setPassword(pw);
+      try {
+        localStorage.setItem("claus-login-mode", "passwort");
+        localStorage.setItem("claus-login-email", email);
+      } catch {}
+      onClose();
+      dialog.toast("Passwort gespeichert – ab jetzt geht die Anmeldung ohne Mail");
+    } catch (err) {
+      setError((err as Error).message);
+      setBusy(false);
+    }
+  }
+
+  return (
+    <div className={styles.backdrop} onPointerDown={(e) => e.target === e.currentTarget && onClose()}>
+      <form className={`${styles.modal} ${styles.modalSmall} panel`} role="dialog" aria-modal="true" aria-labelledby="pw-title" onSubmit={save} noValidate data-password-dialog>
+        <h2 id="pw-title" className={styles.modalTitle}>Passwort festlegen</h2>
+        <p className={styles.modalText}>Damit meldest du dich künftig sofort an, ohne auf eine Mail zu warten. Mindestens {MIN_PASSWORD} Zeichen.</p>
+        {/* für Passwort-Manager: zu welchem Konto gehört das Passwort */}
+        <input type="email" autoComplete="username" value={email} readOnly hidden />
+        <label className="field-label" htmlFor="new-password">Neues Passwort</label>
+        <input ref={field} id="new-password" type="password" autoComplete="new-password" value={pw} onChange={(e) => { setPw(e.target.value); setError(null); }} aria-invalid={Boolean(error)} />
+        {error && <p className="error" role="alert">{error}</p>}
+        <div className={styles.modalActions}>
+          <button type="button" className="btn ghost" onClick={onClose}>Abbrechen</button>
+          <button type="submit" className="btn primary" disabled={busy}>{busy ? "Speichere …" : "Speichern"}</button>
+        </div>
+      </form>
     </div>
   );
 }

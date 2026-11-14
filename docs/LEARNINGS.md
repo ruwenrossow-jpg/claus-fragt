@@ -74,3 +74,7 @@ Neue Einträge oben. Format: Datum – Problem → Lösung/Regel.
 - `.hide-mobile` wirkte auf `.btn` nicht (`.btn` steht später in globals.css) → jetzt `!important`.
 - `signOut()` fällt bei Server-Fehler auf `scope: "local"` zurück, damit Abmelden immer klappt.
 - Login lässt sich lokal testen: Fake-Sitzung in `localStorage` (`sb-<ref>-auth-token`) + REST-Aufrufe per Route auf den Publishable Key umschreiben → `scripts/abmelden-test.mjs`.
+
+## 14.11. Passwort-Anmeldung (Mail-Limit)
+- Supabase ohne eigenes SMTP schickt nur ~2 Mails pro Stunde → nach Abmelden + neuem Link schnell „zu viele Links“. Lösung: Passwort im Konto-Menü festlegen (`updateUser`), danach „Mit Passwort“ ohne Mail; Modus + E-Mail merkt sich die Anmelde-Seite.
+- Test ohne echte Konten: `/auth/v1/token?grant_type=password` und `/auth/v1/user` per Playwright-Route nachstellen (`scripts/abmelden-test.mjs`). Keine Test-Nutzer in Ruwens Auth anlegen (ohne Secret Key nicht löschbar).
