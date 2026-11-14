@@ -89,10 +89,21 @@ try {
   await admin.keyboard.press("Escape");
   await admin.waitForSelector("[data-save=saved]", { timeout: 10000 });
 
-  // ---------- Steuerung (Laptop) → Beamer öffnen ----------
+  // ---------- Ein Handy ist zu früh: noch keine Tafel → es geht allein los ----------
+  const early = await page({ width: 393, height: 852 }, true);
+  await early.goto(link);
+  await early.waitForSelector("text=Los geht's");
+  await early.waitForTimeout(3000);
+  await early.click("text=Los geht's");
+  await early.waitForSelector("text=Ein Wort zum Hackathon?");
+
+  // ---------- Steuerung (Laptop) ohne Beamer: hält selbst den Stand, Handys folgen trotzdem ----------
   const ctl = admin;
   await ctl.goto(`${BASE}/b/${formId}/tafel/steuerung`);
   await ctl.waitForSelector("text=So startest du die Tafel", { timeout: 10000 });
+  check("steuerungOhneBeamerHinweis", (await ctl.locator("[data-no-beamer]").count()) === 1 && (await ctl.locator("[data-beamer=off]").count()) === 1);
+  await early.waitForSelector("text=Schau nach vorne", { timeout: 10000 });
+  check("fruehesHandyFolgtSteuerung", true);
   await ctl.screenshot({ path: OUT + "tafel-03-steuerung-start.png" });
   const [tafel] = await Promise.all([ctl.context().waitForEvent("page"), ctl.click("main button:has-text('Beamer öffnen')")]);
   watch(tafel);
@@ -105,19 +116,20 @@ try {
 
   // ---------- Lobby: 3 Handys kommen rein und warten ----------
   const phones = [];
-  for (let i = 0; i < 3; i++) {
+  for (let i = 0; i < 2; i++) {
     const p = await page({ width: 393, height: 852 }, true);
     await p.goto(link);
     await p.waitForSelector("text=Los geht's");
     phones.push(p);
   }
+  phones.push(early);
   await tafel.waitForSelector("[data-people='3']", { timeout: 15000 });
   await ctl.waitForSelector("[data-people='3']", { timeout: 10000 });
   check("lobbyZaehltDrei", true);
   await tafel.screenshot({ path: OUT + "tafel-04-lobby.png" });
   await ctl.screenshot({ path: OUT + "tafel-05-steuerung-lobby.png" });
   await measure(phones[0], "start");
-  for (const p of phones) await p.click("text=Los geht's");
+  for (const p of phones.slice(0, 2)) await p.click("text=Los geht's");
   await phones[0].waitForSelector("text=Schau nach vorne");
   await measure(phones[0], "warten");
   await phones[0].screenshot({ path: OUT + "tafel-06-handy-warten.png" });
@@ -128,7 +140,8 @@ try {
   // ---------- Frage 1 (Wortwolke), gesteuert vom Laptop ----------
   await ctl.click("[data-remote-next]");
   await tafel.waitForSelector("[data-tafel-question]:has-text('Ein Wort')");
-  const words = ["Teamgeist", "teamgeist", "Pizza"];
+  // Mehrere Begriffe: Handy 2 mit Komma, Handy 1 per „Noch ein Wort“
+  const words = ["Teamgeist", "teamgeist, Pizza", "Pizza"];
   for (const [i, p] of phones.entries()) {
     await p.waitForSelector("input[type=text]", { timeout: 8000 });
     if (i === 0) {
@@ -154,18 +167,84 @@ try {
   }
   await phones[0].waitForSelector("text=Angekommen");
   await measure(phones[0], "angekommen");
+  await phones[0].waitForTimeout(500);
+  await phones[0].click("button:has-text('Noch ein Wort')");
+  await phones[0].waitForSelector("input[type=text]");
+  check("nochEinWortFeldLeer", (await phones[0].inputValue("input[type=text]")) === "");
+  await phones[0].fill("input[type=text]", "Kaffee");
+  await phones[0].click("button:has-text('Abschicken')");
+  await phones[0].waitForSelector("text=Angekommen");
+  check("eigeneBegriffeAlsChips", (await phones[0].locator("[data-zone=body]").innerText()).includes("Kaffee"));
+  await phones[0].screenshot({ path: OUT + "tafel-06b-handy-noch-ein-wort.png" });
   await ctl.waitForSelector("[data-count='3']", { timeout: 10000 });
+  await tafel.waitForSelector("[data-count='3']", { timeout: 10000 });
   check("steuerungSiehtAntwortenVorDemZeigen", (await ctl.locator("[data-cloud]").count()) === 1 && (await tafel.locator("[data-cloud]").count()) === 0);
+  await tafel.screenshot({ path: OUT + "tafel-07-zaehler.png" });
   await ctl.screenshot({ path: OUT + "tafel-07-steuerung-frage.png" });
   await ctl.click("[data-remote-show]");
   await tafel.waitForSelector("[data-cloud]");
-  check("wortwolkeTeamgeist2", (await tafel.locator("[data-cloud] [data-word='Teamgeist']").getAttribute("data-count")) === "2");
-  await tafel.waitForTimeout(800);
-  await tafel.screenshot({ path: OUT + "tafel-08-wortwolke.png" });
+  await tafel.waitForFunction(() => document.querySelector("[data-cloud] [data-word='Kaffee']") && document.querySelectorAll("[data-cloud] [data-word]").length === 3, null, { timeout: 8000 });
+  const wc = (w) => tafel.evaluate((w) => [...document.querySelectorAll("[data-cloud] [data-word]")].find((x) => x.dataset.word.toLowerCase() === w.toLowerCase())?.dataset.count ?? null, w);
+  check("zeigenZeigtAntwortenAmBeamer", (await wc("Teamgeist")) === "2");
+  check("mehrereBegriffeInDerWolke", (await wc("Pizza")) === "2" && (await wc("Kaffee")) === "1", JSON.stringify([await wc("Pizza"), await wc("Kaffee")]));
+  // Beamer-Layout: nichts läuft über, Frage + Wolke + Leiste im Bild (Beamer, Laptop, Full HD, Handy)
+  for (const [w, h, name] of [[1280, 720, "08-wortwolke"], [1440, 900, "08b-wolke-laptop"], [1920, 1080, "08c-wolke-fullhd"], [393, 852, "08d-wolke-handy"]]) {
+    await tafel.setViewportSize({ width: w, height: h });
+    await tafel.mouse.move(w / 2, h / 2);
+    await tafel.waitForTimeout(900);
+    const r = await tafel.evaluate(() => {
+      const inView = (sel) => {
+        const b = document.querySelector(sel)?.getBoundingClientRect();
+        return Boolean(b && b.left >= -1 && b.right <= innerWidth + 1 && b.top >= -1 && b.bottom <= document.documentElement.scrollHeight + 1);
+      };
+      const words = [...document.querySelectorAll("[data-cloud] [data-word]")];
+      const cloud = document.querySelector("[data-cloud]").getBoundingClientRect();
+      const clipped = words.filter((x) => { const b = x.getBoundingClientRect(); return b.right > cloud.right + 1 || b.left < cloud.left - 1 || b.bottom > cloud.bottom + 1; }).length;
+      const bar = document.querySelector("[data-tafel-next]").closest("nav").getBoundingClientRect();
+      return { ueberlauf: document.documentElement.scrollWidth > innerWidth + 1, frage: inView("[data-tafel-question]"), wolke: inView("[data-cloud]"), worteAbgeschnitten: clipped, leiste: bar.right <= innerWidth + 1 && bar.left >= -1, grauUnten: innerHeight > 0 && document.documentElement.scrollHeight < innerHeight - 1 };
+    });
+    check(`beamerLayout${w}`, !r.ueberlauf && r.frage && r.wolke && !r.worteAbgeschnitten && r.leiste, JSON.stringify(r));
+    await tafel.screenshot({ path: OUT + `tafel-${name}.png`, fullPage: w < 700 });
+  }
+  await tafel.setViewportSize({ width: 1280, height: 720 });
 
-  // ---------- Frage 2 (Karten) + Nachzügler steigt mitten ein ----------
+  // ---------- Zurück (Beamer-Knopf, Steuerung, Pfeiltasten) ----------
   await ctl.click("[data-remote-next]");
   await tafel.waitForSelector("[data-tafel-question]:has-text('Was nimmst du mit')");
+  await tafel.mouse.move(200, 200);
+  await tafel.click("[data-tafel-back]");
+  await tafel.waitForSelector("[data-tafel-question]:has-text('Ein Wort')", { timeout: 5000 });
+  await phones[1].waitForSelector("text=Angekommen", { timeout: 8000 });
+  // zurück = vorige Frage gleich mit Ergebnis (Antworten werden neu geladen)
+  check("zurueckBeamerKnopf", await tafel.waitForSelector("[data-cloud]", { timeout: 6000 }).then(() => true, () => false));
+  await tafel.keyboard.press("ArrowRight");
+  await tafel.waitForSelector("[data-tafel-question]:has-text('Was nimmst du mit')", { timeout: 5000 });
+  await tafel.keyboard.press("ArrowLeft");
+  await tafel.waitForSelector("[data-tafel-question]:has-text('Ein Wort')", { timeout: 5000 });
+  check("pfeiltastenBeamer", true);
+  await ctl.click("[data-remote-next]");
+  await tafel.waitForSelector("[data-tafel-question]:has-text('Was nimmst du mit')", { timeout: 5000 });
+  await ctl.click("[data-remote-back]");
+  await tafel.waitForSelector("[data-tafel-question]:has-text('Ein Wort')", { timeout: 5000 });
+  await ctl.waitForSelector("[data-now-question]:has-text('Ein Wort')", { timeout: 5000 });
+  await ctl.evaluate(() => document.activeElement?.blur());
+  await ctl.keyboard.press("ArrowRight");
+  await tafel.waitForSelector("[data-tafel-question]:has-text('Was nimmst du mit')", { timeout: 5000 });
+  check("zurueckUndPfeileSteuerung", true);
+  // kein zweiter Host: ein zweites Beamer-Fenster spiegelt nur, Befehle von dort landen beim ersten
+  const mirror = await ctl.context().newPage();
+  watch(mirror);
+  await mirror.setViewportSize({ width: 1280, height: 720 });
+  await mirror.goto(`${BASE}/b/${formId}/tafel`);
+  await mirror.waitForSelector("[data-tafel-question]:has-text('Was nimmst du mit')", { timeout: 10000 });
+  await mirror.click("[data-tafel-back]");
+  await tafel.waitForSelector("[data-tafel-question]:has-text('Ein Wort')", { timeout: 5000 });
+  await mirror.keyboard.press("ArrowRight");
+  await tafel.waitForSelector("[data-tafel-question]:has-text('Was nimmst du mit')", { timeout: 5000 });
+  await mirror.close();
+  check("zweiterBeamerSpiegelt", true);
+
+  // ---------- Frage 2 (Karten) + Nachzügler steigt mitten ein ----------
   const late = await page({ width: 393, height: 852 }, true);
   await late.goto(link);
   await late.waitForTimeout(2500);
@@ -254,6 +333,21 @@ try {
 
   // ---------- Beamer und Steuerung auf dem Handy: nichts überlappt, nichts läuft über ----------
   await ctl.click("[data-remote-restart]");
+  await tafel.waitForSelector("text=Handy raus und mitmachen!");
+  // Neue Runde, noch niemand hat geantwortet: der Beamer erklärt, wie man mitmacht (statt leer zu bleiben)
+  await ctl.click("[data-remote-next]");
+  await tafel.waitForSelector("[data-tafel-question]:has-text('Ein Wort')");
+  await ctl.click("[data-remote-show]");
+  await tafel.waitForTimeout(2500);
+  check("leerErklaertSich", (await tafel.locator("[data-tafel-empty]").count()) === 1 && (await tafel.locator("[data-cloud]").count()) === 0);
+  await tafel.mouse.move(300, 300);
+  await tafel.screenshot({ path: OUT + "tafel-12b-beamer-leer.png" });
+  await tafel.setViewportSize({ width: 393, height: 852 });
+  await tafel.waitForTimeout(600);
+  check("beamerHandyFrageKeinUeberlauf", await tafel.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1));
+  await tafel.screenshot({ path: OUT + "tafel-12c-beamer-handy-frage.png", fullPage: true });
+  await tafel.setViewportSize({ width: 1280, height: 720 });
+  await ctl.click("nav[aria-label=Ablauf] button:has-text('Lobby')");
   await tafel.waitForSelector("text=Handy raus und mitmachen!");
   for (const [pg, name] of [[tafel, "beamer"], [ctl, "steuerung"]]) {
     await pg.setViewportSize({ width: 390, height: 664 });

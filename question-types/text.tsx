@@ -67,5 +67,6 @@ export const shortText: QuestionTypeDef = {
     />
   ),
   Editor: PlaceholderEditor,
+  tafelMore: true,
   format: (_q, v) => (typeof v === "string" ? v : ""),
 };

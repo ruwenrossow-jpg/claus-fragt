@@ -84,3 +84,10 @@ Neue Einträge oben. Format: Datum – Problem → Lösung/Regel.
 - Aufklappen einer Frage am Handy (pointer: coarse) fokussiert nicht mehr → keine Tastatur; Karte rückt nach oben (`scroll-margin-top`). Neue Fragen (+ Frage) bekommen weiter den Fokus.
 - Zuklappen: Griff oben an der aktiven Karte + Pfeil im Fuß. Beim Tippen am Handy: Vorschau-Knopf und Ablauf-Schiene ausgeblendet (`body:has(:focus)`, nur ≤ 1000 px).
 - Test: `scripts/editor-handy-test.mjs` (Tastatur = Viewport verkleinern).
+
+## 14.11. Tafel: Beamer am Handy, „Zeigen leer“, mehrere Begriffe
+- „Zeigen leer“: Ruwens Testantwort (Sicherung: Abgabe 12:14 UTC) entstand, **bevor** der Beamer geöffnet war; der Beamer zählt nur Abgaben ab `since` (Öffnen − 30 s). Kein Datenbug, aber der leere Zustand war stumm → jetzt „Noch keine Antworten“ mit QR + Link; „Neu starten“ setzt `since` = jetzt.
+- Wahrscheinlich hatte er den Bogen allein ausgefüllt, weil kein Beamer offen war (Handys: Tafel aus). Lösung ohne konkurrierende Hosts: Host-Wahl im Kanal (Beamer > Steuerung, dann der ältere, id als Gleichstand); die Steuerung ist Host, solange kein Beamer da ist, der Beamer übernimmt ihren Stand; weitere Fenster spiegeln und schicken Befehle. Handys halten den letzten Stand 15 s (Host-Übernahme nach 6 s), ein Neuladen wirft niemanden raus.
+- Beamer-Überlauf am Handy: Bedienleiste mit drei `.btn.big` war breiter als 393 px, das Grid wuchs mit (Frage rechts abgeschnitten), iOS zoomte raus → grauer `body` darunter. Jetzt `grid-template-columns: minmax(0,1fr)`, Leiste umbrechend, `body:has(.page)` türkis; Test misst `scrollWidth` bei 393 und 1920.
+- Mehrere Begriffe ohne Migration: Komma trennt Begriffe in `cloudWords`; „Noch ein Wort“ hängt mit „, “ an dieselbe Antwort (saveResponse bleibt idempotent). Registry-Flag `tafelMore` statt Typ-Abfrage.
+- Antwort-Box scrollt in sich: Verlauf allein wurde übersehen → kräftigerer Verlauf (56 px, nächste Zeile angeschnitten) + „mehr ↓“ auf dem Rand (absolut positioniert, verschiebt nichts im Raster). Test: `scripts/mehrfach-test.mjs`.

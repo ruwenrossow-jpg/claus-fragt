@@ -9,7 +9,7 @@ export interface CloudWord {
   count: number;
 }
 
-/** Bis zu 3 Wörter = ein Begriff („Teamarbeit“, „coole Leute“); längere Antworten werden in Wörter zerlegt (ohne Füllwörter). */
+/** Komma/Semikolon/Zeile trennt Begriffe. Bis zu 3 Wörter = ein Begriff („Teamarbeit“, „coole Leute“); längere Antworten werden in Wörter zerlegt (ohne Füllwörter). */
 export function cloudWords(answers: string[], limit = 60): CloudWord[] {
   const counts = new Map<string, CloudWord>();
   const add = (raw: string) => {
@@ -17,10 +17,16 @@ export function cloudWords(answers: string[], limit = 60): CloudWord[] {
     if (!text) return;
     const key = text.toLocaleLowerCase("de");
     const hit = counts.get(key);
-    if (hit) hit.count++;
+    if (hit) {
+      hit.count++;
+      // Schreibweise: großgeschrieben gewinnt („Teamgeist“ statt „teamgeist“)
+      if (text[0] !== text[0].toLocaleLowerCase("de") && hit.text[0] === hit.text[0].toLocaleLowerCase("de")) hit.text = text;
+    }
     else counts.set(key, { text, count: 1 });
   };
-  for (const a of answers) {
+  // Mehrere Begriffe einer Person („Teamgeist, Pizza“ – Tafel: „Noch ein Wort“) zählen einzeln
+  const parts = answers.flatMap((a) => a.split(/[,;\n]+/));
+  for (const a of parts) {
     const words = a.trim().split(/\s+/).filter(Boolean);
     if (!words.length) continue;
     if (words.length <= 3 && a.length <= 40) add(words.join(" "));

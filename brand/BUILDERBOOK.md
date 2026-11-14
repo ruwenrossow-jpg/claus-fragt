@@ -78,7 +78,7 @@ Die Werte sind pixelgenau aus den Prototyp-PNGs und dem InnoNord-Logo ausgelesen
   Die Blase steht immer an derselben Stelle; nur die Zipfelspitze wandert. Text vertikal zentriert, Schrift in Stufen
   `--bubble-font-1` … `-7` (20 → 12 px), bis der Text ins einbeschriebene Rechteck (Breite/√2 × Höhe/√2) passt.
   Die Stufen 6–7 (und etwas mehr Breite) sind nur die Notbremse für sehr lange Fragen; der Editor warnt ab 110 Zeichen.
-- **AnswerCard**: türkise Box, 2 px schwarzer Rand, Radius 18, optionaler Titel (nur v1).
+- **AnswerCard**: türkise Box, 2 px schwarzer Rand, Radius 18, optionaler Titel (nur v1). Scrollt sie in sich, zeigen Verlauf + angeschnittene Zeile + „mehr ↓“ auf dem unteren Rand, dass noch etwas kommt (weg, sobald man unten ist).
 - **PillButton**: rot, min. 212 × 72, Text in Großbuchstaben mit „!“. **Genau ein Button pro Screen**, immer im Fuß.
   Fragen-Screens haben **immer** WEITER! – kein Auto-Weiter (Teilnehmende sollen nachdenken können).
 

@@ -57,6 +57,9 @@ export function SurveyPlayer({ form, questions: allQuestions, onSave, loadAnswer
   /** Tafel: schon abgeschickte Fragen; editing = abgeschickte Frage wird gerade geändert */
   const [sent, setSent] = useState<Record<string, boolean>>({});
   const [editing, setEditing] = useState<string | null>(null);
+  /** Tafel-Freitext: weiterer Begriff zu dieser Frage wird gerade eingegeben (draft), beim Abschicken mit Komma angehängt */
+  const [adding, setAdding] = useState<string | null>(null);
+  const [draft, setDraft] = useState("");
   const questions = individual ? survey.questions.filter((q) => individual.includes(q.id)) : survey.questions;
   const [ownStep, setOwnStep] = useState<Step>(START);
   const [values, setValues] = useState<Record<string, AnswerValue>>({});
@@ -82,7 +85,15 @@ export function SurveyPlayer({ form, questions: allQuestions, onSave, loadAnswer
   const back = prevStep(step, n, resultQuestions.length, individual !== null);
   // Neue Tafel-Frage: alten Hinweis (z. B. „Bitte beantworte …“) wegräumen
   const tafelKey = `${tafel?.phase}-${tafel?.questionId}`;
-  useEffect(() => setNote(null), [tafelKey]);
+  useEffect(() => {
+    setNote(null);
+    setAdding(null);
+  }, [tafelKey]);
+  // Tafel startet, während jemand die Fragen schon allein durchgeht → zurück in den gemeinsamen Teil (Antworten bleiben erhalten)
+  const pullIn = tafelLive && individual === null && !controlledStep && step.kind === "question";
+  useEffect(() => {
+    if (pullIn) setOwnStep({ kind: "tafel" });
+  }, [pullIn]);
 
   /** Speichern/Laden mit Sperre: ein zweiter Klick während der Arbeit tut nichts; bei Fehler bleibt der Screen, Hinweis über dem Button. */
   async function run(task: () => Promise<void>, failure: string, then: () => void = next) {
@@ -111,12 +122,22 @@ export function SurveyPlayer({ form, questions: allQuestions, onSave, loadAnswer
 
   /** Tafel: Antwort abschicken (speichert die ganze Abgabe, idempotent) → „Angekommen“. */
   function sendTafel(q: Question) {
-    if (q.required && isEmptyAnswer(values[q.id])) return setNote(copy.hints.required);
+    let next = values;
+    if (adding === q.id) {
+      // weiterer Begriff: an die bisherige Antwort hängen (eine Antwort je Frage und Abgabe bleibt)
+      const extra = draft.trim();
+      const old = typeof values[q.id] === "string" ? String(values[q.id]).trim() : "";
+      if (!extra) return setNote(copy.hints.required);
+      next = { ...values, [q.id]: old ? `${old}, ${extra}` : extra };
+    } else if (q.required && isEmptyAnswer(values[q.id])) return setNote(copy.hints.required);
     const done = () => {
+      setValues(next);
       setSent((s) => ({ ...s, [q.id]: true }));
       setEditing(null);
+      setAdding(null);
+      setDraft("");
     };
-    if (onSave) run(() => onSave(values), copy.errors.save, done);
+    if (onSave) run(() => onSave(next), copy.errors.save, done);
     else done();
   }
 
@@ -145,14 +166,23 @@ export function SurveyPlayer({ form, questions: allQuestions, onSave, loadAnswer
     <TopBar onBack={back && !busy ? () => go(back) : undefined} backLabel={copy.buttons.back} progress={progressOf(step, n)} label={label} progressLabel={copy.aria.progress} />
   );
 
-  function questionBody(q: Question) {
+  /** Antwort-Box einer Frage. atTafel: Tafel-Freitext (Hinweis auf mehrere Begriffe; beim Nachreichen nur das neue Wort im Feld) */
+  function questionBody(q: Question, atTafel = false) {
     const def = typeOf(q);
+    const more = atTafel && adding === q.id;
+    const value = more ? draft : values[q.id];
+    const onChange = (v: AnswerValue) => {
+      if (more) setDraft(typeof v === "string" ? v : "");
+      else setValues((vs) => ({ ...vs, [q.id]: v }));
+      setNote(null);
+    };
     return (
       <>
-        <AnswerCard title={boxTitleOf(q)} label={survey.labelOf(q)}>
-          <def.Input question={q} label={survey.labelOf(q)} copy={copy} value={values[q.id]} onChange={(v) => { setValues((vs) => ({ ...vs, [q.id]: v })); setNote(null); }} />
+        <AnswerCard title={boxTitleOf(q)} label={survey.labelOf(q)} more={copy.hints.more}>
+          <def.Input question={q} label={survey.labelOf(q)} copy={copy} value={value} onChange={onChange} />
         </AnswerCard>
         {q.settings.maxChoices && <p className={styles.hint}>{copy.hints.maxChoices.replace("{max}", String(q.settings.maxChoices))}</p>}
+        {atTafel && def.tafelMore && <p className={styles.hint}>{copy.hints.moreWords}</p>}
       </>
     );
   }
@@ -188,7 +218,17 @@ export function SurveyPlayer({ form, questions: allQuestions, onSave, loadAnswer
         if (tafel.phase !== "question" || !q) {
           return { header: <TopBar />, stage: { mood: "happy", side: "center", text: copy.tafel.wait }, body: <Intro sub={copy.tafel.waitSub} /> };
         }
-        if (sent[q.id] && editing !== q.id) {
+        if (sent[q.id] && editing !== q.id && adding !== q.id) {
+          // Freitext: eigene Begriffe als Chips, „Noch ein Wort“ statt „Ändern“ (wie Menti: mehrere Einreichungen)
+          if (typeOf(q).tafelMore) {
+            const own = String(values[q.id] ?? "").split(/[,;\n]+/).map((t) => t.trim()).filter(Boolean);
+            return {
+              header: <TopBar />,
+              stage: { mood: "happy", side: i % 2 === 0 ? "right" : "left", text: copy.tafel.sent },
+              body: <Intro sub={copy.tafel.moreSub} tags={[...new Set(own)]} />,
+              button: { label: copy.buttons.more, onClick: () => { setDraft(""); setAdding(q.id); } },
+            };
+          }
           return {
             header: <TopBar />,
             stage: { mood: "happy", side: i % 2 === 0 ? "right" : "left", text: copy.tafel.sent },
@@ -199,7 +239,7 @@ export function SurveyPlayer({ form, questions: allQuestions, onSave, loadAnswer
         return {
           header: <TopBar />,
           stage: { mood: "happy", side: i % 2 === 0 ? "left" : "right", text: survey.labelOf(q), help: !q.required ? copy.hints.optional : q.help_text },
-          body: questionBody(q),
+          body: questionBody(q, true),
           button: { label: busy ? copy.buttons.busy : copy.buttons.send, onClick: () => sendTafel(q), disabled: busy },
         };
       }
@@ -273,7 +313,7 @@ export function SurveyPlayer({ form, questions: allQuestions, onSave, loadAnswer
       typingStage={<MiniStage theme={theme} text={p.stage.text} />}
       footer={p.button ? <PillButton onClick={guarded(p.button.onClick)} disabled={p.button.disabled}>{p.button.label}</PillButton> : <PillSpacer />}
       note={note}
-      bodyKey={"index" in step ? `${step.kind}-${step.index}` : step.kind === "tafel" ? `tafel-${tafelKey}-${sent[tafel?.questionId ?? ""] && editing !== tafel?.questionId}` : step.kind}
+      bodyKey={"index" in step ? `${step.kind}-${step.index}` : step.kind === "tafel" ? `tafel-${tafelKey}-${sent[tafel?.questionId ?? ""] && editing !== tafel?.questionId}-${adding}` : step.kind}
     >
       {p.body}
     </Screen>

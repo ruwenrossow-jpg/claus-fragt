@@ -184,6 +184,19 @@
   background: var(--survey-card);
 }
 .cardScroll { min-height: 0; overflow-y: auto; overscroll-behavior: contain; margin: calc(-1 * var(--space-2)); padding: var(--space-2); }
+/* Box scrollt in sich: kräftigerer Verlauf (die nächste Zeile ist angeschnitten sichtbar) + „mehr ↓“ auf dem unteren Rand */
+.card { position: relative; }
+.card .cardScroll[data-overflow="true"] { mask-image: linear-gradient(to bottom, black calc(100% - 56px), transparent); }
+.card .cardScroll[data-scrolled="true"][data-overflow="true"] { mask-image: linear-gradient(to bottom, transparent, black 16px, black calc(100% - 56px), transparent); }
+.more {
+  position: absolute; left: 50%; bottom: 0; transform: translate(-50%, 50%);
+  display: inline-flex; align-items: center; gap: var(--space-1); padding: 2px var(--space-3);
+  font: inherit; font-size: var(--text-s); font-weight: 600; color: var(--survey-ink); cursor: pointer;
+  background: var(--survey-bg); border: 2px solid var(--survey-ink); border-radius: var(--radius-pill);
+  opacity: 0; pointer-events: none; transition: opacity 0.25s ease;
+}
+.cardScroll[data-overflow="true"] ~ .more { opacity: 1; pointer-events: auto; }
+@media (prefers-reduced-motion: reduce) { .more { transition: none; } }
 .cardTitle { margin: 0; padding-bottom: var(--space-5); font-family: inherit; font-size: var(--text-l); font-weight: 400; color: inherit; }
 @container screen (max-height: 760px) {
   .card { margin-top: var(--space-3); padding: var(--space-3) var(--space-4); }

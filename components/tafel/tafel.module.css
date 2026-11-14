@@ -1,37 +1,57 @@
 /* Tafel (Beamer, Moderation). Groß, ruhig, ohne Scrollen: alles richtet sich nach der Fensterhöhe. Werte aus brand/tokens.css. */
 .page {
-  height: 100dvh; display: grid; grid-template-rows: auto minmax(0, 1fr) auto; gap: 2vh;
-  padding: 3vh 4vw; overflow: hidden;
+  height: 100dvh; display: grid; grid-template-rows: auto minmax(0, 1fr) auto; grid-template-columns: minmax(0, 1fr); gap: 2vh;
+  padding: 3vh 4vw 2vh; overflow: hidden;
   background: var(--survey-bg); color: var(--survey-ink); font-family: var(--font-body);
 }
-.top { display: flex; align-items: center; justify-content: space-between; gap: 2vw; font-size: clamp(16px, 1.6vw, 26px); }
-.title { margin: 0; font-family: var(--font-display); font-size: clamp(18px, 1.8vw, 30px); font-weight: 700; color: var(--inno-navy); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* Kein grauer Admin-Hintergrund unter/neben der Tafel (Handy: Überscrollen, Adressleiste) */
+:global(body):has(.page) { background: var(--survey-bg); }
+.top { display: flex; align-items: center; gap: 2vw; min-width: 0; font-size: clamp(14px, 1.4vw, 24px); }
+.title { flex: 1; min-width: 0; margin: 0; font-family: var(--font-display); font-size: clamp(16px, 1.6vw, 28px); font-weight: 700; color: var(--inno-navy); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.join { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; opacity: 0.85; }
+.join strong { color: var(--inno-red); }
 .people { display: inline-flex; align-items: center; gap: 0.5em; padding: 0.3em 0.9em; font-weight: 700; color: var(--inno-navy); background: var(--survey-card); border-radius: var(--radius-pill); white-space: nowrap; }
 .people::before { content: ""; width: 0.55em; height: 0.55em; border-radius: 50%; background: var(--admin-ok); }
 
-.center { min-height: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3vh; text-align: center; }
-.question { margin: 0; max-width: 28ch; font-family: var(--font-display); font-size: clamp(28px, 4.2vw, 76px); line-height: 1.12; color: var(--inno-navy); overflow-wrap: anywhere; }
-.count { margin: 0; font-size: clamp(18px, 2vw, 34px); }
-.count strong { font-family: var(--font-display); font-size: 1.6em; color: var(--inno-red); }
+.center { min-height: 0; min-width: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3vh; text-align: center; }
+.question { margin: 0; max-width: 30ch; font-family: var(--font-display); font-size: clamp(26px, min(4vw, 7.5vh), 80px); line-height: 1.12; color: var(--inno-navy); overflow-wrap: break-word; hyphens: auto; text-wrap: balance; }
+.count { margin: 0; font-size: clamp(16px, 1.6vw, 28px); }
+.count strong { font-family: var(--font-display); font-size: 1.4em; color: var(--inno-red); }
 .hidden { margin: 0; font-size: clamp(16px, 1.6vw, 26px); opacity: 0.7; }
 
+/* Frage: oben die Frage (groß), darunter mittig das Ergebnis; beides passt immer ins Fenster */
+.questionStage { min-height: 0; min-width: 0; display: grid; grid-template-rows: auto minmax(0, 1fr); gap: 2vh; justify-items: center; text-align: center; padding-top: 2vh; }
+.questionHead { display: flex; flex-direction: column; align-items: center; gap: 1vh; min-width: 0; max-width: 100%; }
+.result { min-height: 0; min-width: 0; width: 100%; display: flex; align-items: center; justify-content: center; }
+.result > .cloud, .result > .cards, .result > .bars { max-height: 100%; }
+.waiting { display: flex; flex-direction: column; align-items: center; gap: 1vh; }
+.bigCount { margin: 0; font-size: clamp(22px, 2.6vw, 44px); }
+.bigCount strong { display: block; font-family: var(--font-display); font-size: 3.2em; line-height: 1; color: var(--inno-red); }
+
+/* Noch keine Antworten: erklärt, wie man mitmacht (QR + Link) */
+.empty { display: flex; align-items: center; gap: 3vw; max-width: min(900px, 100%); text-align: left; }
+.emptyQr { flex: none; display: block; width: min(240px, 28vh); height: auto; border: 3px solid var(--survey-ink); border-radius: 16px; background: var(--admin-surface); }
+.emptyTitle { margin: 0; font-family: var(--font-display); font-size: clamp(22px, 2.6vw, 44px); font-weight: 700; color: var(--inno-navy); }
+.emptySub { margin: 1vh 0; font-size: clamp(16px, 1.6vw, 26px); }
+
 /* Lobby: QR + Aufforderung */
-.lobby { min-height: 0; display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 5vw; }
+.lobby { min-height: 0; min-width: 0; display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 5vw; }
 .lobby h2 { margin: 0; font-family: var(--font-display); font-size: clamp(30px, 4.5vw, 80px); line-height: 1.1; color: var(--inno-navy); }
 .lobby p { margin: 2vh 0 0; font-size: clamp(18px, 2.2vw, 36px); }
-.url { font-weight: 700; color: var(--inno-red); overflow-wrap: anywhere; }
+.url { margin: 0; font-weight: 700; color: var(--inno-red); overflow-wrap: anywhere; }
 .warn { display: flex; align-items: center; gap: 1em; flex-wrap: wrap; font-size: clamp(15px, 1.5vw, 22px) !important; color: var(--admin-danger); }
 .qr { display: block; width: min(500px, 62vh, 40vw); height: auto; aspect-ratio: 1; border: 3px solid var(--survey-ink); border-radius: 24px; background: var(--admin-surface); }
 .mascot { display: block; width: min(170px, 18vh); height: auto; margin-top: 3vh; }
 
-/* Steuerung unten: Zurück · Zeigen · Weiter (auch per Pfeiltasten / Presenter-Klicker) */
-.controls { display: flex; align-items: center; justify-content: space-between; gap: 16px; transition: opacity 0.4s ease; }
-/* Maus ruht 3 s → Steuerung blendet aus (sauberes Bild am Beamer); Bewegung/Taste blendet sie wieder ein */
+/* Bedienleiste unten, dezent: Zurück · Zeigen · Weiter (auch per Pfeiltasten / Presenter-Klicker) */
+.controls { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-width: 0; opacity: 0.75; transition: opacity 0.4s ease; }
+.controls:hover, .controls:focus-within { opacity: 1; }
+.controls :global(.btn) { padding: 7px 16px; font-size: 15px; }
+/* Maus ruht 3 s → Bedienleiste blendet aus (sauberes Bild am Beamer); Bewegung/Taste blendet sie wieder ein */
 .idle .controls { opacity: 0; }
 .idle { cursor: none; }
-.remoteHint { font-size: clamp(13px, 1.1vw, 18px); opacity: 0.7; }
-.controls .group { display: flex; gap: 10px; align-items: center; }
-.step { font-size: clamp(14px, 1.3vw, 20px); opacity: 0.75; }
+.controls .group { display: flex; gap: 8px; align-items: center; min-width: 0; }
+.step { font-size: clamp(13px, 1.1vw, 18px); opacity: 0.75; white-space: nowrap; }
 
 /* Wortwolke */
 .cloud {
@@ -82,15 +102,26 @@
 .compact .card { font-size: 14px; animation: none; box-shadow: var(--admin-shadow); }
 .compact.bars { width: 100%; font-size: 15px; gap: 8px; }
 
-/* Schmale oder niedrige Fenster (Handy, kleiner Laptop): Seite darf scrollen, Steuerung klebt unten mit Hintergrund */
+/* Schmale oder niedrige Fenster (Handy, kleiner Laptop): Seite darf scrollen, Bedienleiste klebt unten mit Hintergrund */
 @media (max-width: 700px), (max-height: 520px) {
-  .page { height: auto; min-height: 100dvh; overflow: visible; padding: 16px 16px 0; }
-  .lobby { grid-template-columns: 1fr; justify-items: center; text-align: center; gap: 16px; }
+  .page { height: auto; min-height: 100dvh; overflow: visible; padding: 16px 16px 0; gap: 16px; }
+  .top { flex-wrap: wrap; gap: 8px; }
+  .join { order: 3; width: 100%; }
+  .lobby { grid-template-columns: minmax(0, 1fr); justify-items: center; text-align: center; gap: 16px; }
   .qr { width: min(300px, 74vw); order: -1; }
   .mascot { margin-inline: auto; width: 90px; margin-top: 12px; }
-  .barRow { grid-template-columns: minmax(0, 7em) 1fr 3.5em; }
-  .cloud, .cards { max-height: none; }
-  .controls { position: sticky; bottom: 0; flex-wrap: wrap; justify-content: center; padding: 10px 0 calc(10px + env(safe-area-inset-bottom)); background: var(--survey-bg); border-top: 1px solid var(--survey-card); }
+  .questionStage { padding-top: 0; }
+  .question { font-size: clamp(24px, 7vw, 34px); }
+  .result { align-items: flex-start; }
+  .empty { flex-direction: column; text-align: center; }
+  .emptyQr { width: min(200px, 56vw); }
+  .barRow { grid-template-columns: minmax(0, 7em) minmax(0, 1fr) 3.5em; }
+  .cloud, .cards { max-height: none; max-width: 100%; }
+  .word { white-space: normal; overflow-wrap: anywhere; }
+  .bars { width: 100%; }
+  .controls { position: sticky; bottom: 0; flex-wrap: wrap; justify-content: center; gap: 8px; padding: 10px 0 calc(10px + env(safe-area-inset-bottom)); background: var(--survey-bg); border-top: 1px solid var(--survey-card); opacity: 1; }
+  .controls .group { flex-wrap: wrap; justify-content: center; }
+  .controls :global(.btn) { padding: 8px 12px; }
   .step { order: -1; width: 100%; text-align: center; }
   .idle .controls { opacity: 1; }
 }

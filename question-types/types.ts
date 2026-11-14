@@ -48,6 +48,8 @@ export interface QuestionTypeDef {
   resultOptions?: (q: Question) => ResultOption[];
   /** Zählt die Antwort für diese Option? (Mehrfachauswahl: Array enthält Wert) */
   matches?: (value: AnswerValue, option: ResultOption) => boolean;
+  /** Tafel: nach dem Abschicken weitere Begriffe nachreichen (werden mit Komma an die Antwort gehängt, die Wortwolke zerlegt sie) */
+  tafelMore?: boolean;
   /** Antwort als Text (CSV, Listen) */
   format: (q: Question, value: AnswerValue | undefined) => string;
 }

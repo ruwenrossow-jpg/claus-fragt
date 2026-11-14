@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { AdminHeader } from "@/components/AdminHeader";
@@ -9,45 +9,34 @@ import { PageState } from "@/components/admin/PageState";
 import { buildSurvey } from "@/components/survey/context";
 import { TafelResult, answerCount, useTafelAnswers } from "@/components/tafel/TafelResult";
 import styles from "@/components/tafel/steuerung.module.css";
+import { useTafel } from "@/components/tafel/useTafel";
 import { loadForm } from "@/lib/data";
-import { TafelCommand, TafelState, nextLabel, remoteTafel } from "@/lib/tafel";
+import { nextLabel } from "@/lib/tafel";
 import { Form, Question, isTrashed } from "@/lib/types";
 import { isAnswerable } from "@/question-types";
 
-const WAIT_MS = 3500;
-
 /**
  * Steuerung der Tafel für Laptop oder Handy (wie die Moderator-Ansicht bei Menti): Ablauf, aktuelle Frage, Antworten live
- * (auch bevor sie am Beamer gezeigt werden) und große Knöpfe. Der Beamer (/b/<id>/tafel) hält den Stand; diese Seite schickt Befehle.
+ * (auch bevor sie am Beamer gezeigt werden) und große Knöpfe. Ist ein Beamer (/b/<id>/tafel) offen, hält er den Stand und diese Seite
+ * schickt Befehle; ohne Beamer hält die Steuerung selbst den Stand, damit die Handys trotzdem gemeinsam folgen (lib/tafel.ts).
  */
 export default function SteuerungPage() {
   const { id } = useParams<{ id: string }>();
   const [data, setData] = useState<{ form: Form; questions: Question[] } | null>(null);
   const [error, setError] = useState<unknown>(null);
-  const [state, setState] = useState<TafelState | null>(null);
-  const [waited, setWaited] = useState(false);
-  const remote = useRef<ReturnType<typeof remoteTafel> | null>(null);
 
   const load = useCallback(() => {
     setError(null);
     loadForm(id).then(setData, setError);
   }, [id]);
   useEffect(load, [load]);
-  useEffect(() => {
-    if (!data) return;
-    remote.current = remoteTafel(data.form.id, setState);
-    const t = setTimeout(() => setWaited(true), WAIT_MS);
-    return () => {
-      clearTimeout(t);
-      remote.current?.close();
-    };
-  }, [data]);
 
   const survey = useMemo(() => (data ? buildSurvey(data.form, data.questions) : null), [data]);
   const tafelQs = useMemo(() => survey?.questions.filter((q) => q.settings.tafel) ?? [], [survey]);
-  const current = state?.phase === "question" ? tafelQs.find((q) => q.id === state.questionId) : undefined;
+  const ids = useMemo(() => tafelQs.map((q) => q.id), [tafelQs]);
+  const { run: state, people, host, command: send } = useTafel(data?.form.id ?? null, "steuerung", ids);
+  const current = state?.phase === "question" ? tafelQs[Math.min(state.index, tafelQs.length - 1)] : undefined;
   const answers = useTafelAnswers(data?.form.id ?? null, current?.id ?? null, state?.since);
-  const send = useCallback((c: TafelCommand) => remote.current?.send(c), []);
 
   // Gleiche Tasten wie am Beamer (Presenter-Klicker am Laptop)
   useEffect(() => {
@@ -69,9 +58,9 @@ export default function SteuerungPage() {
   const total = tafelQs.length;
   const rest = survey.questions.length - total;
   const connected = state !== null;
+  const beamer = host === "beamer";
   const beamerUrl = `/b/${form.id}/tafel`;
   const openBeamer = () => window.open(beamerUrl, "claus-beamer", "popup,width=1280,height=720");
-  const people = state?.people ?? 0;
   const n = answerCount(answers);
 
   return (
@@ -83,15 +72,16 @@ export default function SteuerungPage() {
       <main className="admin-main">
         <h1>Tafel steuern: {form.title}</h1>
         <div className={styles.status}>
-          <span className={`${styles.dot} ${connected ? styles.on : styles.off}`} data-beamer={connected ? "on" : "off"}>{connected ? "Beamer verbunden" : waited ? "Beamer nicht offen" : "Suche Beamer …"}</span>
+          <span className={`${styles.dot} ${beamer ? styles.on : connected ? styles.off : ""}`} data-beamer={beamer ? "on" : "off"}>{beamer ? "Beamer verbunden" : connected ? "Kein Beamer offen" : "Suche Beamer …"}</span>
           <span className={`${styles.dot} ${people ? styles.on : ""}`} data-people={people}>{people} {people === 1 ? "Handy" : "Handys"} dabei</span>
           {form.status !== "published" && <span className={`${styles.dot} ${styles.off}`}>Bogen ist nicht live</span>}
         </div>
 
-        {!connected && waited && (
-          <section className={styles.setup}>
+        {connected && !beamer && (
+          <section className={styles.setup} data-no-beamer>
             <h2>So startest du die Tafel</h2>
-            <p>1. Beamer öffnen und das Fenster auf den Beamer ziehen (Vollbild: Ctrl+Cmd+F am Mac, F11 unter Windows).<br />
+            <p>Die Handys folgen schon dieser Steuerung – niemand klickt sich allein durch. Damit alle die Fragen und Ergebnisse sehen:<br />
+              1. Beamer öffnen und das Fenster auf den Beamer ziehen (Vollbild: Ctrl+Cmd+F am Mac, F11 unter Windows).<br />
               2. Hier steuern – am Laptop oder auf dem Handy. Am Beamer siehst du nur Fragen und Ergebnisse.</p>
             <button type="button" className="btn primary big" onClick={openBeamer}><Icon name="board" size={18} /> Beamer öffnen</button>
           </section>
@@ -128,7 +118,7 @@ export default function SteuerungPage() {
 
             <section className={styles.now} aria-live="polite">
               {!state ? (
-                <p className={styles.empty}>Sobald der Beamer offen ist, siehst du hier, was gerade läuft.</p>
+                <p className={styles.empty}>Verbinde …</p>
               ) : state.phase === "lobby" ? (
                 <>
                   <p className={styles.nowLabel}>Lobby</p>
@@ -143,11 +133,11 @@ export default function SteuerungPage() {
                 </>
               ) : (
                 <>
-                  <p className={styles.nowLabel}>Frage {(state.index ?? 0) + 1} von {total}</p>
+                  <p className={styles.nowLabel}>Frage {state.index + 1} von {total}</p>
                   <h2 className={styles.nowTitle} data-now-question>{survey.labelOf(current)}</h2>
                   <p className={styles.nowCount} data-count={n}><strong>{n}</strong> {n === 1 ? "Antwort" : "Antworten"} von {people}</p>
                   <div className={styles.preview}>{n ? <TafelResult question={current} answers={answers} view={state.view} compact /> : <p className={styles.empty}>Noch keine Antworten.</p>}</div>
-                  <p className={styles.previewNote}>{state.show ? "Am Beamer sichtbar." : "Nur du siehst die Antworten – am Beamer erscheinen sie auf „Zeigen“."}</p>
+                  <p className={styles.previewNote}>{!beamer ? "Kein Beamer offen – nur du siehst die Antworten." : state.show ? "Am Beamer sichtbar." : "Nur du siehst die Antworten – am Beamer erscheinen sie auf „Zeigen“."}</p>
                 </>
               )}
             </section>
@@ -170,7 +160,7 @@ export default function SteuerungPage() {
                 <button type="button" className="btn big" onClick={() => send({ cmd: "restart" })} data-remote-restart><Icon name="restart" size={18} /> Neu starten</button>
               ) : (
                 <button type="button" className="btn primary big" disabled={!connected} onClick={() => send({ cmd: "next" })} data-remote-next>
-                  {state ? nextLabel(state.phase, state.index ?? 0, total) : "Weiter"} →
+                  {state ? nextLabel(state.phase, state.index, total) : "Weiter"} →
                 </button>
               )}
             </div>
