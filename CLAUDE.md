@@ -5,7 +5,7 @@
 Evaluationsbögen für InnoNord: Ein **Builder** (Admin) erstellt Bögen, Teilnehmende füllen sie per Link im
 Claus-Look (Figma-Prototyp „van der Stein“) aus, und die Ergebnisse dienen dazu, den Wissenstransfer von Event zu Event zu verbessern.
 
-Routen: `/meine-boegen` (`?papierkorb=1`, `?tests=1`), `/neu`, `/b/<id>/bearbeiten`, `/b/<id>/ergebnisse`, `/b/<id>/tafel`, `/f/<slug>`, `/f/<slug>/qr`.
+Routen: `/meine-boegen` (`?papierkorb=1`, `?tests=1`), `/neu`, `/b/<id>/bearbeiten`, `/b/<id>/ergebnisse`, `/b/<id>/tafel`, `/b/<id>/tafel/steuerung`, `/f/<slug>`, `/f/<slug>/qr`.
 Art (Inspirierend/Lernend): `brand/themes.ts`. Hinweise/KPI: `lib/rules.ts`, `lib/kpi.ts`. v1-Kompatibilität: `lib/legacy.ts`.
 
 ## Zuerst lesen

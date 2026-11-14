@@ -25,13 +25,17 @@
 .mascot { display: block; width: min(170px, 18vh); height: auto; margin-top: 3vh; }
 
 /* Steuerung unten: Zurück · Zeigen · Weiter (auch per Pfeiltasten / Presenter-Klicker) */
-.controls { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+.controls { display: flex; align-items: center; justify-content: space-between; gap: 16px; transition: opacity 0.4s ease; }
+/* Maus ruht 3 s → Steuerung blendet aus (sauberes Bild am Beamer); Bewegung/Taste blendet sie wieder ein */
+.idle .controls { opacity: 0; }
+.idle { cursor: none; }
+.remoteHint { font-size: clamp(13px, 1.1vw, 18px); opacity: 0.7; }
 .controls .group { display: flex; gap: 10px; align-items: center; }
 .step { font-size: clamp(14px, 1.3vw, 20px); opacity: 0.75; }
 
 /* Wortwolke */
 .cloud {
-  --unit: clamp(16px, 1.9vw, 34px);
+  --unit: clamp(16px, min(1.9vw, 3.2vh), 34px);
   display: flex; flex-wrap: wrap; align-items: center; align-content: center; justify-content: center;
   gap: 0.2em 0.9em; max-width: 92vw; max-height: 52vh; overflow: hidden;
   font-family: var(--font-display); font-weight: 700; line-height: 1.05;
@@ -52,9 +56,41 @@
 .barFill { height: 100%; border-radius: var(--radius-pill); background: var(--inno-navy); transition: width 0.6s ease; }
 .barPct { text-align: right; font-weight: 700; }
 
-@media (max-width: 700px) {
-  .lobby { grid-template-columns: 1fr; justify-items: center; text-align: center; }
-  .qr { width: min(360px, 80vw); }
-  .mascot { margin-inline: auto; }
+/* Karten (Freitext wie Menti) */
+.cards {
+  display: flex; flex-wrap: wrap; align-content: center; justify-content: center; gap: 1.2vh 1.2vw;
+  max-width: 92vw; max-height: 56vh; overflow: hidden; padding: 3vh 2vw; /* Platz für Schatten und Schräglage */
+}
+.card {
+  --tilt: 0deg;
+  margin: 0; max-width: 18em; padding: 0.7em 1em; border-radius: 10px;
+  font-size: clamp(15px, min(1.5vw, 2.6vh), 28px); font-weight: 600; line-height: 1.25; text-align: left; overflow-wrap: anywhere;
+  box-shadow: var(--admin-shadow-active);
+  transform: rotate(var(--tilt));
+  animation: throwIn 0.7s cubic-bezier(0.2, 0.9, 0.3, 1.2) both;
+}
+.tone1Bg { background: var(--inno-navy); color: var(--survey-on-accent); }
+.tone2Bg { background: var(--inno-red); color: var(--survey-on-accent); }
+.tone3Bg { background: var(--survey-accent); color: var(--survey-on-accent); }
+.tone4Bg { background: var(--admin-surface); color: var(--survey-ink); }
+@keyframes throwIn { from { opacity: 0; transform: translateY(40vh) rotate(calc(var(--tilt) * -6)) scale(0.6); } to { opacity: 1; transform: rotate(var(--tilt)); } }
+@media (prefers-reduced-motion: reduce) { .card { animation: none; } }
+
+/* kompakte Darstellung (Steuerung) */
+.compact.cloud { --unit: 13px; max-width: 100%; max-height: none; }
+.compact.cards { max-width: 100%; max-height: none; gap: 8px; }
+.compact .card { font-size: 14px; animation: none; box-shadow: var(--admin-shadow); }
+.compact.bars { width: 100%; font-size: 15px; gap: 8px; }
+
+/* Schmale oder niedrige Fenster (Handy, kleiner Laptop): Seite darf scrollen, Steuerung klebt unten mit Hintergrund */
+@media (max-width: 700px), (max-height: 520px) {
+  .page { height: auto; min-height: 100dvh; overflow: visible; padding: 16px 16px 0; }
+  .lobby { grid-template-columns: 1fr; justify-items: center; text-align: center; gap: 16px; }
+  .qr { width: min(300px, 74vw); order: -1; }
+  .mascot { margin-inline: auto; width: 90px; margin-top: 12px; }
   .barRow { grid-template-columns: minmax(0, 7em) 1fr 3.5em; }
+  .cloud, .cards { max-height: none; }
+  .controls { position: sticky; bottom: 0; flex-wrap: wrap; justify-content: center; padding: 10px 0 calc(10px + env(safe-area-inset-bottom)); background: var(--survey-bg); border-top: 1px solid var(--survey-card); }
+  .step { order: -1; width: 100%; text-align: center; }
+  .idle .controls { opacity: 1; }
 }

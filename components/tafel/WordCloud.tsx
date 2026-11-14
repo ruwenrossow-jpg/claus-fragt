@@ -4,11 +4,11 @@ import styles from "./tafel.module.css";
 const TONES = [styles.tone1, styles.tone2, styles.tone3, styles.tone4];
 
 /** Wortwolke für den Beamer: Größe = Häufigkeit, die häufigsten Begriffe in der Mitte. Neue Begriffe wachsen sanft hinein. */
-export function WordCloud({ words }: { words: CloudWord[] }) {
+export function WordCloud({ words, compact = false }: { words: CloudWord[]; compact?: boolean }) {
   if (!words.length) return null;
   const max = words[0].count;
   return (
-    <div className={styles.cloud} data-cloud>
+    <div className={`${styles.cloud} ${compact ? styles.compact : ""}`} data-cloud>
       {middleOut(words).map((w) => {
         const rank = words.indexOf(w);
         // 1 (selten) … 4.2 (häufigster): Wurzel, damit ein Ausreißer nicht alles andere winzig macht

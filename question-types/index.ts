@@ -42,7 +42,7 @@ export function isAnswerable(q: Question): boolean {
 }
 
 export function newQuestion(formId: string, kind: QuestionKind): Question {
-  const blank: Question = { id: crypto.randomUUID(), form_id: formId, position: 0, step: null, type: "short_text", label: "", help_text: null, required: false, options: [], settings: {} };
+  const blank: Question = { id: crypto.randomUUID(), form_id: formId, position: 0, step: null, type: "short_text", label: "", help_text: null, required: true, options: [], settings: {} };
   return getType(kind).apply(blank);
 }
 

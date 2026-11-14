@@ -9,7 +9,8 @@ app/                      Next.js-Seiten (nur Zusammenbau, keine Logik)
   b/[id]/ergebnisse       Kennzahlen (nur wenn passende Daten da sind), Filter nach Antwort, Auswertung je Frage, CSV
   f/[slug]                Öffentlicher Link (alte /f/<uuid>-Links gehen weiter)
   f/[slug]/qr             QR-Vollbild für den Beamer
-  b/[id]/tafel            Tafel (Menti-Modus) für den Beamer: QR + Zähler „Handys dabei“ → Frage für alle → Antwortzähler →
+  b/[id]/tafel/steuerung  Steuerung der Tafel (Laptop/Handy): Ablauf, Antworten live vor dem Zeigen, Knöpfe; Fernbedienung des Beamers
+  b/[id]/tafel            Tafel (Menti-Modus) für den Beamer (hält den Stand, Knöpfe blenden aus): QR + Zähler „Handys dabei“ → Frage für alle → Antwortzähler →
                           „Zeigen“ → Wortwolke (Freitext) / Balken → nächste Frage; Steuerung auch per Pfeiltasten/Presenter-Klicker
   */layout.tsx            nur Metadaten (Seitentitel, Link-Vorschau) per generateMetadata → formMeta() in lib/data.ts
   not-found, error, global-error   Hinweis-Screens im Claus-Raster (SurveyMessage)
@@ -36,7 +37,7 @@ docs/prototyp/            Figma-Referenz-Screens; docs/screens/v2: Screens Build
 ## Datenmodell
 `forms` (title, description, style = inspire|network, settings{}, public_slug, status draft|published(=Live)|closed)
 → `questions` (position, step, type, label, options[], settings{}) → `responses` → `answers` (value jsonb).
-- Neue Bögen starten **ohne Fragen**; Reihenfolge = `position`.
+- Neue Bögen starten **ohne Fragen**; Reihenfolge = `position`. Neue Fragen sind standardmäßig Pflicht.
 - `questions.settings` ist frei erweiterbar (Skala, Sterne, Platzhalter, maxChoices), dafür ist keine Migration nötig.
 - Sterne sind DB-Typ `scale` mit `settings.display = "stars"`; Stufen sind `single_choice` mit `display = "levels"` (score = Position 1–4).
 - **Framework (offen):** `step`, `settings.slotId`, `settings.kpi` bleiben im Modell und in der CSV, haben aber keine UI.
@@ -69,7 +70,7 @@ Start → Fragen (jeweils WEITER!) → (Speichern) → Ende → Ergebnisse (eige
 „Schließen“ versucht `window.close()` (geht nur bei per Skript geöffneten Fenstern) und zeigt sonst den Tschüss-Screen; in der Builder-Vorschau startet es von vorne.
 
 ### Tafel-Modus (Menti)
-Fragen mit `settings.tafel = true` laufen gemeinsam, **wenn** die Moderation `/b/<id>/tafel` offen hat. Die Tafel sendet alle 2 s ihren Stand
+Ablauf für Ersteller:innen: `docs/TAFEL.md`. Fragen mit `settings.tafel = true` laufen gemeinsam, **wenn** der Beamer `/b/<id>/tafel` offen ist (Steuerung schickt Befehle per Broadcast `cmd`). Die Tafel sendet alle 2 s ihren Stand
 (Lobby · Frage x · Ende) über den Realtime-Kanal `tafel-<formId>`; Handys zählen per Presence. Handys, die 7 s nichts hören, gelten als „Tafel aus“.
 Handy: Start → Screen „tafel“ (warten · Frage + „Abschicken“ · „Angekommen“ + „Ändern“) → bei Ende/Tafel weg: „Das war der gemeinsame Teil“ + WEITER!
 → übrige Fragen allein (+ verpasste Pflichtfragen der Tafel) → Ende … Jedes „Abschicken“ speichert die Abgabe (idempotent, gleiche Abgabe-id).

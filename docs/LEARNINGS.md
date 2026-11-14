@@ -2,6 +2,10 @@
 
 Neue Einträge oben. Format: Datum – Problem → Lösung/Regel.
 
+- 2026-11-14 (Tafel v2): Beamer-Seite mit `height: 100dvh; overflow: hidden` war am Handy kaputt (Knöpfe über dem QR) → unter 700 px Breite/520 px Höhe scrollt die Seite, Leiste klebt unten, QR zuerst. Getrennte Steuerung (Fernbedienung) statt Knöpfen auf dem Beamer; der Beamer bleibt Host, damit auch ein einzelner Bildschirm reicht.
+- 2026-11-14: CSS-Module hashen auch `.btn` → globale Klassen in Modulen nur über `:global(.btn)` ansprechen.
+- 2026-11-14: `page.tsx` darf im App Router nur erlaubte Exporte haben → Hilfsfunktionen in `lib/`.
+
 - 2026-11-14 (iPhone): iOS-Tastatur verkleinert nur den sichtbaren Bereich (`visualViewport`), nicht `100dvh` → Feld lag unter der Tastatur. `useKeyboard` erkennt Fokus im Textfeld + geschrumpften visualViewport und legt den Screen `position: fixed` genau über die Tastatur (kompakte Bühne: kleiner Claus + Frage). Test: Feld fokussieren und Viewport-Höhe verkleinern.
 - 2026-11-14 (iPhone): Zu lange Antwort-Box wurde vom Verlauf am Zonenrand mittendurch abgeschnitten (Rahmen weg) → Inhaltszone als Flex-Spalte, die Box schrumpft und scrollt IN sich (`[data-scroll]`), Verlauf oben/unten nur innerhalb der Box. Ergebnis-Zeilen auf kleinen Screens kompakter.
 

@@ -82,7 +82,7 @@ export function ShareDialog({ form, warnings, onStatus, onClose, tafelCount = 0 
       {tafelCount > 0 && (
         <div className={styles.shareTafel}>
           <span>{tafelCount === 1 ? "1 Frage läuft" : `${tafelCount} Fragen laufen`} gemeinsam an der Tafel.</span>
-          <a className="btn" href={`/b/${form.id}/tafel`} target="_blank" rel="noreferrer" data-tafel-open>Tafel starten</a>
+          <a className="btn" href={`/b/${form.id}/tafel/steuerung`} target="_blank" rel="noreferrer" data-tafel-open>Tafel starten</a>
         </div>
       )}
 

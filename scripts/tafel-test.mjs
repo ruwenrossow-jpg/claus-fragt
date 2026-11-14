@@ -1,4 +1,5 @@
-// E2E-Test Tafel-Modus (Menti): Moderation am Beamer + 3 Handys gleichzeitig. Screenshots nach .shots/tafel-*.png
+// E2E-Test Tafel-Modus (Menti), Ruwens Hackathon-Ablauf: Steuerung am Laptop → Beamer öffnen → Lobby (3 Handys) → 4 Fragen gemeinsam
+// (Wortwolke, Karten, Balken; Nachzügler) → allein weiter (2 Fragen) → Ergebnis; Beamer/Steuerung am Handy. Screenshots nach .shots/tafel-*.png
 // DATENSCHUTZ: Testbogen nur über /neu?test=1 (settings.test = true); Aufräumen per REST mit test=true UND exakter id.
 // Aufruf: node scripts/tafel-test.mjs [BASE_URL] [--keep]
 import fs from "fs";
@@ -44,6 +45,7 @@ const measure = async (p, name) => {
 
 let formId;
 try {
+  // ---------- Ersteller:in baut den Hackathon-Bogen: 4 Fragen an der Tafel, 2 allein ----------
   const admin = await page({ width: 1280, height: 900 });
   await admin.goto(`${BASE}/neu?test=1`);
   await admin.fill("#name", NAME);
@@ -67,11 +69,15 @@ try {
     }
     if (tafel) await active().locator("[role=switch]:has-text('An der Tafel')").click();
   }
-  await add("Text (kurz)", "Was nimmst du mit? Ein Wort!", [], true);
+  await add("Text (kurz)", "Ein Wort zum Hackathon?", [], true);
+  check("pflichtStandard", (await active().locator("[role=switch]:has-text('Pflicht')").getAttribute("aria-checked")) === "true");
   await admin.screenshot({ path: OUT + "tafel-01-editor.png" });
-  await add("Auswahl", "Wie war die Stimmung?", ["Mega", "Gut", "Geht so"], true);
+  await add("Text (Absatz)", "Was nimmst du mit?", [], true);
+  await add("Auswahl", "Würdest du wiederkommen?", ["Sofort", "Vielleicht", "Eher nicht"], true);
+  await add("Sterne", "Wie war die Stimmung?", [], true);
   await add("Sterne", "Wie fandest du das Essen?");
-  check("headerTafel", await admin.locator("header [data-header-tafel]").isVisible());
+  await add("Text (kurz)", "Was sollen wir ändern?");
+  check("headerTafelZurSteuerung", ((await admin.locator("header [data-header-tafel]").getAttribute("href")) ?? "").endsWith("/tafel/steuerung"));
   await admin.click("main [data-cta]");
   await admin.click("button:has-text('Live schalten')");
   await admin.waitForSelector("[role=radiogroup][aria-label=Status]");
@@ -81,14 +87,21 @@ try {
   await admin.keyboard.press("Escape");
   await admin.waitForSelector("[data-save=saved]", { timeout: 10000 });
 
-  // Beamer
-  const tafel = await page({ width: 1280, height: 720 });
-  await tafel.goto(`${BASE}/b/${formId}/tafel`);
+  // ---------- Steuerung (Laptop) → Beamer öffnen ----------
+  const ctl = admin;
+  await ctl.goto(`${BASE}/b/${formId}/tafel/steuerung`);
+  await ctl.waitForSelector("text=So startest du die Tafel", { timeout: 10000 });
+  await ctl.screenshot({ path: OUT + "tafel-03-steuerung-start.png" });
+  const [tafel] = await Promise.all([ctl.context().waitForEvent("page"), ctl.click("main button:has-text('Beamer öffnen')")]);
+  watch(tafel);
+  await tafel.setViewportSize({ width: 1280, height: 720 });
   await tafel.evaluate((id) => localStorage.removeItem(`tafel:${id}`), formId);
   await tafel.reload();
   await tafel.waitForSelector("text=Handy raus und mitmachen!");
+  await ctl.waitForSelector("[data-beamer=on]", { timeout: 10000 });
+  check("steuerungVerbunden", true);
 
-  // 3 Handys
+  // ---------- Lobby: 3 Handys kommen rein und warten ----------
   const phones = [];
   for (let i = 0; i < 3; i++) {
     const p = await page({ width: 393, height: 852 }, true);
@@ -97,19 +110,23 @@ try {
     phones.push(p);
   }
   await tafel.waitForSelector("[data-people='3']", { timeout: 15000 });
-  check("dreiHandysDabei", true);
-  await tafel.screenshot({ path: OUT + "tafel-03-lobby.png" });
-  await phones[0].waitForTimeout(500);
+  await ctl.waitForSelector("[data-people='3']", { timeout: 10000 });
+  check("lobbyZaehltDrei", true);
+  await tafel.screenshot({ path: OUT + "tafel-04-lobby.png" });
+  await ctl.screenshot({ path: OUT + "tafel-05-steuerung-lobby.png" });
   await measure(phones[0], "start");
   for (const p of phones) await p.click("text=Los geht's");
   await phones[0].waitForSelector("text=Schau nach vorne");
   await measure(phones[0], "warten");
-  await phones[0].screenshot({ path: OUT + "tafel-04-handy-warten.png" });
+  await phones[0].screenshot({ path: OUT + "tafel-06-handy-warten.png" });
+  // Beamer: Steuerung blendet aus, wenn die Maus ruht
+  await tafel.waitForTimeout(3600);
+  check("beamerSteuerungBlendetAus", (await tafel.evaluate(() => getComputedStyle(document.querySelector("[data-tafel-next]").parentElement.parentElement).opacity)) === "0");
 
-  // Frage 1: Wortwolke
-  await tafel.click("[data-tafel-next]");
-  await tafel.waitForSelector("[data-tafel-question]:has-text('Was nimmst du mit')");
-  const words = ["Teamgeist", "teamgeist", "Pizza um Mitternacht"];
+  // ---------- Frage 1 (Wortwolke), gesteuert vom Laptop ----------
+  await ctl.click("[data-remote-next]");
+  await tafel.waitForSelector("[data-tafel-question]:has-text('Ein Wort')");
+  const words = ["Teamgeist", "teamgeist", "Pizza"];
   for (const [i, p] of phones.entries()) {
     await p.waitForSelector("input[type=text]", { timeout: 8000 });
     if (i === 0) {
@@ -125,68 +142,103 @@ try {
         };
         return { typing: Boolean(document.querySelector("[data-typing]")), feld: vis("input[type=text]"), button: vis("[data-pill]"), claus: vis("[data-typing] [data-mini] img") };
       });
-      checks.tastatur = k;
       check("tastaturFeldUndButtonSichtbar", k.typing && k.feld && k.button && k.claus, JSON.stringify(k));
-      await p.screenshot({ path: OUT + "tafel-05b-handy-tastatur.png" });
       await p.evaluate(() => document.activeElement.blur());
       await p.setViewportSize({ width: 393, height: 852 });
       await p.waitForTimeout(700);
-      check("tastaturZu", !(await p.locator("[data-typing]").count()));
     }
     await p.fill("input[type=text]", words[i]);
-    if (i === 0) await p.screenshot({ path: OUT + "tafel-05-handy-frage.png" });
     await p.click("button:has-text('Abschicken')");
   }
   await phones[0].waitForSelector("text=Angekommen");
   await measure(phones[0], "angekommen");
-  await phones[0].screenshot({ path: OUT + "tafel-06-handy-angekommen.png" });
-  await tafel.waitForSelector("[data-count='3']", { timeout: 10000 });
-  await tafel.screenshot({ path: OUT + "tafel-07-zaehler.png" });
-  await tafel.click("[data-tafel-show]");
+  await ctl.waitForSelector("[data-count='3']", { timeout: 10000 });
+  check("steuerungSiehtAntwortenVorDemZeigen", (await ctl.locator("[data-cloud]").count()) === 1 && (await tafel.locator("[data-cloud]").count()) === 0);
+  await ctl.screenshot({ path: OUT + "tafel-07-steuerung-frage.png" });
+  await ctl.click("[data-remote-show]");
   await tafel.waitForSelector("[data-cloud]");
-  check("wortwolkeTeamgeist2", (await tafel.locator("[data-word='Teamgeist']").getAttribute("data-count")) === "2");
+  check("wortwolkeTeamgeist2", (await tafel.locator("[data-cloud] [data-word='Teamgeist']").getAttribute("data-count")) === "2");
   await tafel.waitForTimeout(800);
   await tafel.screenshot({ path: OUT + "tafel-08-wortwolke.png" });
-  // Antwort ändern (keine zweite Abgabe)
-  await phones[2].click("button:has-text('Ändern')");
-  await phones[2].fill("input[type=text]", "Pizza");
-  await phones[2].click("button:has-text('Abschicken')");
-  await phones[2].waitForSelector("text=Angekommen");
-  await tafel.waitForSelector("[data-word='Pizza']", { timeout: 8000 });
-  check("aendernAktualisiertWolke", (await tafel.locator("[data-word='Pizza um Mitternacht']").count()) === 0);
 
-  // Frage 2: Balken (per Pfeiltaste wie mit dem Presenter-Klicker)
-  await tafel.keyboard.press("ArrowRight");
-  await tafel.waitForSelector("[data-tafel-question]:has-text('Stimmung')");
+  // ---------- Frage 2 (Karten) + Nachzügler steigt mitten ein ----------
+  await ctl.click("[data-remote-next]");
+  await tafel.waitForSelector("[data-tafel-question]:has-text('Was nimmst du mit')");
+  const late = await page({ width: 393, height: 852 }, true);
+  await late.goto(link);
+  await late.waitForTimeout(2500);
+  await late.click("text=Los geht's");
+  await late.waitForSelector("text=Was nimmst du mit?", { timeout: 8000 });
+  check("nachzueglerLandetInAktuellerFrage", true);
+  phones.push(late);
+  const cards = ["Wie man in 24 h ein Team aufbaut", "Mut zum Pitchen", "Neue Kontakte", "Prototyp statt Folien"];
   for (const [i, p] of phones.entries()) {
-    await p.waitForSelector("text=Wie war die Stimmung?", { timeout: 8000 });
-    await p.locator("[role=radio]").nth(i === 2 ? 1 : 0).click();
+    await p.waitForSelector("textarea", { timeout: 8000 });
+    await p.fill("textarea", cards[i]);
     await p.click("button:has-text('Abschicken')");
     await p.waitForSelector("text=Angekommen");
   }
-  await tafel.waitForSelector("[data-count='3']", { timeout: 10000 });
-  await tafel.keyboard.press("z");
-  await tafel.waitForSelector("[data-bars]");
-  await tafel.waitForTimeout(800);
-  await tafel.screenshot({ path: OUT + "tafel-09-balken.png" });
+  await ctl.waitForSelector("[data-count='4']", { timeout: 10000 });
+  await ctl.click("[data-remote-view]");
+  await ctl.click("[data-remote-show]");
+  await tafel.waitForSelector("[data-cards]");
+  await tafel.waitForTimeout(1000);
+  check("vierKarten", (await tafel.locator("[data-cards] [data-card]").count()) === 4);
+  await tafel.screenshot({ path: OUT + "tafel-09-karten.png" });
 
-  // Ende des gemeinsamen Teils → Handys: WEITER! → Sterne-Frage allein
-  await tafel.click("[data-tafel-next]");
+  // ---------- Frage 3 (Auswahl) und 4 (Sterne): Balken ----------
+  for (const [label, pick] of [["Würdest du wiederkommen?", 0], ["Wie war die Stimmung?", 4]]) {
+    await ctl.click("[data-remote-next]");
+    await tafel.waitForSelector(`[data-tafel-question]:has-text("${label}")`);
+    for (const [i, p] of phones.entries()) {
+      await p.waitForSelector(`text=${label}`, { timeout: 8000 });
+      await p.locator("[role=radio]").nth(i === 3 ? 1 : pick).click();
+      await p.click("button:has-text('Abschicken')");
+      await p.waitForSelector("text=Angekommen");
+    }
+    await ctl.waitForSelector("[data-count='4']", { timeout: 10000 });
+    await tafel.keyboard.press("z"); // Presenter-Taste am Beamer
+    await tafel.waitForSelector("[data-bars]");
+  }
+  await tafel.waitForTimeout(800);
+  await tafel.screenshot({ path: OUT + "tafel-10-balken.png" });
+  // Sprung über den Ablauf: zurück zu Frage 1 und wieder zur letzten
+  await ctl.click("[data-step='1']");
+  await tafel.waitForSelector("[data-tafel-question]:has-text('Ein Wort')");
+  await ctl.click("[data-step='4']");
+  await tafel.waitForSelector("[data-tafel-question]:has-text('Stimmung')");
+  check("ablaufSprung", true);
+
+  // ---------- Ende des gemeinsamen Teils → allein weiter ----------
+  await ctl.click("[data-remote-next]");
   await tafel.waitForSelector("text=Der gemeinsame Teil ist geschafft");
-  await tafel.screenshot({ path: OUT + "tafel-10-ende.png" });
+  await tafel.screenshot({ path: OUT + "tafel-11-ende.png" });
   for (const p of phones) await p.waitForSelector("text=Das war der gemeinsame Teil", { timeout: 8000 });
   await measure(phones[0], "gemeinsam-vorbei");
-  await phones[0].screenshot({ path: OUT + "tafel-11-handy-vorbei.png" });
+  await phones[0].screenshot({ path: OUT + "tafel-12-handy-vorbei.png" });
+  check("nachzueglerHolt1Nach", await late.locator("text=noch 3 Fragen").count() === 1, await late.locator("[data-zone=body]").innerText());
   for (const p of phones) {
     await p.click("text=WEITER!");
+    if (p === late) {
+      await p.waitForSelector("text=Ein Wort zum Hackathon?");
+      await p.fill("input[type=text]", "Teamgeist");
+      await p.waitForTimeout(500);
+      await p.click("text=WEITER!");
+    }
     await p.waitForSelector("text=Wie fandest du das Essen?");
     await p.locator("[role=radio]").nth(3).click();
+    await p.waitForTimeout(500);
+    await p.click("text=WEITER!");
+    await p.waitForSelector("text=Was sollen wir ändern?");
+    await p.fill("input[type=text]", "Mehr Kaffee");
     await p.waitForTimeout(500);
     await p.click("text=WEITER!");
     await p.waitForSelector("text=Ergebnis ansehen");
   }
   await measure(phones[0], "ende");
-  // Zurück von der ersten eigenen Frage führt zum Tafel-Screen, nicht zum Start
+  await phones[0].click("[data-back]");
+  await phones[0].waitForSelector("text=Was sollen wir ändern?");
+  await phones[0].waitForTimeout(500);
   await phones[0].click("[data-back]");
   await phones[0].waitForSelector("text=Wie fandest du das Essen?");
   await phones[0].waitForTimeout(500);
@@ -195,12 +247,29 @@ try {
   check("zurueckZurTafel", true);
 
   const responses = await rest(`responses?form_id=eq.${formId}&select=id,answers(question_id,value)`);
-  check("dreiAbgaben", responses.length === 3, `${responses.length}`);
-  check("jeDreiAntworten", responses.every((r) => r.answers.length === 3), JSON.stringify(responses.map((r) => r.answers.length)));
+  check("vierAbgaben", responses.length === 4, `${responses.length}`);
+  check("jeSechsAntworten", responses.every((r) => r.answers.length === 6), JSON.stringify(responses.map((r) => r.answers.length)));
+
+  // ---------- Beamer und Steuerung auf dem Handy: nichts überlappt, nichts läuft über ----------
+  await ctl.click("[data-remote-restart]");
+  await tafel.waitForSelector("text=Handy raus und mitmachen!");
+  for (const [pg, name] of [[tafel, "beamer"], [ctl, "steuerung"]]) {
+    await pg.setViewportSize({ width: 390, height: 664 });
+    await pg.waitForTimeout(800);
+    await pg.mouse.move(10, 10);
+    const r = await pg.evaluate(() => {
+      scrollTo(0, document.documentElement.scrollHeight);
+      const bar = document.querySelector("[data-tafel-next], [data-remote-next]")?.closest("div[class]")?.parentElement?.getBoundingClientRect();
+      const qr = document.querySelector("img[alt^='QR-Code']")?.getBoundingClientRect();
+      return { ueberlauf: document.documentElement.scrollWidth > innerWidth + 1, barSichtbar: Boolean(bar && bar.bottom <= innerHeight + 1 && bar.top >= 0), qrUnterBar: Boolean(qr && bar && qr.bottom > bar.top + 1) };
+    });
+    check(`${name}Handy`, !r.ueberlauf && r.barSichtbar && !r.qrUnterBar, JSON.stringify(r));
+    await pg.screenshot({ path: OUT + `tafel-13-${name}-handy.png` });
+  }
 
   const spread = (k) => Math.max(...raster.map((r) => r[k])) - Math.min(...raster.map((r) => r[k]));
-  checks.raster = { buttonSpread: spread("button"), bubbleSpread: spread("bubble"), rows: raster };
-  check("rasterGleich", spread("button") === 0 && spread("bubble") === 0);
+  checks.raster = { buttonSpread: spread("button"), bubbleSpread: spread("bubble") };
+  check("rasterGleich", spread("button") === 0 && spread("bubble") === 0, JSON.stringify(raster));
 } catch (e) {
   errors.push(`Abbruch: ${e.message.split("\n").slice(0, 3).join(" ")}`);
 } finally {

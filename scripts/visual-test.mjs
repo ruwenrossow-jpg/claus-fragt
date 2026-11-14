@@ -192,7 +192,7 @@ try {
   await addQuestion("Auswahl", "Wer bist du heute?", ["Student:in", "Mentor:in", "Orga / Partner", "Wird entfernt"]);
   await active().locator("button[aria-label='Antwort D entfernen']").click();
   check("optionEntfernt", (await active().locator("input[aria-label^='Antwort ']").count()) === 3);
-  await active().locator("[role=switch]:has-text('Pflicht')").click();
+  // Pflicht ist Standard bei neuen Fragen
   check("pflichtAn", (await active().locator("[role=switch]:has-text('Pflicht')").getAttribute("aria-checked")) === "true");
   // Typwechsel Auswahl → Mehrfachauswahl → Auswahl: Antworten bleiben
   await setKind("Mehrfachauswahl");

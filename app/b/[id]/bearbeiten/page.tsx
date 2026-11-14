@@ -105,7 +105,7 @@ export default function EditorPage() {
         <Link className="btn ghost" href="/meine-boegen" aria-label="Meine Bögen" data-header-list><Icon name="list" size={18} /> <span className="hide-mobile">Meine Bögen</span></Link>
         <Link className="btn ghost hide-xs" href={`/b/${id}/ergebnisse`} aria-label="Ergebnisse"><Icon name="chart" size={18} /> <span className="hide-mobile">Ergebnisse</span></Link>
         {tafelCount > 0 && (
-          <a className="btn ghost" href={`/b/${id}/tafel`} target="_blank" rel="noreferrer" aria-label="Tafel starten" data-header-tafel><Icon name="board" size={18} /> <span className="hide-mobile">Tafel</span></a>
+          <a className="btn ghost" href={`/b/${id}/tafel/steuerung`} target="_blank" rel="noreferrer" aria-label="Tafel starten" data-header-tafel><Icon name="board" size={18} /> <span className="hide-mobile">Tafel</span></a>
         )}
         <button type="button" className="btn" onClick={() => setSharing(true)} aria-label="Teilen" data-share><Icon name="share" size={18} /> <span className="hide-mobile">Teilen</span></button>
         <button type="button" className="btn primary" onClick={finish} disabled={finishing} data-cta>
