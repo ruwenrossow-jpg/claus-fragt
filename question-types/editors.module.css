@@ -1,0 +1,23 @@
+/* Typ-spezifische Felder im Builder (Admin-Look). Werte aus brand/tokens.css. */
+.option { display: flex; align-items: center; gap: 12px; min-height: 44px; }
+.mark { flex: none; width: 18px; height: 18px; border: 2px solid var(--admin-border); border-radius: 50%; }
+.markCheck { border-radius: 4px; }
+.number { flex: none; width: 18px; text-align: center; font-weight: 600; color: var(--admin-muted); }
+.input {
+  flex: 1; min-width: 0; padding: 8px 2px; font: inherit; color: var(--admin-text);
+  background: none; border: 0; border-bottom: 1px solid transparent; border-radius: 0;
+}
+.input:hover { border-bottom-color: var(--admin-border); }
+.input:focus { outline: none; border-bottom: 2px solid var(--inno-navy); padding-bottom: 7px; }
+.input::placeholder { color: var(--admin-muted); }
+.addOption {
+  display: flex; align-items: center; gap: 12px; min-height: 44px; padding: 0;
+  font: inherit; color: var(--admin-muted); background: none; border: 0; cursor: pointer;
+}
+.addOption:hover { color: var(--inno-navy); }
+.row { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin-top: 4px; color: var(--admin-muted); }
+.row > div { width: 96px; }
+.labels { display: grid; grid-template-columns: 1fr 1fr; gap: 4px 24px; margin-top: 10px; }
+.labels label { display: block; font-size: 13px; color: var(--admin-muted); }
+.labels .input { width: 100%; border-bottom-color: var(--admin-border); }
+@media (max-width: 560px) { .labels { grid-template-columns: 1fr; } }

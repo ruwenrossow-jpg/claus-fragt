@@ -1,0 +1,21 @@
+/* Inhaltszone der Bogen-Screens. Werte aus brand/tokens.css. */
+.hint { margin: var(--space-3) 0 0; font-size: var(--text-s); text-align: center; }
+
+/* Ergebnis (in der Antwort-Box) */
+.yourAnswer { margin: 0 0 var(--space-4); font-size: var(--text-m); }
+.total { font-size: var(--text-s); opacity: 0.7; }
+.rows { display: flex; flex-direction: column; gap: var(--space-3); }
+.row { display: grid; grid-template-columns: 36px 1fr 52px; align-items: start; gap: var(--space-3); font-size: var(--text-m); line-height: 20px; }
+.bar { height: 20px; border-radius: var(--radius-pill); background: var(--survey-accent-light); overflow: hidden; }
+.barFill { height: 100%; border-radius: var(--radius-pill); background: var(--survey-accent); transition: width 0.5s ease; }
+.rowCaption { margin: var(--space-1) 0 0; font-size: var(--text-xs); line-height: 1.2; opacity: 0.75; }
+.pct { text-align: right; }
+.own { color: var(--inno-red); font-weight: 600; }
+/* Kleine Screens (iPhone mit Safari-Leisten ≈ 660 px): Ergebnis kompakter, damit möglichst alle Zeilen ohne Scrollen passen */
+@container screen (max-height: 760px) {
+  .rows { gap: var(--space-1); }
+  .row { line-height: 18px; }
+  .bar { height: 14px; margin-top: 2px; }
+  .rowCaption { margin-top: 2px; }
+  .yourAnswer { margin-bottom: var(--space-2); font-size: var(--text-s); }
+}

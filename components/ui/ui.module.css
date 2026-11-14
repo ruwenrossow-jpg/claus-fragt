@@ -1,0 +1,197 @@
+/* Bausteine der Bogen-Oberfläche. Werte ausschließlich aus brand/tokens.css. */
+
+/* ---------- Screen: festes Layout-Raster ----------
+   Kopf (--zone-head) · Bühne (Claus + Zipfel + Blase) · Inhalt (Rest, scrollt) · Fuß (Hinweis + Button).
+   Alle Zonen liegen auf derselben linken/rechten Achse (--screen-pad). */
+.screen {
+  container: screen / size;
+  flex: 1;
+  width: 100%;
+  max-width: var(--screen-max);
+  height: 100%;
+  margin: 0 auto;
+  background: var(--survey-bg);
+  color: var(--survey-ink);
+  font-family: var(--font-body);
+}
+.grid {
+  display: grid;
+  grid-template-rows: var(--zone-head) calc(var(--space-2) + var(--claus-size) + var(--zone-tail) + var(--bubble-h)) minmax(0, 1fr) auto;
+  height: 100%;
+}
+/* Kleine Screens (z. B. 375 × 667): alle festen Zonen kompakter, Verhältnisse bleiben gleich */
+@container screen (max-height: 760px) {
+  .grid {
+    --zone-head: 100px;
+    --claus-size: 88px;
+    --zone-tail: 30px;
+    --bubble-h: 118px;
+    --pill-h: 60px;
+    --pill-font: 28px;
+    --foot-pad: 20px;
+    --text-m: 18px;
+    --text-xl: 24px;
+  }
+}
+
+.zoneHead { padding: var(--space-3) var(--screen-pad) 0; }
+.zoneStage { padding: var(--space-2) var(--screen-pad) 0; }
+/* Inhaltszone als Spalte: die Antwort-Box schrumpft auf die verfügbare Höhe und scrollt in sich (Rahmen bleibt ganz sichtbar) */
+.zoneBody { min-height: 0; overflow-y: auto; padding: 0 var(--screen-pad) var(--space-4); overscroll-behavior: contain; display: flex; flex-direction: column; }
+.zoneBody > * { flex-shrink: 0; }
+.zoneBody > .card { flex-shrink: 1; min-height: 0; }
+.zoneFoot { display: flex; flex-direction: column; align-items: center; padding: 0 var(--screen-pad) var(--foot-pad); }
+.note { min-height: 22px; margin: var(--space-2) 0; font-size: var(--text-s); line-height: 22px; text-align: center; }
+/* Inhalt länger als die Zone: weicher Verlauf unten zeigt, dass man scrollen kann */
+.zoneBody[data-overflow="true"], .cardScroll[data-overflow="true"] { mask-image: linear-gradient(to bottom, black calc(100% - 24px), transparent); }
+.zoneBody[data-scrolled="true"], .cardScroll[data-scrolled="true"] { mask-image: linear-gradient(to bottom, transparent, black 16px); }
+.zoneBody[data-scrolled="true"][data-overflow="true"], .cardScroll[data-scrolled="true"][data-overflow="true"] { mask-image: linear-gradient(to bottom, transparent, black 16px, black calc(100% - 24px), transparent); }
+@container screen (max-height: 760px) {
+  .note { margin: var(--space-1) 0; }
+}
+
+/* Tastatur offen (Handy): Kopf und große Bühne weg, kompakte Bühne oben, Inhalt + Button über der Tastatur */
+.typing .zoneHead, .typing .zoneStage { display: none; }
+.typing .grid { grid-template-rows: auto minmax(0, 1fr) auto; }
+.typing .card { margin-top: var(--space-3); }
+.typing .zoneFoot { padding-bottom: var(--space-3); }
+.typing .note { margin: var(--space-1) 0; }
+.zoneTyping { padding: var(--space-3) var(--screen-pad) 0; }
+.miniStage { display: flex; align-items: center; gap: var(--space-2); }
+.miniMascot { flex: none; width: 52px; height: 52px; }
+.miniBubble {
+  flex: 1; min-width: 0; margin: 0; padding: var(--space-2) var(--space-3);
+  font-size: var(--text-s); line-height: 1.25;
+  background: var(--survey-bubble); border: 1px solid var(--survey-ink); border-radius: var(--radius-card);
+  display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;
+}
+
+/* ---------- Kopfzone ---------- */
+.back {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  height: 30px;
+  padding: 0 var(--space-3) 0 var(--space-2);
+  border: var(--border-ink);
+  border-radius: var(--radius-pill);
+  background: var(--survey-card);
+  box-shadow: 0 2px 0 var(--survey-ink);
+  font: inherit;
+  font-size: var(--text-s);
+  font-weight: 600;
+  line-height: 1;
+  color: var(--survey-ink);
+  cursor: pointer;
+  transition: transform 0.1s ease, box-shadow 0.1s ease;
+}
+.back:active { transform: translateY(2px); box-shadow: 0 0 0 var(--survey-ink); }
+.backIcon { width: 16px; height: 16px; }
+.backPlaceholder { height: 30px; }
+.progress {
+  height: 34px;
+  margin-top: var(--space-3);
+  border-radius: var(--radius-pill);
+  background: var(--survey-accent-light);
+  overflow: hidden;
+}
+.progressFill {
+  height: 100%;
+  border-radius: var(--radius-pill);
+  background: var(--survey-accent);
+  transition: width 0.35s ease;
+}
+.progressMeta { display: flex; justify-content: space-between; margin-top: var(--space-2); font-size: var(--text-s); font-weight: 600; }
+@container screen (max-height: 760px) {
+  .progress { height: 26px; margin-top: var(--space-2); }
+}
+
+/* ---------- Bühne: Claus + Sprechblase ---------- */
+.track { position: relative; height: var(--claus-size); }
+.mascot {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: var(--claus-size);
+  height: var(--claus-size);
+  /* Wanderung über left + translate (transform bleibt frei für den Hüpfer) */
+  transition: left 0.7s cubic-bezier(0.65, 0, 0.35, 1), translate 0.7s cubic-bezier(0.65, 0, 0.35, 1);
+}
+.left .mascot { left: 0; translate: -8px 0; animation: hopLeft 0.7s ease-in-out; }
+.center .mascot { left: 50%; translate: -50% 0; animation: hopCenter 0.7s ease-in-out; }
+.right .mascot { left: 100%; translate: calc(-100% + 8px) 0; animation: hopRight 0.7s ease-in-out; }
+/* gleiche Keyframes mit verschiedenen Namen: der Klassenwechsel startet den Hüpfer neu */
+@keyframes hopLeft { 40% { transform: translateY(-14px) rotate(-5deg); } }
+@keyframes hopCenter { 40% { transform: translateY(-14px); } }
+@keyframes hopRight { 40% { transform: translateY(-14px) rotate(5deg); } }
+@media (prefers-reduced-motion: reduce) {
+  .mascot { transition: none; animation: none !important; }
+}
+
+/* Sprechblase (Umriss = ein SVG-Pfad, siehe SpeechBubble.tsx): volle Breite, feste Höhe, Text vertikal zentriert */
+.bubble {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: var(--bubble-h);
+  margin-top: var(--zone-tail);
+  line-height: 1.22;
+}
+.bubbleShape { position: absolute; top: 0; left: 0; overflow: visible; }
+.bubbleShape path { fill: var(--survey-bubble); stroke: var(--survey-ink); stroke-width: 1; stroke-linejoin: round; }
+.bubbleText {
+  position: relative;
+  max-width: 70.7%; /* einbeschriebenes Rechteck der Ellipse: Breite / √2 */
+  text-align: center;
+  overflow-wrap: break-word;
+  text-wrap: balance;
+}
+/* letzte Stufe (sehr lange Frage): etwas breiter als das einbeschriebene Rechteck, die Ellipse ist in der Mitte breit genug */
+.bubbleTextWide { max-width: 84%; line-height: 1.15; }
+.bubbleHelp { display: block; margin-top: var(--space-1); font-size: var(--text-s); opacity: 0.7; }
+
+/* ---------- Pill-Button ---------- */
+.pill {
+  min-width: 212px;
+  height: var(--pill-h);
+  padding: 0 var(--space-6);
+  border: 0;
+  border-radius: var(--radius-pill);
+  background: var(--inno-red);
+  color: var(--survey-on-accent);
+  font: inherit;
+  font-size: var(--pill-font);
+  letter-spacing: 0.5px;
+  cursor: pointer;
+  transition: transform 0.1s ease, opacity 0.2s ease;
+}
+.pill:active { transform: scale(0.97); }
+.pill:focus-visible, .back:focus-visible { outline: 3px solid var(--survey-ink); outline-offset: 3px; }
+.pill:disabled { opacity: 0.45; cursor: default; }
+/* Screens ohne Button: gleicher Platz, damit nichts springt */
+.pillSpacer { height: var(--pill-h); }
+
+/* ---------- Antwort-Box (gemeinsame Region) ---------- */
+.card {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  margin-top: var(--space-5);
+  padding: var(--space-5);
+  border: 2px solid var(--survey-ink);
+  border-radius: var(--radius-card);
+  background: var(--survey-card);
+}
+.cardScroll { min-height: 0; overflow-y: auto; overscroll-behavior: contain; margin: calc(-1 * var(--space-2)); padding: var(--space-2); }
+.cardTitle { margin: 0; padding-bottom: var(--space-5); font-family: inherit; font-size: var(--text-l); font-weight: 400; color: inherit; }
+@container screen (max-height: 760px) {
+  .card { margin-top: var(--space-3); padding: var(--space-3) var(--space-4); }
+}
+
+/* ---------- Texte in der Inhaltszone (Start, Ende, Danke) ---------- */
+.intro { padding-top: var(--space-5); text-align: center; }
+.introTitle { margin: 0; font-family: inherit; font-size: var(--text-xl); font-weight: 700; line-height: 1.15; color: inherit; }
+.introSub { margin: var(--space-2) 0 0; font-size: var(--text-m); line-height: 1.3; }
+.tags { display: flex; flex-wrap: wrap; justify-content: center; gap: var(--space-2); margin-top: var(--space-4); }
+.tag { padding: 6px var(--space-3); border: 1px solid var(--survey-ink); border-radius: var(--radius-pill); background: var(--survey-card); font-size: var(--text-s); }

@@ -1,0 +1,96 @@
+/* Tafel (Beamer, Moderation). Groß, ruhig, ohne Scrollen: alles richtet sich nach der Fensterhöhe. Werte aus brand/tokens.css. */
+.page {
+  height: 100dvh; display: grid; grid-template-rows: auto minmax(0, 1fr) auto; gap: 2vh;
+  padding: 3vh 4vw; overflow: hidden;
+  background: var(--survey-bg); color: var(--survey-ink); font-family: var(--font-body);
+}
+.top { display: flex; align-items: center; justify-content: space-between; gap: 2vw; font-size: clamp(16px, 1.6vw, 26px); }
+.title { margin: 0; font-family: var(--font-display); font-size: clamp(18px, 1.8vw, 30px); font-weight: 700; color: var(--inno-navy); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.people { display: inline-flex; align-items: center; gap: 0.5em; padding: 0.3em 0.9em; font-weight: 700; color: var(--inno-navy); background: var(--survey-card); border-radius: var(--radius-pill); white-space: nowrap; }
+.people::before { content: ""; width: 0.55em; height: 0.55em; border-radius: 50%; background: var(--admin-ok); }
+
+.center { min-height: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3vh; text-align: center; }
+.question { margin: 0; max-width: 28ch; font-family: var(--font-display); font-size: clamp(28px, 4.2vw, 76px); line-height: 1.12; color: var(--inno-navy); overflow-wrap: anywhere; }
+.count { margin: 0; font-size: clamp(18px, 2vw, 34px); }
+.count strong { font-family: var(--font-display); font-size: 1.6em; color: var(--inno-red); }
+.hidden { margin: 0; font-size: clamp(16px, 1.6vw, 26px); opacity: 0.7; }
+
+/* Lobby: QR + Aufforderung */
+.lobby { min-height: 0; display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 5vw; }
+.lobby h2 { margin: 0; font-family: var(--font-display); font-size: clamp(30px, 4.5vw, 80px); line-height: 1.1; color: var(--inno-navy); }
+.lobby p { margin: 2vh 0 0; font-size: clamp(18px, 2.2vw, 36px); }
+.url { font-weight: 700; color: var(--inno-red); overflow-wrap: anywhere; }
+.warn { display: flex; align-items: center; gap: 1em; flex-wrap: wrap; font-size: clamp(15px, 1.5vw, 22px) !important; color: var(--admin-danger); }
+.qr { display: block; width: min(500px, 62vh, 40vw); height: auto; aspect-ratio: 1; border: 3px solid var(--survey-ink); border-radius: 24px; background: var(--admin-surface); }
+.mascot { display: block; width: min(170px, 18vh); height: auto; margin-top: 3vh; }
+
+/* Steuerung unten: Zurück · Zeigen · Weiter (auch per Pfeiltasten / Presenter-Klicker) */
+.controls { display: flex; align-items: center; justify-content: space-between; gap: 16px; transition: opacity 0.4s ease; }
+/* Maus ruht 3 s → Steuerung blendet aus (sauberes Bild am Beamer); Bewegung/Taste blendet sie wieder ein */
+.idle .controls { opacity: 0; }
+.idle { cursor: none; }
+.remoteHint { font-size: clamp(13px, 1.1vw, 18px); opacity: 0.7; }
+.controls .group { display: flex; gap: 10px; align-items: center; }
+.step { font-size: clamp(14px, 1.3vw, 20px); opacity: 0.75; }
+
+/* Wortwolke */
+.cloud {
+  --unit: clamp(16px, min(1.9vw, 3.2vh), 34px);
+  display: flex; flex-wrap: wrap; align-items: center; align-content: center; justify-content: center;
+  gap: 0.2em 0.9em; max-width: 92vw; max-height: 52vh; overflow: hidden;
+  font-family: var(--font-display); font-weight: 700; line-height: 1.05;
+}
+.word { font-size: calc(var(--unit) * var(--scale, 1)); transition: font-size 0.6s ease; animation: grow 0.6s ease both; white-space: nowrap; }
+.tone1 { color: var(--inno-navy); }
+.tone2 { color: var(--inno-red); }
+.tone3 { color: var(--survey-accent); }
+.tone4 { color: var(--admin-text); }
+@keyframes grow { from { opacity: 0; transform: scale(0.4); } to { opacity: 1; transform: scale(1); } }
+@media (prefers-reduced-motion: reduce) { .word { animation: none; transition: none; } }
+
+/* Balken (Auswahl, Sterne, Skala, Ja/Nein) */
+.bars { display: flex; flex-direction: column; gap: 1.6vh; width: min(1100px, 86vw); font-size: clamp(16px, 1.8vw, 30px); text-align: left; }
+.barRow { display: grid; grid-template-columns: minmax(0, 14em) 1fr 4.5em; align-items: center; gap: 1em; }
+.barLabel { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.barTrack { height: 1.1em; border-radius: var(--radius-pill); background: var(--survey-card); overflow: hidden; }
+.barFill { height: 100%; border-radius: var(--radius-pill); background: var(--inno-navy); transition: width 0.6s ease; }
+.barPct { text-align: right; font-weight: 700; }
+
+/* Karten (Freitext wie Menti) */
+.cards {
+  display: flex; flex-wrap: wrap; align-content: center; justify-content: center; gap: 1.2vh 1.2vw;
+  max-width: 92vw; max-height: 56vh; overflow: hidden; padding: 3vh 2vw; /* Platz für Schatten und Schräglage */
+}
+.card {
+  --tilt: 0deg;
+  margin: 0; max-width: 18em; padding: 0.7em 1em; border-radius: 10px;
+  font-size: clamp(15px, min(1.5vw, 2.6vh), 28px); font-weight: 600; line-height: 1.25; text-align: left; overflow-wrap: anywhere;
+  box-shadow: var(--admin-shadow-active);
+  transform: rotate(var(--tilt));
+  animation: throwIn 0.7s cubic-bezier(0.2, 0.9, 0.3, 1.2) both;
+}
+.tone1Bg { background: var(--inno-navy); color: var(--survey-on-accent); }
+.tone2Bg { background: var(--inno-red); color: var(--survey-on-accent); }
+.tone3Bg { background: var(--survey-accent); color: var(--survey-on-accent); }
+.tone4Bg { background: var(--admin-surface); color: var(--survey-ink); }
+@keyframes throwIn { from { opacity: 0; transform: translateY(40vh) rotate(calc(var(--tilt) * -6)) scale(0.6); } to { opacity: 1; transform: rotate(var(--tilt)); } }
+@media (prefers-reduced-motion: reduce) { .card { animation: none; } }
+
+/* kompakte Darstellung (Steuerung) */
+.compact.cloud { --unit: 13px; max-width: 100%; max-height: none; }
+.compact.cards { max-width: 100%; max-height: none; gap: 8px; }
+.compact .card { font-size: 14px; animation: none; box-shadow: var(--admin-shadow); }
+.compact.bars { width: 100%; font-size: 15px; gap: 8px; }
+
+/* Schmale oder niedrige Fenster (Handy, kleiner Laptop): Seite darf scrollen, Steuerung klebt unten mit Hintergrund */
+@media (max-width: 700px), (max-height: 520px) {
+  .page { height: auto; min-height: 100dvh; overflow: visible; padding: 16px 16px 0; }
+  .lobby { grid-template-columns: 1fr; justify-items: center; text-align: center; gap: 16px; }
+  .qr { width: min(300px, 74vw); order: -1; }
+  .mascot { margin-inline: auto; width: 90px; margin-top: 12px; }
+  .barRow { grid-template-columns: minmax(0, 7em) 1fr 3.5em; }
+  .cloud, .cards { max-height: none; }
+  .controls { position: sticky; bottom: 0; flex-wrap: wrap; justify-content: center; padding: 10px 0 calc(10px + env(safe-area-inset-bottom)); background: var(--survey-bg); border-top: 1px solid var(--survey-card); }
+  .step { order: -1; width: 100%; text-align: center; }
+  .idle .controls { opacity: 1; }
+}

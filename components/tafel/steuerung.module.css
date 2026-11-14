@@ -1,0 +1,49 @@
+/* Tafel-Steuerung (Laptop/Handy der Moderation). Admin-Look, Werte aus brand/tokens.css. */
+.layout { display: grid; grid-template-columns: 300px minmax(0, 1fr); gap: 24px; align-items: start; }
+.status { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 18px; }
+.dot { display: inline-flex; align-items: center; gap: 6px; padding: 4px 12px; font-size: 14px; font-weight: 600; border-radius: var(--radius-pill); background: var(--admin-hover); color: var(--admin-muted); }
+.dot::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: currentColor; }
+.on { color: var(--admin-ok); }
+.off { color: var(--admin-danger); }
+
+.setup { margin: 0 0 18px; padding: 18px 20px; background: var(--admin-navy-soft); border-radius: var(--radius-admin); }
+.setup h2 { margin: 0 0 6px; font-family: var(--font-display); font-size: 20px; color: var(--inno-navy); }
+.setup p { margin: 0 0 12px; color: var(--admin-text); }
+
+/* Ablauf: Lobby · Fragen · Ende */
+.steps { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.stepBtn {
+  display: grid; grid-template-columns: 28px 1fr; gap: 8px; align-items: start; width: 100%; padding: 10px 12px;
+  font: inherit; font-size: 15px; text-align: left; color: var(--admin-text); cursor: pointer;
+  background: var(--admin-surface); border: 1px solid var(--admin-border); border-radius: var(--radius-admin-s);
+}
+.stepBtn:hover:not(:disabled) { border-color: var(--inno-navy); }
+.stepBtn:disabled { cursor: default; opacity: 0.6; }
+.stepBtn[aria-current="step"] { border-color: var(--inno-navy); background: var(--admin-navy-soft); box-shadow: inset 0 0 0 1px var(--inno-navy); font-weight: 600; }
+.stepNo { display: inline-grid; place-items: center; width: 24px; height: 24px; font-size: 13px; font-weight: 700; color: var(--inno-navy); background: var(--admin-hover); border-radius: 50%; }
+.stepMeta { display: block; font-size: 13px; font-weight: 400; color: var(--admin-muted); }
+
+.now { padding: 20px 22px; background: var(--admin-surface); border: 1px solid var(--admin-border); border-radius: var(--radius-admin); box-shadow: var(--admin-shadow); }
+.nowLabel { margin: 0; font-size: 13px; font-weight: 600; color: var(--admin-muted); text-transform: uppercase; letter-spacing: 0.04em; }
+.nowTitle { margin: 6px 0 4px; font-family: var(--font-display); font-size: 26px; line-height: 1.2; color: var(--inno-navy); }
+.nowCount { margin: 0 0 14px; font-size: 16px; }
+.nowCount strong { font-size: 22px; color: var(--inno-red); }
+.preview { min-height: 120px; padding: 16px; background: var(--survey-bg); border-radius: var(--radius-admin-s); display: flex; align-items: center; justify-content: center; }
+.previewNote { margin: 8px 0 0; font-size: 13px; color: var(--admin-muted); }
+.empty { margin: 0; color: var(--admin-muted); }
+
+/* Steuerleiste klebt unten (auch am Handy mit dem Daumen erreichbar) */
+.bar {
+  position: sticky; bottom: 0; z-index: 10; display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap;
+  margin-top: 20px; padding: 12px 16px calc(12px + env(safe-area-inset-bottom));
+  background: var(--admin-surface); border: 1px solid var(--admin-border); border-radius: var(--radius-admin); box-shadow: var(--admin-shadow-pop);
+}
+.barGroup { display: flex; gap: 8px; flex-wrap: wrap; }
+.keys { margin: 10px 0 0; font-size: 13px; color: var(--admin-muted); }
+
+@media (max-width: 800px) {
+  .layout { grid-template-columns: 1fr; }
+  .stepsCol { order: 2; }
+  .bar { justify-content: center; }
+  .bar :global(.btn.big) { padding: 10px 18px; font-size: 16px; }
+}

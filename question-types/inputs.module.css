@@ -1,0 +1,52 @@
+/* Eingabe-Elemente in der Antwort-Box. Werte aus brand/tokens.css. */
+.options { display: flex; flex-direction: column; gap: var(--space-6); padding: var(--space-1) 0; }
+.option {
+  display: flex; align-items: center; gap: clamp(14px, 7vw, 30px);
+  padding: 0 0 0 0; border: 0; background: none;
+  font: inherit; font-size: var(--text-m); text-align: left; color: var(--survey-ink); cursor: pointer;
+}
+.mark {
+  flex: none; width: 30px; height: 30px;
+  border: var(--border-ink); border-radius: 50%; background: var(--survey-neutral);
+  transition: background 0.15s ease;
+}
+.markSquare { border-radius: 8px; }
+.markOn { background: var(--survey-accent); }
+
+.chips { display: flex; justify-content: space-between; gap: var(--space-2); }
+.chip {
+  flex: 1; max-width: 44px; height: 44px;
+  border: 2px solid transparent; border-radius: 10px;
+  background: var(--survey-accent); color: var(--survey-on-accent);
+  font: inherit; font-size: var(--text-l); cursor: pointer;
+}
+.chipOn { background: var(--inno-red); border-color: var(--survey-ink); }
+/* Viele Stufen (z. B. 0–10): zwei Reihen mit gleich großen Feldern statt Überlauf */
+.chips:has(> :nth-child(8)) { flex-wrap: wrap; justify-content: center; gap: var(--space-2); }
+.chips:has(> :nth-child(8)) .chip { flex: 0 0 40px; height: 40px; font-size: var(--text-m); }
+
+.stars { display: flex; justify-content: space-between; }
+.star { padding: 0; border: 0; background: none; cursor: pointer; line-height: 0; }
+
+.scaleLabels { display: flex; justify-content: space-between; margin-top: var(--space-6); font-size: var(--text-s); }
+
+.field {
+  width: 100%; padding: 14px 16px;
+  border: 1px solid var(--survey-ink); border-radius: var(--radius-field);
+  background: var(--survey-field); color: var(--survey-ink);
+  font: inherit; font-size: var(--text-s); resize: none;
+}
+.field:focus { outline: 2px solid var(--survey-accent); outline-offset: 1px; }
+.field::placeholder { color: rgba(0, 0, 0, 0.45); }
+.textarea { min-height: 120px; }
+.options:has(> :nth-child(4)) { gap: var(--space-4); } /* 4+ Optionen: Box passt ohne Scrollen ins Raster (393 × 852) */
+@container screen (max-height: 760px) {
+  .options, .options:has(> :nth-child(4)) { gap: var(--space-3); }
+  .mark { width: 26px; height: 26px; }
+  .scaleLabels { margin-top: var(--space-4); }
+}
+.option[aria-checked="true"] { font-weight: 600; }
+.optionLabel { min-width: 0; overflow-wrap: anywhere; }
+.option:focus-visible, .chip:focus-visible, .star:focus-visible { outline: 3px solid var(--survey-ink); outline-offset: 3px; border-radius: 10px; }
+/* 0–10 (11 Stufen): 6 + 5 statt 5 + 5 + 1 */
+.chips:has(> :nth-child(11)) .chip { flex-basis: calc((100% - 5 * var(--space-2)) / 6); max-width: 48px; }
