@@ -4,11 +4,13 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { AdminHeader } from "@/components/AdminHeader";
+import { Icon } from "@/components/admin/icons";
+import { Select, SelectOption } from "@/components/admin/Select";
+import { buildSurvey } from "@/components/survey/context";
 import { loadAnswers, loadForm, loadResponses } from "@/lib/data";
-import { fillVars, sortByStep, stepName } from "@/lib/framework";
 import { computeKpis } from "@/lib/kpi";
-import { Answer, Form, Question } from "@/lib/types";
-import { average, distribution, isAnswerable, kindOf, levelScore, typeOf } from "@/question-types";
+import { Answer, AnswerValue, Form, Question } from "@/lib/types";
+import { ResultOption, average, distribution, isAnswerable, kindOf, levelScore, typeOf } from "@/question-types";
 
 interface Data {
   form: Form;
@@ -16,6 +18,8 @@ interface Data {
   responses: { id: string; created_at: string }[];
   answers: Answer[];
 }
+
+const matchesOption = (q: Question, v: AnswerValue, o: ResultOption) => (typeOf(q).matches ?? ((x: AnswerValue, y: ResultOption) => x === y.value))(v, o);
 
 function Summary({ q, answers, responseCount }: { q: Question; answers: Answer[]; responseCount: number }) {
   const own = answers.filter((a) => a.question_id === q.id);
@@ -49,41 +53,59 @@ function Summary({ q, answers, responseCount }: { q: Question; answers: Answer[]
   );
 }
 
+/** Auswertung: Kennzahlen (nur wenn passende Daten da sind), Filter nach einer Antwort, je Frage, CSV. */
 export default function ResultsPage() {
   const { id } = useParams<{ id: string }>();
   const [data, setData] = useState<Data | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [group, setGroup] = useState("");
+  const [filter, setFilter] = useState("");
 
   useEffect(() => {
+    let cancelled = false;
     Promise.all([loadForm(id), loadResponses(id), loadAnswers(id)]).then(
-      ([f, responses, answers]) => setData({ form: f.form, questions: sortByStep(f.questions), responses, answers }),
-      (e: Error) => setError(e.message)
+      ([f, responses, answers]) => !cancelled && setData({ form: f.form, questions: f.questions, responses, answers }),
+      (e: Error) => !cancelled && setError(e.message)
     );
+    return () => {
+      cancelled = true;
+    };
   }, [id]);
 
-  const zielgruppe = data?.questions.find((q) => q.settings.slotId === "zielgruppe");
+  const labelOf = useMemo(() => (data ? buildSurvey(data.form, data.questions).labelOf : () => ""), [data]);
 
-  /** Filter nach Zielgruppe (Schritt 1) wirkt auf alle Kacheln und Fragen. */
+  /** Filter-Optionen: jede Antwort jeder Auswahlfrage (Einfachauswahl, Stufen, Ja/Nein). */
+  const filterOptions = useMemo<SelectOption<string>[]>(() => {
+    const opts: SelectOption<string>[] = [{ value: "", label: "Alle Antworten" }];
+    for (const q of data?.questions ?? []) {
+      if (q.type !== "single_choice" && q.type !== "yes_no") continue;
+      typeOf(q).resultOptions?.(q).forEach((o, i) => opts.push({ value: `${q.id}|${i}`, label: o.label, group: i === 0 ? labelOf(q) : undefined }));
+    }
+    return opts;
+  }, [data, labelOf]);
+
   const view = useMemo(() => {
     if (!data) return null;
-    if (!group || !zielgruppe) return { responses: data.responses, answers: data.answers };
-    const ids = new Set(data.answers.filter((a) => a.question_id === zielgruppe.id && a.value === group).map((a) => a.response_id));
+    const [qid, idx] = filter.split("|");
+    const q = data.questions.find((x) => x.id === qid);
+    const option = q && typeOf(q).resultOptions?.(q)[Number(idx)];
+    if (!q || !option) return { responses: data.responses, answers: data.answers };
+    const ids = new Set(data.answers.filter((a) => a.question_id === q.id && matchesOption(q, a.value, option)).map((a) => a.response_id));
     return { responses: data.responses.filter((r) => ids.has(r.id)), answers: data.answers.filter((a) => ids.has(a.response_id)) };
-  }, [data, group, zielgruppe]);
+  }, [data, filter]);
 
   function exportCsv() {
     if (!data) return;
-    const qById = new Map(data.questions.map((q) => [q.id, q]));
+    const qById = new Map(data.questions.map((q, i) => [q.id, { q, nr: i + 1 }]));
     const time = new Map(data.responses.map((r) => [r.id, r.created_at]));
     const esc = (s: string | number) => `"${String(s).replace(/"/g, '""')}"`;
-    const lines = [["zeitpunkt", "antwort_id", "step", "bereich", "slot_id", "kpi", "frage", "antwort", "score"].map(esc).join(";")];
+    const lines = [["zeitpunkt", "antwort_id", "frage_nr", "frage", "frageart", "antwort", "score", "step", "slot_id", "kpi"].map(esc).join(";")];
     for (const a of data.answers) {
-      const q = qById.get(a.question_id);
-      if (!q) continue;
+      const entry = qById.get(a.question_id);
+      if (!entry) continue;
+      const { q, nr } = entry;
       const score = kindOf(q) === "levels" ? levelScore(q, a.value) : q.type === "scale" ? Number(a.value) : null;
       lines.push(
-        [new Date(time.get(a.response_id) ?? "").toLocaleString("de-DE"), a.response_id, q.step ?? "", stepName(q.step), q.settings.slotId ?? "", q.settings.kpi ?? "", fillVars(q.label, data.form), typeOf(q).format(q, a.value), score ?? ""]
+        [new Date(time.get(a.response_id) ?? "").toLocaleString("de-DE"), a.response_id, nr, labelOf(q), typeOf(q).label, typeOf(q).format(q, a.value), score ?? "", q.step ?? "", q.settings.slotId ?? "", q.settings.kpi ?? ""]
           .map(esc)
           .join(";")
       );
@@ -96,45 +118,50 @@ export default function ResultsPage() {
     URL.revokeObjectURL(url);
   }
 
+  const kpis = data && view ? computeKpis(data.questions, view.answers, labelOf) : [];
+
   return (
     <>
       <AdminHeader>
-        <Link className="btn" href={`/b/${id}/bearbeiten`}>Zum Editor</Link>
+        <Link className="btn ghost" href={`/b/${id}/bearbeiten`}><Icon name="edit" size={18} /> Zum Editor</Link>
         <button type="button" className="btn primary" onClick={exportCsv} disabled={!data?.answers.length}>CSV exportieren</button>
       </AdminHeader>
       <main className="admin-main admin-narrow">
+        <Link href="/meine-boegen" className="back-link"><Icon name="back" size={18} /> Meine Bögen</Link>
         {error && <p className="error">{error}</p>}
         {!data || !view ? (
           !error && <p className="muted">Lädt …</p>
         ) : (
           <>
-            <h1>{data.form.title}</h1>
+            <h1 style={{ marginTop: 12 }}>{data.form.title}</h1>
             <div className="row spread">
-              <p><strong>{view.responses.length}</strong> Antworten</p>
-              {zielgruppe && (
-                <label className="row">
-                  Zielgruppe
-                  <select value={group} onChange={(e) => setGroup(e.target.value)} className="filter">
-                    <option value="">alle</option>
-                    {zielgruppe.options.map((o) => <option key={o} value={o}>{o}</option>)}
-                  </select>
-                </label>
+              <p><strong>{view.responses.length}</strong> {view.responses.length === 1 ? "Antwort" : "Antworten"}</p>
+              {filterOptions.length > 1 && (
+                <div className="row" style={{ minWidth: 260 }}>
+                  <span className="muted">Filter</span>
+                  <div style={{ flex: 1 }}>
+                    <Select label="Nach Antwort filtern" value={filter} options={filterOptions} onChange={setFilter} />
+                  </div>
+                </div>
               )}
             </div>
-            {view.responses.length < 10 && <div className="warn">Wenige Antworten – nur eine Tendenz.</div>}
-            <div className="kpis">
-              {computeKpis(data.questions, view.answers).map((k) => (
-                <div key={k.key} className="kpi" title={k.hint}>
-                  <span className="kpi-label">{k.label}</span>
-                  <span className="kpi-value">{k.value ?? "–"}</span>
-                  <span className="muted">n = {k.n}</span>
-                </div>
-              ))}
-            </div>
+            {view.responses.length > 0 && view.responses.length < 10 && <div className="warn">Wenige Antworten – nur eine Tendenz.</div>}
+            {kpis.length > 0 && (
+              <div className="kpis">
+                {kpis.map((k) => (
+                  <div key={k.key} className="kpi">
+                    <span className="kpi-label">{k.label}</span>
+                    <span className="kpi-value">{k.value}</span>
+                    <span className="muted">{k.hint} · n = {k.n}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+            {data.questions.length === 0 && <p className="muted">Der Bogen hat noch keine Fragen.</p>}
             {data.questions.map((q, i) => (
               <section key={q.id} className="panel">
-                <div className="muted">Frage {i + 1} · {typeOf(q).label} · {stepName(q.step)}{q.settings.kpi ? ` · KPI ${q.settings.kpi}` : ""}</div>
-                <h2>{fillVars(q.label, data.form) || "(ohne Fragetext)"}</h2>
+                <div className="muted">Frage {i + 1} · {typeOf(q).label}</div>
+                <h2>{labelOf(q) || "(ohne Fragetext)"}</h2>
                 <Summary q={q} answers={view.answers} responseCount={view.responses.length} />
               </section>
             ))}

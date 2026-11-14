@@ -22,7 +22,7 @@ export default function QrPage() {
   return (
     <main className="beamer">
       <div>
-        <h1>{form?.settings?.eventName || form?.title || "Claus fragt"}</h1>
+        <h1>{form?.title || "Claus fragt"}</h1>
         <p>Scan mich und sag uns ehrlich, wie es war!</p>
         <p className="beamer-url">{url.replace(/^https?:\/\//, "")}</p>
       </div>

@@ -4,35 +4,35 @@ import { SpeechBubble } from "./SpeechBubble";
 import styles from "./ui.module.css";
 
 type Mood = "happy" | "sad";
+export type Side = "left" | "right";
 
 /** Große Variante: Sprechblase oben, Maskottchen darunter (Start, Ende, Danke). size="s" lässt Platz für Text darunter. */
 export function MascotHero({ theme, mood, text, size = "l" }: { theme: Theme; mood: Mood; text: string; size?: "l" | "s" }) {
   return (
     <div className={`${styles.hero} ${size === "s" ? styles.heroSmall : ""}`}>
-      <SpeechBubble tail="down-right">{text}</SpeechBubble>
+      <SpeechBubble tail="down" tailX={0.66}>{text}</SpeechBubble>
       <img className={styles.heroMascot} src={theme.mascot[mood]} alt={theme.mascot.alt} />
     </div>
   );
 }
 
-/** Kleine Variante: Maskottchen in der Ecke, Sprechblase mit Frage darunter (Fragen-Screens). */
-export function MascotCorner({ theme, mood = "happy", side, text, help }: { theme: Theme; mood?: Mood; side: "left" | "right"; text: React.ReactNode; help?: string | null }) {
+/** Spitze des Zipfels je Seite: zeigt auf Claus' Hände. */
+const TAIL_X: Record<Side, number> = { left: 0.27, right: 0.83 };
+
+/**
+ * Fragen-Screens: Claus oben links oder rechts, die Frage in der Sprechblase darunter.
+ * Das Element bleibt zwischen den Fragen bestehen (gleiche Stelle im Baum), deshalb wandert Claus per
+ * CSS-Transition hinüber und der Zipfel gleitet mit (useTween).
+ */
+export function MascotCorner({ theme, side, text, help }: { theme: Theme; side: Side; text: React.ReactNode; help?: string | null }) {
   return (
     <div className={`${styles.corner} ${side === "left" ? styles.cornerLeft : styles.cornerRight}`}>
-      <img className={styles.cornerMascot} src={theme.mascot[mood]} alt={theme.mascot.alt} />
-      <SpeechBubble tail={side === "left" ? "up-left" : "up-right"} help={help}>
+      <div className={styles.track}>
+        <img className={styles.cornerMascot} src={theme.mascot.happy} alt={theme.mascot.alt} />
+      </div>
+      <SpeechBubble tail="up" tailX={TAIL_X[side]} help={help}>
         {text}
       </SpeechBubble>
-    </div>
-  );
-}
-
-/** Frage ohne Claus (Theme „Implement“: Claus nur bei Start und Ende). */
-export function PlainPrompt({ text, help }: { text: React.ReactNode; help?: string | null }) {
-  return (
-    <div className={styles.prompt}>
-      {text}
-      {help && <small className={styles.promptHelp}>{help}</small>}
     </div>
   );
 }

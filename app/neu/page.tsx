@@ -1,33 +1,29 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { THEMES, ThemeId } from "@/brand/themes";
 import { AdminHeader } from "@/components/AdminHeader";
+import { Icon } from "@/components/admin/icons";
+import { ArtChoice } from "@/components/builder/ArtChoice";
 import { createForm } from "@/lib/data";
-import { questionsForForm } from "@/lib/framework";
-import { EVENT_TYPES, EventType, STYLES } from "@/lib/styles";
 
-/** Neuer Bogen in zwei Schritten: Event-Typ wählen (= Vorauswahl von Style, Teach, Menti, Ansprache) → Name → Editor. */
+/** Neuer Bogen: Name, Beschreibung und eine Wahl (Inspirierend/Lernend) – dann leer in den Editor. */
 export default function NewFormPage() {
   const router = useRouter();
-  const [type, setType] = useState<EventType | null>(null);
-  const [eventName, setEventName] = useState("");
-  const [thema, setThema] = useState("");
+  const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
+  const [art, setArt] = useState<ThemeId>(THEMES[0].id);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   async function create(e: React.FormEvent) {
     e.preventDefault();
-    if (!type || !eventName.trim()) return;
+    if (!title.trim()) return setError("Bitte gib dem Bogen einen Namen.");
     setBusy(true);
     try {
-      const settings = { eventTyp: type.id, eventName: eventName.trim(), thema: thema.trim() || undefined, teach: type.teach, menti: type.menti, ansprache: type.ansprache };
-      const form = await createForm({
-        title: eventName.trim(),
-        style: type.style,
-        settings,
-        questions: (formId) => questionsForForm(formId, { style: type.style, eventTyp: type.id, teach: type.teach }),
-      });
+      const form = await createForm({ title: title.trim(), description: description.trim() || null, style: art });
       router.push(`/b/${form.id}/bearbeiten`);
     } catch (err) {
       setError((err as Error).message);
@@ -39,35 +35,21 @@ export default function NewFormPage() {
     <>
       <AdminHeader />
       <main className="admin-main admin-narrow">
-        <h1>Neuer Bogen</h1>
-        {!type ? (
-          <>
-            <p className="muted">Was für ein Event ist es? Den Rest stellen wir passend ein.</p>
-            <div className="tiles">
-              {EVENT_TYPES.map((t) => (
-                <button key={t.id} type="button" className="tile" onClick={() => setType(t)}>
-                  <strong>{t.name}</strong>
-                  <span className="muted">{STYLES[t.style].name} · {t.ansprache}{t.teach ? " · Teach" : ""}</span>
-                </button>
-              ))}
-            </div>
-          </>
-        ) : (
-          <form className="panel" onSubmit={create}>
-            <p className="muted">
-              {type.name} ·{" "}
-              <button type="button" className="link" onClick={() => setType(null)}>ändern</button>
-            </p>
-            <label className="field-label" htmlFor="event">Wie heißt dein Event?</label>
-            <input id="event" type="text" autoFocus value={eventName} onChange={(e) => setEventName(e.target.value)} placeholder="z. B. Hackathon Flensburg" />
-            <label className="field-label" htmlFor="thema">Thema (optional)</label>
-            <input id="thema" type="text" value={thema} onChange={(e) => setThema(e.target.value)} placeholder="z. B. Wasserstoff" />
-            {error && <p className="error">{error}</p>}
-            <button type="submit" className="btn primary big" disabled={busy || !eventName.trim()} style={{ marginTop: 16 }}>
-              {busy ? "Legt an …" : "Los"}
-            </button>
-          </form>
-        )}
+        <Link href="/meine-boegen" className="back-link"><Icon name="back" size={18} /> Meine Bögen</Link>
+        <h1 style={{ marginTop: 12 }}>Neuer Bogen</h1>
+        <form className="panel" onSubmit={create} noValidate>
+          <label className="field-label" htmlFor="name">Name</label>
+          <input id="name" type="text" autoFocus value={title} onChange={(e) => { setTitle(e.target.value); setError(null); }} placeholder="z. B. Hackathon Flensburg" />
+          <label className="field-label" htmlFor="beschreibung">Beschreibung (optional, erscheint auf dem Start-Screen)</label>
+          <textarea id="beschreibung" value={description} onChange={(e) => setDescription(e.target.value)} placeholder="z. B. Danke, dass du dabei warst! Sag uns kurz, wie es war." />
+          <span className="field-label">Was für ein Event ist es?</span>
+          <ArtChoice value={art} onChange={setArt} />
+          {error && <p className="error">{error}</p>}
+          <div className="row" style={{ justifyContent: "flex-end", marginTop: 22 }}>
+            <Link href="/meine-boegen" className="btn ghost">Abbrechen</Link>
+            <button type="submit" className="btn primary big" disabled={busy}>{busy ? "Legt an …" : "Bogen anlegen"}</button>
+          </div>
+        </form>
       </main>
     </>
   );

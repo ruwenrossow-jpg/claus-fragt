@@ -63,36 +63,54 @@
 .pill:active { transform: scale(0.97); }
 .pill:disabled { opacity: 0.45; cursor: default; }
 
-/* ---------- Sprechblase ---------- */
+/* ---------- Sprechblase (Umriss = ein SVG-Pfad, siehe SpeechBubble.tsx) ---------- */
 .bubble {
   position: relative;
   display: flex;
   align-items: center;
-  min-height: 128px;
-  padding: 30px 38px;
-  border: 1px solid var(--survey-ink);
-  border-radius: 50%;
-  background: var(--survey-bubble);
+  justify-content: center;
+  width: 100%;
+  min-height: 104px;
   font-size: var(--text-m);
   line-height: 1.25;
 }
-.bubbleText { width: 100%; }
+.bubbleShape { position: absolute; top: 0; left: 0; overflow: visible; }
+.bubbleShape path { fill: var(--survey-bubble); stroke: var(--survey-ink); stroke-width: 1; stroke-linejoin: round; }
+.bubbleUp { margin-top: 40px; }
+.bubbleDown { margin-bottom: 40px; }
+.bubbleText {
+  position: relative;
+  width: max-content;
+  max-width: 70.7%; /* einbeschriebenes Rechteck der Ellipse: Breite / √2 */
+  padding: 6px 0;
+  text-align: center;
+  overflow-wrap: break-word;
+}
+.bubbleLong { font-size: 18px; line-height: 1.22; }
 .bubbleHelp { display: block; margin-top: 6px; font-size: var(--text-s); opacity: 0.75; }
-.tail { position: absolute; width: 34px; height: 44px; overflow: visible; }
-.tailUpLeft { top: -38px; left: 22%; }
-.tailUpRight { top: -38px; right: 22%; transform: scaleX(-1); }
-.tailDownRight { bottom: -38px; right: 24%; transform: scaleY(-1); }
 
 /* ---------- Maskottchen-Anordnungen ---------- */
-.hero { display: flex; flex-direction: column; align-items: center; padding: 60px 26px 0; }
-.hero .bubble { width: 274px; margin-right: 26px; }
-.heroMascot { width: 86%; max-width: 300px; height: auto; margin-top: 50px; }
+.hero { display: flex; flex-direction: column; align-items: center; padding: 48px var(--screen-pad) 0; }
+.hero .bubble { max-width: 300px; }
+.heroMascot { width: 86%; max-width: 300px; height: auto; margin-top: 10px; }
 
-.corner { display: flex; flex-direction: column; padding: 10px 26px 0; }
-.cornerMascot { width: 116px; height: auto; margin: -6px -10px 0; }
-.cornerLeft .cornerMascot { align-self: flex-start; }
-.cornerRight .cornerMascot { align-self: flex-end; }
-.corner .bubble { align-self: center; width: 272px; margin-top: 30px; }
+/* Fragen-Screens: Claus wandert zwischen links und rechts (gleiche Dauer wie MOVE_MS in useTween.ts) */
+.corner { padding: 6px var(--screen-pad) 0; }
+.track { position: relative; height: 104px; margin: 0 -10px; }
+.cornerMascot {
+  position: absolute; top: 0; left: 0;
+  width: 116px; height: auto;
+  transition: left 0.7s cubic-bezier(0.65, 0, 0.35, 1);
+}
+.cornerRight .cornerMascot { left: calc(100% - 116px); }
+.cornerLeft .cornerMascot { animation: hopLeft 0.7s ease-in-out; }
+.cornerRight .cornerMascot { animation: hopRight 0.7s ease-in-out; }
+/* zwei gleiche Keyframes mit verschiedenen Namen: der Klassenwechsel startet den Hüpfer neu */
+@keyframes hopLeft { 40% { transform: translateY(-14px) rotate(-5deg); } }
+@keyframes hopRight { 40% { transform: translateY(-14px) rotate(5deg); } }
+@media (prefers-reduced-motion: reduce) {
+  .cornerMascot { transition: none; animation: none !important; }
+}
 
 /* ---------- Antwort-Box ---------- */
 .card {
@@ -100,7 +118,7 @@
   flex-direction: column;
   justify-content: center;
   min-height: 242px;
-  margin: 48px var(--screen-pad) 0;
+  margin: 36px var(--screen-pad) 0;
   padding: 22px;
   border: 2px solid var(--survey-ink);
   border-radius: var(--radius-card);
@@ -119,10 +137,4 @@
 .tags { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin-top: 14px; }
 .tag { padding: 6px 12px; border: 1px solid var(--survey-ink); border-radius: var(--radius-pill); background: var(--survey-card); font-size: var(--text-s); }
 
-/* ---------- Frage ohne Claus (Implement) ---------- */
-.prompt { padding: 28px var(--screen-pad) 0; font-size: var(--text-l); line-height: 1.3; font-weight: 600; }
-.promptHelp { display: block; margin-top: 8px; font-size: var(--text-s); font-weight: 400; opacity: 0.75; }
 
-/* ---------- Text-Button (Überspringen) ---------- */
-.textButton { margin-top: 14px; padding: 6px 12px; border: 0; background: none; font: inherit; font-size: var(--text-m); text-decoration: underline; color: var(--survey-ink); cursor: pointer; }
-.footerStack { display: flex; flex-direction: column; align-items: center; }

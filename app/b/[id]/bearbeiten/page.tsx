@@ -1,28 +1,33 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useParams, useSearchParams } from "next/navigation";
-import { getTheme } from "@/brand/themes";
 import { AdminHeader } from "@/components/AdminHeader";
-import { ConfigChips } from "@/components/builder/ConfigChips";
+import { useDialog } from "@/components/admin/Dialog";
+import { Icon } from "@/components/admin/icons";
+import { FormHeadCard } from "@/components/builder/FormHeadCard";
 import { PreviewTabs } from "@/components/builder/PreviewTabs";
+import { QuestionCard } from "@/components/builder/QuestionCard";
+import { SaveStatus } from "@/components/builder/SaveStatus";
 import { ShareDialog } from "@/components/builder/ShareDialog";
-import { SlotCard } from "@/components/builder/SlotCard";
 import { useFormDraft } from "@/components/builder/useFormDraft";
 import styles from "@/components/builder/builder.module.css";
+import { playableQuestions } from "@/components/survey/context";
 import { START, Step } from "@/components/survey/flow";
 import { SurveyPlayer } from "@/components/survey/SurveyPlayer";
-import { FRAMEWORK_STEPS, STEP_KINDS, configOf, slotsFor } from "@/lib/framework";
-import { formWarnings, scopeWarnings } from "@/lib/rules";
-import { FormStatus, STATUS_LABELS } from "@/lib/types";
-import { getType, isAnswerable, isPlayable } from "@/question-types";
+import { formWarnings } from "@/lib/rules";
+import { STATUS_LABELS } from "@/lib/types";
+import { isAnswerable } from "@/question-types";
 
+/** Editor wie Google Forms: Kopf-Karte, Fragen Schritt für Schritt hinzufügen, Autosave, Live-Vorschau im Handy-Rahmen. */
 export default function EditorPage() {
   const { id } = useParams<{ id: string }>();
+  const dialog = useDialog();
   const draft = useFormDraft(id);
   const { form, questions } = draft;
   const [step, setStep] = useState<Step>(START);
+  const [activeId, setActiveId] = useState<string | null>(null);
   const [mobilePreview, setMobilePreview] = useState(false);
   const [sharing, setSharing] = useState(false);
   const wantsShare = useSearchParams().get("teilen") === "1";
@@ -30,135 +35,103 @@ export default function EditorPage() {
     if (wantsShare) setSharing(true);
   }, [wantsShare]);
 
+  const playable = useMemo(() => (form ? playableQuestions(form, questions) : []), [form, questions]);
+  const previewIndex = playable.findIndex((q) => q.id === activeId);
+  // Die Vorschau folgt der aktiven Frage, sobald sie im Bogen erscheint (Tabs bleiben frei wählbar)
+  useEffect(() => {
+    if (previewIndex >= 0) setStep({ kind: "question", index: previewIndex });
+  }, [activeId, previewIndex]);
+
   if (!form) return <main className="admin-main">{draft.error ? <p className="error">{draft.error}</p> : <p className="muted">Lädt …</p>}</main>;
 
-  const slots = slotsFor(configOf(form));
-  const ansprache = form.settings?.ansprache ?? getTheme(form.style).ansprache;
-  const playable = questions.filter(isPlayable);
-  const warnings = formWarnings(form, questions);
-  const umfang = scopeWarnings(questions);
-  const previewIndex = (qid: string) => playable.findIndex((q) => q.id === qid);
-  const activeId = step.kind === "question" ? playable[step.index]?.id : undefined;
-  const focus = (qid: string) => {
-    const i = previewIndex(qid);
-    if (i >= 0 && qid !== activeId) setStep({ kind: "question", index: i });
-  };
-
-  async function setStatus(status: FormStatus) {
-    await draft.save({ status });
+  async function remove(qid: string) {
+    if (draft.responseCount > 0) {
+      const ok = await dialog.confirm({
+        title: "Frage löschen?",
+        text: `Es gibt schon ${draft.responseCount} Antworten. Die Antworten auf diese Frage gehen dabei verloren.`,
+        confirmLabel: "Löschen",
+        danger: true,
+      });
+      if (!ok) return;
+    }
+    const i = questions.findIndex((q) => q.id === qid);
+    draft.removeQuestion(qid);
+    setActiveId(questions[i + 1]?.id ?? questions[i - 1]?.id ?? null);
+    setStep(START);
+    dialog.toast("Frage gelöscht");
   }
 
   const player = <SurveyPlayer form={form} questions={questions} step={step} onStepChange={setStep} />;
   const tabs = <PreviewTabs step={step} count={playable.length} hasResults={playable.some(isAnswerable)} onChange={setStep} />;
-  const groups = [...FRAMEWORK_STEPS.map((s) => ({ step: s.step as number | null, name: s.name })), { step: null, name: "Ohne Bereich" }];
 
   return (
     <>
       <AdminHeader>
-        <Link className="btn" href={`/b/${id}/ergebnisse`}>Ergebnisse</Link>
-        <button type="button" className="btn" onClick={() => draft.save()} disabled={draft.saving || !draft.dirty}>
-          {draft.saving ? "Speichert …" : draft.dirty ? "Speichern" : "Gespeichert ✓"}
-        </button>
-        <button type="button" className="btn primary" onClick={() => setSharing(true)}>Teilen</button>
+        <SaveStatus state={draft.saveState} onRetry={draft.retry} />
+        <Link className="btn ghost" href={`/b/${id}/ergebnisse`} aria-label="Ergebnisse"><Icon name="chart" size={18} /> <span className="hide-mobile">Ergebnisse</span></Link>
+        <button type="button" className="btn primary" onClick={() => setSharing(true)}><Icon name="share" size={18} /> Teilen</button>
       </AdminHeader>
 
       <main className="admin-main">
-        <Link href="/meine-boegen" className="muted">← Meine Bögen</Link>
+        <div className={styles.topLine}>
+          <Link href="/meine-boegen" className="back-link"><Icon name="back" size={18} /> Meine Bögen</Link>
+          <span className={`status-pill status-${form.status}`}>{STATUS_LABELS[form.status]}</span>
+          {draft.responseCount > 0 && <span className="muted">{draft.responseCount} {draft.responseCount === 1 ? "Antwort" : "Antworten"}</span>}
+        </div>
         {draft.error && <p className="error">{draft.error}</p>}
 
         <div className={styles.layout}>
-          <div>
-            <section className="panel">
-              <div className="row spread">
-                <strong>{STATUS_LABELS[form.status]} · {playable.length} Fragen im Bogen</strong>
-                {draft.responseCount > 0 && <span className="badge">{draft.responseCount} Antworten</span>}
-              </div>
-              <label className="field-label">Wie heißt dein Event?</label>
-              <input
-                type="text"
-                value={form.settings?.eventName ?? form.title}
-                onChange={(e) => {
-                  draft.patchSettings({ eventName: e.target.value });
-                  draft.patchForm({ title: e.target.value });
-                }}
-                style={{ fontSize: 20, fontWeight: 700 }}
-              />
-              <label className="field-label">Thema (optional, ersetzt {"{thema}"})</label>
-              <input type="text" value={form.settings?.thema ?? ""} onChange={(e) => draft.patchSettings({ thema: e.target.value || undefined })} />
-              <ConfigChips form={form} onStyle={draft.setStyle} onTeach={draft.setTeach} onSettings={draft.patchSettings} />
-              {umfang.length > 0 && <div className="warn"><ul>{umfang.map((w) => <li key={w.text}>{w.text}</li>)}</ul></div>}
-              {form.status !== "draft" && draft.responseCount > 0 && (
-                <div className={`warn ${styles.liveBanner}`}>
-                  Es gibt schon {draft.responseCount} Antworten. Texte ändern ist ok – Plätze löschen oder Optionen ändern verfälscht die Auswertung.
-                </div>
-              )}
-            </section>
+          <div className={styles.cards}>
+            <FormHeadCard form={form} onPatch={(p) => draft.patchForm(p)} />
 
-            {groups.map(({ step: s, name }) => {
-              const inStep = questions.filter((q) => q.step === s);
-              if (s === null && !inStep.length) return null;
-              return (
-                <div key={String(s)}>
-                  <div className={styles.stepHead}>
-                    {s !== null && <span className={styles.stepNum}>{s}</span>}
-                    <h2>{name}</h2>
-                  </div>
-                  {inStep.map((q, i) => (
-                    <SlotCard
-                      key={q.id}
-                      form={form}
-                      question={q}
-                      slot={slots.find((sl) => sl.id === q.settings.slotId)}
-                      ansprache={ansprache}
-                      active={q.id === activeId}
-                      canMoveUp={i > 0}
-                      canMoveDown={i < inStep.length - 1}
-                      onFocus={() => focus(q.id)}
-                      onPatch={(p) => draft.patchQuestion(q.id, p)}
-                      onKind={(k) => draft.changeKind(q.id, k)}
-                      onMove={(d) => draft.move(q.id, d)}
-                      onDuplicate={() => draft.duplicateQuestion(q.id)}
-                      onRemove={() => {
-                        if (draft.responseCount > 0 && !confirm(`Es gibt schon ${draft.responseCount} Antworten – Löschen verfälscht die Auswertung. Trotzdem löschen?`)) return;
-                        draft.removeQuestion(q.id);
-                        setStep(START);
-                      }}
-                    />
-                  ))}
-                  {s !== null && (
-                    <div className={styles.addBar}>
-                      <span className="muted">+ Frage in diesem Bereich:</span>
-                      {STEP_KINDS[s].map((k) => (
-                        <button key={k} type="button" className="btn small" onClick={() => draft.addQuestion(k, s)}>
-                          {getType(k).label}
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              );
-            })}
+            {questions.length === 0 && <p className={styles.empty}>Noch keine Fragen. Füge die erste hinzu – Schritt für Schritt.</p>}
+            {questions.map((q, i) => (
+              <QuestionCard
+                key={q.id}
+                question={q}
+                index={i}
+                count={questions.length}
+                active={q.id === activeId}
+                onActivate={() => setActiveId(q.id)}
+                onPatch={(p) => draft.patchQuestion(q.id, p)}
+                onKind={(k) => draft.changeKind(q.id, k)}
+                onMove={(d) => draft.move(q.id, d)}
+                onDuplicate={() => setActiveId(draft.duplicateQuestion(q.id))}
+                onRemove={() => remove(q.id)}
+              />
+            ))}
+
+            <button type="button" className={styles.addQuestion} aria-label="Frage hinzufügen" onClick={() => setActiveId(draft.addQuestion("single_choice"))}>
+              <Icon name="plus" /> Frage
+            </button>
           </div>
 
-          <aside className={styles.previewCol}>
+          <aside className={styles.previewCol} aria-label="Vorschau">
             {tabs}
             <div className={styles.phone}>{player}</div>
           </aside>
         </div>
 
         <button type="button" className={`btn primary ${styles.mobilePreviewBtn}`} onClick={() => setMobilePreview(true)}>
-          Vorschau
+          <Icon name="eye" size={18} /> Vorschau
         </button>
         {mobilePreview && (
-          <div className={styles.overlay}>
+          <div className={styles.overlay} role="dialog" aria-modal="true" aria-label="Vorschau">
             <div className={styles.overlayBar}>
               {tabs}
-              <button type="button" className="btn small" onClick={() => setMobilePreview(false)}>Schließen ✕</button>
+              <button type="button" className="icon-btn" onClick={() => setMobilePreview(false)} aria-label="Vorschau schließen"><Icon name="close" /></button>
             </div>
             <div className={styles.overlayBody}>{player}</div>
           </div>
         )}
-        {sharing && <ShareDialog form={form} warnings={warnings} busy={draft.saving} onStatus={setStatus} onClose={() => setSharing(false)} />}
+        {sharing && (
+          <ShareDialog
+            form={form}
+            warnings={formWarnings(questions, playable.length)}
+            onStatus={(status) => draft.patchForm({ status }, true)}
+            onClose={() => setSharing(false)}
+          />
+        )}
       </main>
     </>
   );

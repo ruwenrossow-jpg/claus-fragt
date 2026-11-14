@@ -1,11 +1,10 @@
 import { Question, QuestionSettings } from "@/lib/types";
 
-/** Einstellungen, die jeder Fragetyp beim Typwechsel behält (Platz/KPI-Zuordnung, Box-Titel, Claus-Seite). */
+/** Einstellungen, die jeder Fragetyp beim Typwechsel behält (Framework-Zuordnung, Box-Titel aus v1). */
 export function commonSettings(q: Question): QuestionSettings {
-  const { boxTitle, mascotSide, slotId, kpi } = q.settings;
+  const { boxTitle, slotId, kpi } = q.settings;
   return {
     ...(boxTitle !== undefined && { boxTitle }),
-    ...(mascotSide && { mascotSide }),
     ...(slotId && { slotId }),
     ...(kpi && { kpi }),
   };

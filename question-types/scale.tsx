@@ -2,6 +2,7 @@ import { COPY_DEFAULT as COPY } from "@/brand/copy";
 import { Question } from "@/lib/types";
 import { commonSettings } from "./settings";
 import { EditorProps, InputProps, QuestionTypeDef } from "./types";
+import { Select } from "@/components/admin/Select";
 import styles from "./inputs.module.css";
 import ed from "./editors.module.css";
 
@@ -65,23 +66,37 @@ function StarInput({ question, value, onChange }: InputProps) {
   );
 }
 
-function ScaleEditor({ question, onChange, maxChoices }: EditorProps & { maxChoices: number[] }) {
+const toOptions = (ns: number[]) => ns.map((n) => ({ value: n, label: String(n) }));
+
+function ScaleEditor({ question, onChange, maxChoices, stars = false }: EditorProps & { maxChoices: number[]; stars?: boolean }) {
   const set = (patch: Partial<Question["settings"]>) => onChange({ settings: { ...question.settings, ...patch } });
   return (
     <div>
       <div className={ed.row}>
-        <label>Von</label>
-        <select value={question.settings.min ?? 1} onChange={(e) => set({ min: Number(e.target.value) })}>
-          {[0, 1].map((n) => <option key={n} value={n}>{n}</option>)}
-        </select>
-        <label>bis</label>
-        <select value={question.settings.max ?? 5} onChange={(e) => set({ max: Number(e.target.value) })}>
-          {maxChoices.map((n) => <option key={n} value={n}>{n}</option>)}
-        </select>
+        {stars ? (
+          <>
+            <Select label="Anzahl Sterne" value={question.settings.max ?? 5} options={toOptions(maxChoices)} onChange={(max) => set({ max })} />
+            Sterne
+          </>
+        ) : (
+          <>
+            Von
+            <Select label="Von" value={question.settings.min ?? 1} options={toOptions([0, 1])} onChange={(min) => set({ min })} />
+            bis
+            <Select label="Bis" value={question.settings.max ?? 5} options={toOptions(maxChoices)} onChange={(max) => set({ max })} />
+          </>
+        )}
       </div>
-      <div className={ed.grid}>
-        <input type="text" value={question.settings.minLabel ?? ""} placeholder={`links: ${COPY.scale.min}`} onChange={(e) => set({ minLabel: e.target.value || undefined })} />
-        <input type="text" value={question.settings.maxLabel ?? ""} placeholder={`rechts: ${COPY.scale.max}`} onChange={(e) => set({ maxLabel: e.target.value || undefined })} />
+      <div className={ed.labels}>
+        {(["min", "max"] as const).map((side) => {
+          const key = side === "min" ? "minLabel" : "maxLabel";
+          return (
+            <div key={side}>
+              <label htmlFor={`${side}-${question.id}`}>Beschriftung {side === "min" ? "links" : "rechts"}</label>
+              <input id={`${side}-${question.id}`} type="text" className={ed.input} value={question.settings[key] ?? ""} placeholder={COPY.scale[side]} onChange={(e) => set({ [key]: e.target.value || undefined })} />
+            </div>
+          );
+        })}
       </div>
     </div>
   );
@@ -96,8 +111,8 @@ const scaleResultOptions = (q: Question) => scaleRange(q).map((n) => ({ value: n
 
 export const scale: QuestionTypeDef = {
   kind: "scale",
-  autoAdvance: true,
-  label: "Skala (Zahlen)",
+  label: "Skala",
+  hint: "Zahlen, z. B. 1 bis 5",
   defaultBoxTitle: "",
   apply: (q) => applyScale(q, "numbers"),
   Input: NumberInput,
@@ -108,12 +123,12 @@ export const scale: QuestionTypeDef = {
 
 export const stars: QuestionTypeDef = {
   kind: "stars",
-  autoAdvance: true,
-  label: "Sterne-Bewertung",
+  label: "Sterne",
+  hint: "Bewertung mit 3 bis 6 Sternen",
   defaultBoxTitle: "",
   apply: (q) => applyScale(q, "stars"),
   Input: StarInput,
-  Editor: (p) => <ScaleEditor {...p} maxChoices={[3, 4, 5, 6]} />,
+  Editor: (p) => <ScaleEditor {...p} maxChoices={[3, 4, 5, 6]} stars />,
   resultOptions: (q) => scaleResultOptions(q).map((o) => ({ ...o, label: `${o.value}★`, short: `${o.value}★` })),
   format: (_q, v) => (v == null ? "" : `${v} ★`),
 };

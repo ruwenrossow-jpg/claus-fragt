@@ -1,7 +1,7 @@
 /* Eingabe-Elemente in der Antwort-Box. Werte aus brand/tokens.css. */
 .options { display: flex; flex-direction: column; gap: 40px; padding: 12px 0 12px 0; }
 .option {
-  display: flex; align-items: center; gap: 30px;
+  display: flex; align-items: center; gap: clamp(14px, 7vw, 30px);
   padding: 0 0 0 0; border: 0; background: none;
   font: inherit; font-size: var(--text-m); text-align: left; color: var(--survey-ink); cursor: pointer;
 }

@@ -1,48 +1,43 @@
 /**
- * KPI Wissenstransfer. Stufen-Fragen haben score 1–4 (Position der Option); „Treffer“ = Stufe 3 oder 4.
- * Transfer und Erlebnis sind über alle Events vergleichbar, Ziel nur innerhalb desselben Styles.
+ * Kennzahlen für die Ergebnisseite – funktionieren mit beliebigen Fragen.
+ * Eine Kachel erscheint nur, wenn es passende Antworten gibt:
+ *   Stufen → Anteil der obersten zwei Stufen · Sterne/Skala → Durchschnitt · Ja/Nein → Anteil „Ja“.
+ * Das Framework-Konzept (settings.kpi, step) folgt später; die Daten dafür bleiben erhalten.
  */
 import { Answer, Question } from "./types";
-import { kindOf, levelScore } from "@/question-types";
+import { average, kindOf, levelScore } from "@/question-types";
 
 export interface Kpi {
   key: string;
+  /** Fragetext (gekürzt) */
   label: string;
   /** Anzeigewert, z. B. „62 %“ oder „4,1 ★“ */
-  value: string | null;
-  n: number;
+  value: string;
+  /** Wie wird gerechnet? */
   hint: string;
+  n: number;
 }
 
 const pct = (x: number) => `${Math.round(x * 100)} %`;
+const num = (x: number) => x.toLocaleString("de-DE", { maximumFractionDigits: 1 });
 
-function levelShare(q: Question | undefined, answers: Answer[]): { share: number | null; n: number } {
-  if (!q) return { share: null, n: 0 };
-  const scores = answers.filter((a) => a.question_id === q.id).map((a) => levelScore(q, a.value)).filter((s): s is number => s !== null);
-  return { share: scores.length ? scores.filter((s) => s >= 3).length / scores.length : null, n: scores.length };
-}
-
-export function computeKpis(questions: Question[], answers: Answer[]): Kpi[] {
-  const byKpi = (k: string) => questions.find((q) => q.settings.kpi === k && kindOf(q) === "levels");
-  const transfer = levelShare(byKpi("transfer"), answers);
-  const ziel = levelShare(byKpi("ziel"), answers);
-  const teach = levelShare(byKpi("teach"), answers);
-
-  const starsQ = questions.find((q) => q.settings.slotId === "gesamteindruck") ?? questions.find((q) => kindOf(q) === "stars");
-  const stars = starsQ ? answers.filter((a) => a.question_id === starsQ.id).map((a) => Number(a.value)).filter((v) => !Number.isNaN(v)) : [];
-  const starsAvg = stars.length ? stars.reduce((a, b) => a + b, 0) / stars.length : null;
-  const starsMax = starsQ?.settings.max ?? 5;
-
-  const gap = starsAvg !== null && transfer.share !== null ? starsAvg / starsMax - transfer.share : null;
-
-  const kpis: Kpi[] = [
-    { key: "transfer", label: "Transfer-Score", value: transfer.share === null ? null : pct(transfer.share), n: transfer.n, hint: "Anteil Stufe 3+4 im Transfer-Platz" },
-    { key: "ziel", label: "Ziel-Score", value: ziel.share === null ? null : pct(ziel.share), n: ziel.n, hint: "Anteil Stufe 3+4 im Ziel-Platz (nur im selben Style vergleichbar)" },
-  ];
-  if (byKpi("teach")) kpis.push({ key: "teach", label: "Teach-Score", value: teach.share === null ? null : pct(teach.share), n: teach.n, hint: "Anteil Stufe 3+4: Wissen wird weitergegeben" });
-  kpis.push(
-    { key: "erlebnis", label: "Erlebnis", value: starsAvg === null ? null : `${starsAvg.toLocaleString("de-DE", { maximumFractionDigits: 1 })} ★`, n: stars.length, hint: "Durchschnitt der Sterne" },
-    { key: "luecke", label: "Lücke Gefallen vs. Verstanden", value: gap === null ? null : `${gap > 0 ? "+" : ""}${Math.round(gap * 100)} Pkt.`, n: Math.min(stars.length, transfer.n), hint: "Sterne in % minus Transfer-Score – groß = gefallen, aber wenig hängen geblieben" }
-  );
-  return kpis;
+export function computeKpis(questions: Question[], answers: Answer[], labelOf: (q: Question) => string): Kpi[] {
+  const out: Kpi[] = [];
+  for (const q of questions) {
+    const values = answers.filter((a) => a.question_id === q.id).map((a) => a.value);
+    if (!values.length) continue;
+    const base = { key: q.id, label: labelOf(q) || "(ohne Fragetext)", n: values.length };
+    const kind = kindOf(q);
+    if (kind === "levels") {
+      const scores = values.map((v) => levelScore(q, v)).filter((s): s is number => s !== null);
+      const top = q.options.length - 1; // die obersten zwei Stufen
+      if (scores.length) out.push({ ...base, value: pct(scores.filter((s) => s >= top).length / scores.length), hint: `Anteil „${q.options[top - 1]}“ + „${q.options[top]}“`, n: scores.length });
+    } else if (kind === "stars" || kind === "scale") {
+      const avg = average(q, answers);
+      if (avg !== null) out.push({ ...base, value: kind === "stars" ? `${num(avg)} ★` : num(avg), hint: `Durchschnitt (${q.settings.min ?? 1}–${q.settings.max ?? 5})` });
+    } else if (kind === "yes_no") {
+      out.push({ ...base, value: pct(values.filter((v) => v === true).length / values.length), hint: "Anteil „Ja“" });
+    }
+  }
+  return out;
 }

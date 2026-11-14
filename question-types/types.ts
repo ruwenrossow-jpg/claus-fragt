@@ -27,17 +27,17 @@ export interface ResultOption {
 
 export interface QuestionTypeDef {
   kind: QuestionKind;
-  /** Name im Builder */
+  /** Name im Builder (Auswahl „Frageart“) */
   label: string;
+  /** kurze Erklärung unter dem Namen in der Auswahl */
+  hint: string;
   /** Standard-Überschrift der Antwort-Box ("" = keine) */
   defaultBoxTitle: string;
-  /** Eine Antwort genügt → im Bogen automatisch weiter (wenn das Theme es erlaubt), kein WEITER!-Button */
-  autoAdvance: boolean;
   /** Wandelt eine Frage in diesen Typ um (setzt DB-Typ + sinnvolle Standardwerte). */
   apply: (q: Question) => Question;
   /** Eingabe für Teilnehmende (Bogen + Builder-Vorschau) */
   Input: React.ComponentType<InputProps>;
-  /** Zusätzliche Felder im Builder (Optionen, Skala …) */
+  /** Felder im Builder unter der Frageart (Optionen, Skala …). Fehlt = keine weiteren Felder. */
   Editor?: React.ComponentType<EditorProps>;
   /** Antwortmöglichkeiten für Auswertung/Ergebnis-Screens. Fehlt = nicht auswertbar (Freitext). */
   resultOptions?: (q: Question) => ResultOption[];

@@ -3,6 +3,7 @@ import { Question } from "@/lib/types";
 import { commonSettings } from "./settings";
 import { EditorProps, QuestionTypeDef } from "./types";
 import styles from "./inputs.module.css";
+import ed from "./editors.module.css";
 
 function textSettings(q: Question): Question["settings"] {
   return { ...commonSettings(q), placeholder: q.settings.placeholder };
@@ -10,19 +11,23 @@ function textSettings(q: Question): Question["settings"] {
 
 function PlaceholderEditor({ question, onChange }: EditorProps) {
   return (
-    <input
-      type="text"
-      value={question.settings.placeholder ?? ""}
-      placeholder={`Platzhalter im Feld (Standard: ${COPY.placeholder.text})`}
-      onChange={(e) => onChange({ settings: { ...question.settings, placeholder: e.target.value || undefined } })}
-    />
+    <div className={ed.option}>
+      <input
+        type="text"
+        className={ed.input}
+        value={question.settings.placeholder ?? ""}
+        placeholder={`Platzhalter im Antwortfeld (Standard: ${COPY.placeholder.text})`}
+        aria-label="Platzhalter im Antwortfeld"
+        onChange={(e) => onChange({ settings: { ...question.settings, placeholder: e.target.value || undefined } })}
+      />
+    </div>
   );
 }
 
 export const longText: QuestionTypeDef = {
   kind: "long_text",
-  autoAdvance: false,
-  label: "Offene Antwort",
+  label: "Text (Absatz)",
+  hint: "Freie Antwort, mehrere Zeilen",
   defaultBoxTitle: "",
   apply: (q) => ({ ...q, type: "long_text", options: [], settings: textSettings(q) }),
   Input: ({ question, value, onChange }) => (
@@ -39,8 +44,8 @@ export const longText: QuestionTypeDef = {
 
 export const shortText: QuestionTypeDef = {
   kind: "short_text",
-  autoAdvance: false,
-  label: "Kurze Antwort",
+  label: "Text (kurz)",
+  hint: "Freie Antwort, eine Zeile",
   defaultBoxTitle: "",
   apply: (q) => ({ ...q, type: "short_text", options: [], settings: textSettings(q) }),
   Input: ({ question, value, onChange }) => (

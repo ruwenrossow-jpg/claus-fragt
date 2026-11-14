@@ -1,3 +1,4 @@
+import { Select } from "@/components/admin/Select";
 import { ChoiceList } from "./ChoiceList";
 import { OptionsEditor } from "./OptionsEditor";
 import { letter } from "./letters";
@@ -6,54 +7,57 @@ import ed from "./editors.module.css";
 import { Question } from "@/lib/types";
 import { commonSettings } from "./settings";
 
-const DEFAULT_OPTIONS = ["Antwort A", "Antwort B", "Antwort C"];
+/** Neue Auswahlfrage: zwei leere Antworten (Platzhalter „Antwort A/B“). */
+const DEFAULT_OPTIONS = ["", ""];
 
 function withOptions(q: Question, type: Question["type"]): Question {
   return { ...q, type, settings: commonSettings(q), options: q.options.length ? q.options : DEFAULT_OPTIONS };
 }
 
+/** Leere Antworten (noch nicht ausgefüllt) erscheinen nicht im Bogen. */
+const filled = (q: Question) => q.options.filter((o) => o.trim());
+
 function resultOptions(q: Question): ResultOption[] {
-  return q.options.map((o, i) => ({ value: o, label: o, short: letter(i) }));
+  return filled(q).map((o, i) => ({ value: o, label: o, short: letter(i) }));
 }
 
 export const singleChoice: QuestionTypeDef = {
   kind: "single_choice",
-  autoAdvance: true,
-  label: "Multiple Choice (eine Antwort)",
+  label: "Auswahl",
+  hint: "Eine Antwort aus einer Liste",
   defaultBoxTitle: "",
   apply: (q) => withOptions(q, "single_choice"),
   Input: ({ question, value, onChange }) => (
     <ChoiceList
-      items={question.options.map((o, i) => ({ key: o, label: o || `Antwort ${letter(i)}` }))}
+      items={filled(question).map((o) => ({ key: o, label: o }))}
       isOn={(k) => value === k}
       onToggle={(k) => onChange(k)}
     />
   ),
-  Editor: OptionsEditor,
+  Editor: (p) => <OptionsEditor {...p} marker="radio" />,
   resultOptions,
   format: (_q, v) => (v == null ? "" : String(v)),
 };
 
+const MAX_OPTIONS = [{ value: 0, label: "beliebig" }, ...[1, 2, 3, 4].map((n) => ({ value: n, label: String(n) }))];
+
 function MaxChoicesEditor({ question, onChange }: EditorProps) {
   return (
     <>
-      <OptionsEditor question={question} onChange={onChange} />
-      <label className={ed.row}>
+      <OptionsEditor question={question} onChange={onChange} marker="check" />
+      <div className={ed.row}>
         Höchstens
-        <select value={question.settings.maxChoices ?? 0} onChange={(e) => onChange({ settings: { ...question.settings, maxChoices: Number(e.target.value) || undefined } })}>
-          <option value={0}>beliebig viele</option>
-          {[1, 2, 3, 4].map((n) => <option key={n} value={n}>{n}</option>)}
-        </select>
+        <Select label="Höchstens so viele Antworten" value={question.settings.maxChoices ?? 0} options={MAX_OPTIONS} onChange={(n) => onChange({ settings: { ...question.settings, maxChoices: n || undefined } })} />
         Antworten
-      </label>
+      </div>
     </>
   );
 }
 
 export const multipleChoice: QuestionTypeDef = {
   kind: "multiple_choice",
-  autoAdvance: false,
   label: "Mehrfachauswahl",
+  hint: "Mehrere Antworten möglich",
   defaultBoxTitle: "",
   apply: (q) => {
     const next = withOptions(q, "multiple_choice");
@@ -65,7 +69,7 @@ export const multipleChoice: QuestionTypeDef = {
     return (
       <ChoiceList
         square
-        items={question.options.map((o, i) => ({ key: o, label: o || `Antwort ${letter(i)}` }))}
+        items={filled(question).map((o) => ({ key: o, label: o }))}
         isOn={(k) => arr.includes(k)}
         onToggle={(k) => {
           if (arr.includes(k)) return onChange(arr.filter((x) => x !== k));

@@ -1,29 +1,47 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { countResponses, loadForm, saveForm } from "@/lib/data";
-import { configOf, questionForSlot, slotsFor, sortByStep } from "@/lib/framework";
-import { getStyle } from "@/lib/styles";
-import { Form, FormSettings, Question } from "@/lib/types";
+import { getTheme } from "@/brand/themes";
+import { legacyLabel } from "@/lib/legacy";
+import { Form, Question } from "@/lib/types";
 import { QuestionKind, getType, newQuestion } from "@/question-types";
 
-/** Lokaler Entwurf eines Bogens: Änderungen bleiben im Browser, bis save() aufgerufen wird. Fragen sind immer nach Bereich sortiert. */
+/** Pause nach der letzten Änderung, bevor automatisch gespeichert wird. */
+const AUTOSAVE_MS = 800;
+
+export type SaveState = "saved" | "pending" | "saving" | "error";
+
+/**
+ * Entwurf eines Bogens mit Autosave wie bei Google Forms: jede Änderung wird nach kurzer Pause gespeichert,
+ * es gibt keinen Speichern-Knopf und keine „Seite verlassen?“-Abfrage.
+ * Änderungen während eines laufenden Speicherns werden danach nachgespeichert (Revisionszähler).
+ */
 export function useFormDraft(id: string) {
   const [form, setForm] = useState<Form | null>(null);
   const [questions, setQuestions] = useState<Question[]>([]);
-  const [removed, setRemoved] = useState<string[]>([]);
   const [responseCount, setResponseCount] = useState(0);
-  const [dirty, setDirty] = useState(false);
-  const [saving, setSaving] = useState(false);
+  const [saveState, setSaveState] = useState<SaveState>("saved");
   const [error, setError] = useState<string | null>(null);
+
+  // Aktueller Stand für das Speichern außerhalb des Render-Zyklus
+  const latest = useRef<{ form: Form | null; questions: Question[]; removed: string[] }>({ form: null, questions: [], removed: [] });
+  const revision = useRef(0);
+  const savedRevision = useRef(0);
+  const saving = useRef(false);
+  const timer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
   useEffect(() => {
     let cancelled = false; // verhindert, dass eine verspätete Antwort bereits getippte Änderungen überschreibt
     Promise.all([loadForm(id), countResponses(id)]).then(
       ([d, count]) => {
         if (cancelled) return;
+        const theme = getTheme(d.form.style);
+        // v1-Bögen: leere Pflicht-Plätze bekommen ihren bisherigen Beispieltext als echten Text
+        const qs = d.questions.map((q) => (q.label.trim() ? q : { ...q, label: legacyLabel(q, d.form, d.form.settings?.ansprache ?? theme.ansprache) }));
+        latest.current = { form: d.form, questions: qs, removed: [] };
         setForm(d.form);
-        setQuestions(sortByStep(d.questions));
+        setQuestions(qs);
         setResponseCount(count);
       },
       (e: Error) => !cancelled && setError(e.message)
@@ -33,110 +51,102 @@ export function useFormDraft(id: string) {
     };
   }, [id]);
 
-  // Warnung beim Verlassen mit ungespeicherten Änderungen
-  useEffect(() => {
-    if (!dirty) return;
-    const warn = (e: BeforeUnloadEvent) => e.preventDefault();
-    window.addEventListener("beforeunload", warn);
-    return () => window.removeEventListener("beforeunload", warn);
-  }, [dirty]);
+  const flush = useCallback(async () => {
+    clearTimeout(timer.current);
+    const snap = latest.current;
+    if (!snap.form || saving.current || revision.current === savedRevision.current) return;
+    const rev = revision.current;
+    saving.current = true;
+    setSaveState("saving");
+    try {
+      const slug = await saveForm(snap.form, snap.questions, snap.removed);
+      savedRevision.current = rev;
+      latest.current.removed = latest.current.removed.filter((r) => !snap.removed.includes(r));
+      if (latest.current.form && !latest.current.form.public_slug) latest.current.form = { ...latest.current.form, public_slug: slug };
+      setForm((f) => (f && !f.public_slug ? { ...f, public_slug: slug } : f));
+      setError(null);
+    } catch (e) {
+      setError((e as Error).message);
+      setSaveState("error");
+      saving.current = false;
+      return;
+    }
+    saving.current = false;
+    if (revision.current !== savedRevision.current) flush();
+    else setSaveState("saved");
+  }, []);
 
-  const changeQuestions = (fn: (qs: Question[]) => Question[]) => {
-    setQuestions((qs) => sortByStep(fn(qs)));
-    setDirty(true);
+  // Beim Verlassen der Seite/Wechsel des Tabs sofort speichern statt zu warnen
+  useEffect(() => {
+    const onHide = () => document.visibilityState === "hidden" && flush();
+    document.addEventListener("visibilitychange", onHide);
+    return () => {
+      document.removeEventListener("visibilitychange", onHide);
+      flush();
+    };
+  }, [flush]);
+
+  const touch = (next: { form?: Form; questions?: Question[]; removed?: string[] }, now = false) => {
+    latest.current = { ...latest.current, ...next };
+    if (next.form) setForm(next.form);
+    if (next.questions) setQuestions(next.questions);
+    revision.current++;
+    setSaveState("pending");
+    clearTimeout(timer.current);
+    if (now) flush();
+    else timer.current = setTimeout(flush, AUTOSAVE_MS);
   };
-  const patchForm = (patch: Partial<Form>) => {
-    setForm((f) => (f ? { ...f, ...patch } : f));
-    setDirty(true);
-  };
-  const removeIds = (ids: string[]) => setRemoved((r) => [...r, ...ids]);
+  const changeQuestions = (fn: (qs: Question[]) => Question[]) => touch({ questions: fn(latest.current.questions) });
 
   return {
     form,
     questions,
     responseCount,
-    dirty,
-    saving,
+    saveState,
     error,
-    patchForm,
-    patchSettings(patch: Partial<FormSettings>) {
-      setForm((f) => (f ? { ...f, settings: { ...f.settings, ...patch } } : f));
-      setDirty(true);
+    /** Bogen-Felder ändern; now = sofort speichern (z. B. Live schalten) */
+    patchForm(patch: Partial<Form>, now = false) {
+      if (latest.current.form) touch({ form: { ...latest.current.form, ...patch } }, now);
     },
-    /** Style wechseln: Stufen im Ziel-Platz folgen, solange sie nicht von Hand geändert wurden. */
-    setStyle(style: string) {
-      if (!form) return;
-      const before = getStyle(form.style).zielLevels.join("|");
-      const after = getStyle(style).zielLevels;
-      patchForm({ style });
-      changeQuestions((qs) => qs.map((q) => (q.settings.slotId === "ziel" && q.options.join("|") === before ? { ...q, options: [...after] } : q)));
-    },
-    /** Teach an/aus: Platz „Weitertragen“ hinzufügen bzw. entfernen. */
-    setTeach(teach: boolean) {
-      if (!form) return;
-      setForm((f) => (f ? { ...f, settings: { ...f.settings, teach } } : f));
-      const existing = questions.filter((q) => q.settings.slotId === "weitertragen");
-      if (teach && !existing.length) {
-        const slot = slotsFor({ ...configOf(form), teach: true }).find((s) => s.id === "weitertragen")!;
-        changeQuestions((qs) => [...qs, questionForSlot(id, slot)]);
-      } else if (!teach && existing.length) {
-        removeIds(existing.map((q) => q.id));
-        changeQuestions((qs) => qs.filter((q) => q.settings.slotId !== "weitertragen"));
-      }
-      setDirty(true);
-    },
+    /** Erneut versuchen nach einem Fehler */
+    retry: flush,
     patchQuestion(qid: string, patch: Partial<Question>) {
       changeQuestions((qs) => qs.map((q) => (q.id === qid ? { ...q, ...patch } : q)));
     },
     changeKind(qid: string, kind: QuestionKind) {
       changeQuestions((qs) => qs.map((q) => (q.id === qid ? getType(kind).apply(q) : q)));
     },
-    /** Eigene Frage am Ende eines Bereichs. Gibt die neue id zurück. */
-    addQuestion(kind: QuestionKind, step: number | null): string {
-      const q = { ...newQuestion(id, kind), step };
-      changeQuestions((qs) => [...qs, q]);
+    /** Neue Frage nach `afterId` (sonst am Ende). Gibt die neue id zurück. */
+    addQuestion(kind: QuestionKind, afterId?: string): string {
+      const q = newQuestion(id, kind);
+      changeQuestions((qs) => {
+        const i = afterId ? qs.findIndex((x) => x.id === afterId) : -1;
+        return i < 0 ? [...qs, q] : [...qs.slice(0, i + 1), q, ...qs.slice(i + 1)];
+      });
       return q.id;
     },
     removeQuestion(qid: string) {
-      changeQuestions((qs) => qs.filter((q) => q.id !== qid));
-      removeIds([qid]);
+      touch({ questions: latest.current.questions.filter((q) => q.id !== qid), removed: [...latest.current.removed, qid] });
     },
-    duplicateQuestion(qid: string) {
+    /** Kopie direkt darunter; gibt die neue id zurück. Die Kopie ist eine eigene Frage (ohne Framework-Zuordnung). */
+    duplicateQuestion(qid: string): string {
+      const newId = crypto.randomUUID();
       changeQuestions((qs) => {
         const i = qs.findIndex((q) => q.id === qid);
-        // Kopie ist eine eigene Frage, kein Platz → ohne slotId/kpi
         const settings = { ...qs[i].settings, slotId: undefined, kpi: undefined };
-        const copy: Question = { ...qs[i], id: crypto.randomUUID(), options: [...qs[i].options], settings };
-        return [...qs.slice(0, i + 1), copy, ...qs.slice(i + 1)];
+        return [...qs.slice(0, i + 1), { ...qs[i], id: newId, options: [...qs[i].options], settings }, ...qs.slice(i + 1)];
       });
+      return newId;
     },
-    /** Verschieben nur innerhalb des Bereichs – die Bereiche selbst sind fest. */
     move(qid: string, dir: -1 | 1) {
       changeQuestions((qs) => {
         const i = qs.findIndex((q) => q.id === qid);
         const j = i + dir;
-        if (j < 0 || j >= qs.length || qs[j].step !== qs[i].step) return qs;
+        if (i < 0 || j < 0 || j >= qs.length) return qs;
         const next = [...qs];
         [next[i], next[j]] = [next[j], next[i]];
         return next;
       });
-    },
-    /** Speichert; patch wird vorher übernommen (z. B. Status beim Live schalten). */
-    async save(patch: Partial<Form> = {}) {
-      if (!form) return;
-      const toSave = { ...form, ...patch };
-      setSaving(true);
-      setError(null);
-      try {
-        const slug = await saveForm(toSave, questions, removed);
-        setForm({ ...toSave, public_slug: slug });
-        setRemoved([]);
-        setDirty(false);
-      } catch (e) {
-        setError((e as Error).message);
-      } finally {
-        setSaving(false);
-      }
     },
   };
 }

@@ -13,8 +13,8 @@ import { QuestionKind, QuestionTypeDef, ResultOption } from "./types";
 
 export type { QuestionKind, QuestionTypeDef, ResultOption } from "./types";
 
-/** Reihenfolge = Reihenfolge in der Typ-Auswahl. */
-export const QUESTION_TYPES: QuestionTypeDef[] = [singleChoice, levels, scale, stars, longText, multipleChoice, shortText, yesNo];
+/** Reihenfolge = Reihenfolge in der Auswahl „Frageart“ im Builder. */
+export const QUESTION_TYPES: QuestionTypeDef[] = [singleChoice, multipleChoice, levels, stars, scale, yesNo, shortText, longText];
 
 const BY_KIND = Object.fromEntries(QUESTION_TYPES.map((t) => [t.kind, t])) as Record<QuestionKind, QuestionTypeDef>;
 
@@ -76,11 +76,8 @@ export function average(q: Question, answers: Answer[]): number | null {
 
 export { levelScore } from "./levels";
 
-/** Wird die Frage im Bogen gezeigt? Leere optionale Plätze fallen weg; Auswahlfragen brauchen ≥ 2 Optionen. */
-export function isPlayable(q: Question): boolean {
-  const def = typeOf(q);
-  if (def.resultOptions && (q.type === "single_choice" || q.type === "multiple_choice")) {
-    if (q.options.filter((o) => o.trim()).length < 2) return false;
-  }
-  return q.label.trim() !== "" || q.required;
+/** Hat eine Auswahlfrage genug Antworten (≥ 2 nicht leere), um im Bogen zu erscheinen? */
+export function hasEnoughOptions(q: Question): boolean {
+  if (q.type !== "single_choice" && q.type !== "multiple_choice") return true;
+  return q.options.filter((o) => o.trim()).length >= 2;
 }

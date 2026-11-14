@@ -26,8 +26,8 @@ function LevelIcon({ level, of }: { level: number; of: number }) {
 
 export const levels: QuestionTypeDef = {
   kind: "levels",
-  autoAdvance: true,
-  label: "Stufen (4)",
+  label: "Stufen",
+  hint: "4 beschriebene Stufen, z. B. „Gar nicht“ bis „Voll und ganz“",
   defaultBoxTitle: "",
   apply: (q: Question) => ({
     ...q,
@@ -42,7 +42,7 @@ export const levels: QuestionTypeDef = {
       onToggle={(k) => onChange(k)}
     />
   ),
-  Editor: OptionsEditor,
+  Editor: (p) => <OptionsEditor {...p} marker="number" fixed />,
   resultOptions: (q) => q.options.map((o, i) => ({ value: o, label: o, short: String(i + 1) })),
   format: (_q, v) => (v == null ? "" : String(v)),
 };

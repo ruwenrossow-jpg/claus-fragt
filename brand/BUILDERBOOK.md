@@ -7,10 +7,11 @@ bestimmt, liegt hier zentral, damit jede Erweiterung gleich aussieht.
 |---|---|
 | `brand/tokens.css` | Alle Farben, Schriften, Größen, Radien als CSS-Variablen |
 | `brand/copy.ts` | Alle Texte für Teilnehmende (Platzhalter für die Tonalitätsregeln) |
-| `brand/themes.ts` | Stile (aktuell „Claus (Weihnachten)“) + Logo-Pfad |
+| `brand/themes.ts` | Art des Events: Inspirierend / Lernend (Ton, Emojis, Maskottchen) + Logo-Pfad |
 | `public/brand/` | Logo, Maskottchen (froh/traurig, freigestellt) |
 | `docs/prototyp/` | Figma-Prototyp als Referenz-Screens (393 × 852) |
-| `components/ui/` | Bausteine: Screen, TopBar, SpeechBubble, Mascot, AnswerCard, PillButton |
+| `components/ui/` | Bogen-Bausteine: Screen, TopBar, SpeechBubble, Mascot, AnswerCard, PillButton |
+| `components/admin/` | Admin-Bausteine: Dialog/Toast (`useDialog`), Select, Switch, Icons |
 
 ## Farben
 | Token | Wert | Verwendung |
@@ -39,16 +40,20 @@ Die Werte sind pixelgenau aus den Prototyp-PNGs und dem InnoNord-Logo ausgelesen
 ## Bausteine (components/ui)
 - **Screen**: Rahmen 393 × 852 (max. 430 px breit), Hintergrund türkis, Footer mit Button unten (60 px Abstand).
 - **TopBar**: „< zurück“ (optional) + Fortschrittsbalken (34 px hoch, Pill).
-- **SpeechBubble**: Ellipse, 1 px schwarzer Rand, Zipfel `up-left` | `up-right` | `down-right`.
+- **SpeechBubble**: Ellipse, 1 px schwarzer Rand, Zipfel `tail="up" | "down"` mit Spitze bei `tailX` (0–1).
+  Ellipse und Zipfel sind **ein SVG-Pfad** (nahtlos). Die Ellipse wird um den gemessenen Text berechnet
+  (Textbox × √2), deshalb wird nichts abgeschnitten; ab 90 Zeichen 18 px statt 20 px. Kurze Texte: mind. 250 px breit.
 - **MascotHero**: Sprechblase oben, großer Claus darunter (Start, Ende, Fertig, Geschlossen).
-- **MascotCorner**: kleiner Claus links/rechts oben, Frage-Sprechblase darunter (Fragen-Screens).
-  Seite: `settings.mascotSide`, sonst automatisch abwechselnd (links, rechts, …) wie im Prototyp.
+- **MascotCorner**: Claus oben, Frage-Sprechblase darunter. **Auf jedem Fragen-Screen, nicht abschaltbar.**
+  Abwechselnd links/rechts (gerade Frage-Nr. links). Das Element bleibt zwischen den Fragen erhalten, Claus wandert
+  per CSS-Transition (0,7 s) mit kleinem Hüpfer, der Zipfel gleitet mit (`useTween`, gleiche Dauer). `prefers-reduced-motion` schaltet das ab.
 - **AnswerCard**: türkise Box, 2 px schwarzer Rand, Radius 18, min. 242 px hoch, optionaler Titel.
 - **PillButton**: rot, 212 × 72, Text in Großbuchstaben mit „!“. **Genau ein Button pro Screen.**
+  Fragen-Screens haben **immer** WEITER! – kein Auto-Weiter (Teilnehmende sollen nachdenken können).
 
 ## Screens (Ablauf siehe `components/survey/flow.ts`)
-1. **Start**: froher Claus, Begrüßung (`form.description` oder `COPY.startBubble`, `{anzahl}`), START!
-2. **Frage** (je Frage): zurück, Fortschritt, Claus in der Ecke, Frage in der Sprechblase, Antwort-Box, WEITER!
+1. **Start**: froher Claus mit Begrüßung, Titel, Untertitel = Beschreibung des Bogens (sonst Standardtext), Chips, „Los geht's“.
+2. **Frage** (je Frage): zurück, Fortschritt, Claus (wandert), Frage in der Sprechblase, Antwort-Box, WEITER!
 3. **Ende**: trauriger Claus, „Oh du bist ja schon fertig …“, voller Balken, ERGEBNIS! (Antworten sind hier schon gespeichert.)
 4. **Ergebnis** (je auswertbare Frage): „Frage N / Titel“, „Deine Antwort = A:“, Balken mit % aller Teilnehmenden, eigene Antwort rot.
 5. **Fertig**: froher Claus, Dank.
@@ -56,28 +61,36 @@ Die Werte sind pixelgenau aus den Prototyp-PNGs und dem InnoNord-Logo ausgelesen
 ## Fragetypen im Look
 | Typ | Box-Titel (Standard) | Darstellung |
 |---|---|---|
-| Multiple Choice | – | runde Radios, gewählt = Akzent |
-| Skala (Zahlen) | „Das ist Ihre Skala:“ | 5 Chips, gewählt = rot, Beschriftung links/rechts |
-| Sterne | „Bewerten Sie:“ | 5 Sterne gelb/grau |
-| Offene Antwort | „Offene Antwort:“ | Textfeld, Platzhalter „Ihre Antwort hier…“ |
-| Mehrfachauswahl, Kurze Antwort, Ja/Nein | siehe Registry | gleiche Bausteine |
+| Auswahl | – | runde Radios, gewählt = Akzent |
+| Mehrfachauswahl | – | eckige Kästchen, optional „Höchstens N“ |
+| Stufen | – | 4 Zeilen mit Signalbalken rechts |
+| Sterne | – | 3–6 Sterne gelb/grau |
+| Skala | – | Zahlen-Chips, gewählt = rot, Beschriftung links/rechts |
+| Ja / Nein, Text (kurz), Text (Absatz) | – | gleiche Bausteine |
+Box-Überschriften gibt es nur noch bei v1-Bögen (`settings.boxTitle`), neu werden keine angelegt.
 
 ## Assets
 - Maskottchen als freigestellte PNGs: `claus-froh.png`, `claus-traurig.png` (mit `scripts/freistellen.mjs` aus den JPGs).
   Das frohe Bild stammt aus einem 500-px-JPG, deshalb sind am Rand leichte Reste möglich. **Besser: PNG mit Transparenz direkt aus Figma exportieren.**
 - Logo `innonord-logo.jpg` hat einen weißen Hintergrund und gehört deshalb nur auf weiße Flächen (Admin-Kopfzeile).
 
-## Styles & Ton (seit 14.11.)
-| Style | Ansprache (Standard) | Emojis | Claus auf Fragen | Auto-Weiter |
-|---|---|---|---|---|
-| Inspire | du | ja | immer | ja |
-| Network | du | nein | am Anfang jedes Bereichs | ja |
-| Implement | Sie | nein | nie (nur Start/Ende) | ja |
-Ansprache ist pro Bogen änderbar (Chip im Editor). Texte: `brand/copy.ts`. Start-Screen: Claus-Sprechblase, Titel, Untertitel, Chips („{anzahl} kurze Fragen · anonym · Ergebnis gleich danach“).
-Fragen-Screen: Fortschritt mit Prozent + Bereichs-Label („Kurz zu dir:“, „Halbzeit!“, „Letzte Frage!“). Auto-Weiter nach 400 ms bei Einfachauswahl, Stufen, Sternen, Skala, Ja/Nein; WEITER! nur bei Mehrfachauswahl/Text; „Überspringen“ bei freiwilligen Fragen.
-Stufen: 4 Zeilen mit Signalbalken-Symbol rechts. Box-Überschriften sind standardmäßig leer (Tonalität: kein „Bewerten Sie:“).
+## Art & Ton (Builder v2)
+| Art (`forms.style`) | Ansprache | Emojis |
+|---|---|---|
+| Inspirierend (`inspire`) | du | ja |
+| Lernend (`network`) | du | nein |
+Alte Bögen: `implement` läuft als Lernend; `settings.ansprache = "Sie"` wird weiter respektiert. Texte: `brand/copy.ts`.
+Fortschritt: Prozent + Label („Los geht's!“, „Halbzeit!“, „Letzte Frage!“). Freiwillige Fragen zeigen „Freiwillig“, WEITER! geht dann auch ohne Antwort.
+
+## Admin-Oberfläche (Builder v2)
+- **Ruhig wie Google Forms**: weiße Karten (`--radius-admin`, `--admin-shadow`), aktive Karte nur über Schatten (`--admin-shadow-active`), kein farbiger Rand.
+- Kopf-Karte mit navy Oberkante: Name (Zilla Slab), Beschreibung, Umschalter Inspirierend/Lernend.
+- Frage-Karte: inaktiv = Zusammenfassung (Text, Frageart, Antworten); aktiv = Fragetext, Auswahl „Frageart“, Felder der Art, Fuß mit ↑ ↓ Duplizieren Löschen | Pflicht-Schalter.
+- **Keine Browser-Dialoge**: `confirm()`, `alert()`, `prompt()`, `beforeunload`, `required`, natives `<select>` und `title`-Tooltips sind tabu.
+  Stattdessen `useDialog().confirm(...)` / `.toast(...)`, `Select`, `Switch` aus `components/admin/`, Formulare mit `noValidate` + eigener Meldung.
+- Autosave mit Statusanzeige „Speichert …“ / „Gespeichert“ in der Kopfzeile, kein Speichern-Knopf.
 
 ## Offen / folgt
-- Tonalitätsregeln → `brand/copy.ts` (+ ggf. Regeln je Framework-Schritt)
-- 5-Schritt-Framework → `lib/framework.ts` (Namen, Beschreibungen, empfohlene Fragetypen)
-- Weitere Stile → `brand/themes.ts` (+ Token-Sets je Stil)
+- Tonalitätsregeln → `brand/copy.ts` + Hinweise in `lib/rules.ts`
+- Framework/KPI-Konzept (Ruwen): Datenmodell hält `step`, `settings.slotId`, `settings.kpi` bereit, ohne UI
+- Weitere Arten/Looks → `brand/themes.ts` (+ Token-Sets je Art)

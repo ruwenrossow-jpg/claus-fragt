@@ -12,32 +12,35 @@ export type FormStatus = "draft" | "published" | "closed";
 
 export type Ansprache = "du" | "Sie";
 
-/** Framework-Konfiguration eines Bogens (Spalte forms.settings, jsonb). */
+/**
+ * Einstellungen eines Bogens (Spalte forms.settings, jsonb). Neue Bögen brauchen keine davon;
+ * ältere Bögen (Builder v1) haben hier Ansprache, Eventname und Thema – die werden weiter gelesen.
+ * Weitere Felder aus v1 (eventTyp, teach, menti) bleiben in der DB, werden aber nicht mehr genutzt.
+ */
 export interface FormSettings {
-  eventTyp?: string;
-  eventName?: string;
-  thema?: string;
-  teach?: boolean;
-  menti?: boolean;
+  /** Standard „du“; „Sie“ nur bei älteren Bögen */
   ansprache?: Ansprache;
+  /** v1: ersetzt {event} (sonst gilt der Titel) */
+  eventName?: string;
+  /** v1: ersetzt {thema} */
+  thema?: string;
 }
 
 export interface Form {
   id: string;
-  /** interner Titel (= Eventname bei neuen Bögen) */
+  /** Name des Bogens (= Eventname, ersetzt {event}) */
   title: string;
+  /** Beschreibung; steht auf dem Start-Screen */
   description: string | null;
   /** "published" wird in der Oberfläche als „Live“ bezeichnet */
   status: FormStatus;
-  /** Style-id (inspire | implement | network), siehe lib/styles.ts */
+  /** Art des Events: "inspire" (Inspirierend) | "network" (Lernend), siehe brand/themes.ts */
   style: string | null;
   settings?: FormSettings | null;
   public_slug?: string | null;
   created_at: string;
   updated_at: string;
 }
-
-export type MascotSide = "auto" | "left" | "right";
 
 /** Frei erweiterbare Einstellungen je Frage (jsonb-Spalte, keine Migration nötig). */
 export interface QuestionSettings {
@@ -47,23 +50,21 @@ export interface QuestionSettings {
   maxLabel?: string;
   /** Darstellung: "stars" = Skala als Sterne, "levels" = Einfachauswahl als Stufen (score = Position 1–4) */
   display?: "numbers" | "stars" | "levels";
-  /** Platz im Framework (lib/framework.ts), fehlt bei eigenen Fragen */
+  /** Framework (v1): Platz-id und KPI. Bleiben im Datenmodell für ein späteres Framework-Konzept, ohne UI. */
   slotId?: string;
-  /** KPI, für die diese Frage zählt */
   kpi?: "transfer" | "ziel" | "teach";
   /** Mehrfachauswahl: höchstens so viele Antworten */
   maxChoices?: number;
-  /** Überschrift in der Antwort-Box, z. B. „Bewerten Sie:“ */
+  /** v1: Überschrift in der Antwort-Box (wird noch angezeigt, aber nicht mehr bearbeitet) */
   boxTitle?: string;
   placeholder?: string;
-  mascotSide?: MascotSide;
 }
 
 export interface Question {
   id: string;
   form_id: string;
   position: number;
-  /** Schritt im 5er-Framework (1–5), siehe lib/framework.ts */
+  /** Framework (v1): Schritt 1–5. Neue Fragen: null. */
   step: number | null;
   type: DbQuestionType;
   label: string;

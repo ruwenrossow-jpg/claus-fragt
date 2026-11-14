@@ -1,19 +1,17 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useMemo, useState } from "react";
 import { Intro, MascotHero } from "@/components/ui/Mascot";
 import { PillButton } from "@/components/ui/PillButton";
 import { Screen } from "@/components/ui/Screen";
 import { TopBar } from "@/components/ui/TopBar";
 import { Answer, AnswerValue, Form, Question, isEmptyAnswer } from "@/lib/types";
-import { isAnswerable, typeOf } from "@/question-types";
+import { isAnswerable } from "@/question-types";
 import { buildSurvey } from "./context";
 import { START, Step, nextStep, prevStep, progressOf } from "./flow";
 import { QuestionScreen } from "./QuestionScreen";
 import { ResultView } from "./ResultView";
 import styles from "./survey.module.css";
-
-const AUTO_ADVANCE_MS = 400;
 
 export interface SurveyPlayerProps {
   form: Form;
@@ -37,19 +35,17 @@ export function SurveyPlayer({ form, questions: allQuestions, onSave, loadAnswer
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [hint, setHint] = useState<string | null>(null);
-  const timer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
-  useEffect(() => () => clearTimeout(timer.current), []);
 
   const step = controlledStep ?? ownStep;
   const resultQuestions = questions.filter(isAnswerable);
   const n = questions.length;
 
   const go = (s: Step) => {
-    clearTimeout(timer.current);
     setHint(null);
     setError(null);
-    if (onStepChange) onStepChange(s);
-    else setOwnStep(s);
+    if (onStepChange) return onStepChange(s);
+    setOwnStep(s);
+    window.scrollTo({ top: 0 });
   };
   const next = () => go(nextStep(step, n, resultQuestions.length));
   const back = prevStep(step, n);
@@ -75,14 +71,9 @@ export function SurveyPlayer({ form, questions: allQuestions, onSave, loadAnswer
     next();
   }
 
-  function answer(q: Question, index: number, v: AnswerValue) {
-    const snapshot = { ...values, [q.id]: v };
-    setValues(snapshot);
+  function answer(q: Question, v: AnswerValue) {
+    setValues((vs) => ({ ...vs, [q.id]: v }));
     setHint(null);
-    clearTimeout(timer.current);
-    if (theme.autoAdvance && typeOf(q).autoAdvance && !isEmptyAnswer(v)) {
-      timer.current = setTimeout(() => leaveQuestion(index, snapshot), AUTO_ADVANCE_MS);
-    }
   }
 
   if (form.status === "closed" && onSave) {
@@ -95,9 +86,10 @@ export function SurveyPlayer({ form, questions: allQuestions, onSave, loadAnswer
   }
 
   const progressLabel = (i: number) => {
-    if (i === n - 1) return copy.progress.last;
+    if (i === n - 1 && n > 1) return copy.progress.last;
+    if (i === 0) return copy.progress.first;
     if (n >= 4 && i === Math.floor(n / 2)) return copy.progress.half;
-    return copy.steps[questions[i].step ?? 0] ?? "";
+    return "";
   };
   const header = (label?: string) => (
     <TopBar onBack={back ? () => go(back) : undefined} backLabel={copy.buttons.back} progress={progressOf(step, n)} label={label} />
@@ -111,7 +103,7 @@ export function SurveyPlayer({ form, questions: allQuestions, onSave, loadAnswer
           footer={<PillButton onClick={next} disabled={!n}>{copy.start.button}</PillButton>}
         >
           <MascotHero theme={theme} mood="happy" size="s" text={survey.fill(copy.start.claus)} />
-          <Intro title={survey.fill(copy.start.title)} sub={survey.fill(copy.start.sub)} tags={copy.start.chips.map(survey.fill)} />
+          <Intro title={survey.fill(copy.start.title)} sub={form.description?.trim() || survey.fill(copy.start.sub)} tags={copy.start.chips.map(survey.fill)} />
         </Screen>
       );
 
@@ -124,7 +116,7 @@ export function SurveyPlayer({ form, questions: allQuestions, onSave, loadAnswer
           index={step.index}
           header={header(progressLabel(step.index))}
           value={values[q.id]}
-          onAnswer={(v) => answer(q, step.index, v)}
+          onAnswer={(v) => answer(q, v)}
           onNext={() => leaveQuestion(step.index, values)}
           busy={busy}
           hint={hint}

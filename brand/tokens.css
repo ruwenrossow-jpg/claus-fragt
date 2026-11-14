@@ -27,6 +27,20 @@
   --admin-text: #1b1d3a;
   --admin-muted: #6b6f8a;
   --admin-danger: #b3000a;
+  --admin-danger-soft: #fdecec;
+  --admin-hover: #f0f1f7;
+  --admin-navy-soft: #ebecf8;   /* aktive Elemente, gewählte Kacheln */
+  --admin-warn-bg: #fff8e1;
+  --admin-warn-border: #f0d77a;
+  --admin-warn-text: #5c4700;
+  --admin-ok: #1e7a46;
+  --admin-overlay: rgba(21, 23, 46, 0.45);
+  --admin-shadow: 0 1px 2px rgba(27, 29, 58, 0.06);
+  --admin-shadow-active: 0 2px 6px rgba(27, 29, 58, 0.08), 0 10px 28px rgba(27, 29, 58, 0.10);
+  --admin-shadow-pop: 0 12px 40px rgba(27, 29, 58, 0.22);
+  --phone-frame: #15172e;
+  --radius-admin: 12px;
+  --radius-admin-s: 8px;
 
   /* Typografie: InnoNord-Web nutzt Source Sans Pro; Logo ist eine Slab-Serif (nächste freie: Zilla Slab) */
   --font-body: var(--font-source-sans), "Source Sans 3", "Source Sans Pro", system-ui, sans-serif;

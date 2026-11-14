@@ -37,7 +37,7 @@ export function ResultView({ survey, question, number, own, answers, onBack }: P
       </h2>
       <p className={styles.yourAnswer}>
         {copy.result.mine} = {ownShorts.length ? ownShorts.join(", ") : "–"}
-        <span className={styles.total}> · {total} Antworten</span>
+        <span className={styles.total}> · {total} {total === 1 ? "Antwort" : "Antworten"}</span>
       </p>
       <div className={styles.rows}>
         {rows.map(({ option, share }) => {

@@ -6,7 +6,7 @@ Evaluationsbögen für InnoNord: Ein **Builder** (Admin) erstellt Bögen, Teilne
 Claus-Look (Figma-Prototyp „van der Stein“) aus, und die Ergebnisse dienen dazu, den Wissenstransfer von Event zu Event zu verbessern.
 
 Routen: `/meine-boegen`, `/neu`, `/b/<id>/bearbeiten`, `/b/<id>/ergebnisse`, `/f/<slug>`, `/f/<slug>/qr`.
-Framework/Styles/Regeln/KPI: `lib/framework.ts`, `lib/styles.ts`, `lib/rules.ts`, `lib/kpi.ts`.
+Art (Inspirierend/Lernend): `brand/themes.ts`. Hinweise/KPI: `lib/rules.ts`, `lib/kpi.ts`. v1-Kompatibilität: `lib/legacy.ts`.
 
 ## Zuerst lesen
 1. `brand/BUILDERBOOK.md`: Design-System (Farben, Typo, Bausteine, Screens). **Verbindlich.**
@@ -20,6 +20,9 @@ Framework/Styles/Regeln/KPI: `lib/framework.ts`, `lib/styles.ts`, `lib/rules.ts`
 - **Datenbank nur über `lib/data.ts`.** Seiten/Komponenten importieren nie `supabase` direkt.
 - **Fragetypen nur über die Registry `question-types/`.** Kein `switch (q.type)` in Seiten.
 - Teilnehmer-Screens bestehen aus den Bausteinen in `components/ui/`, keine Einzelanfertigungen.
+- **Keine Browser-Dialoge** (confirm, alert, prompt, beforeunload, `required`-Blasen, natives `<select>`, `title`-Tooltips).
+  Admin nutzt `components/admin/` (`useDialog().confirm/toast`, `Select`, `Switch`). Der Editor speichert automatisch.
+- Claus ist auf jedem Fragen-Screen sichtbar; kein Auto-Weiter, immer WEITER!.
 - `SurveyPlayer` ist die einzige Darstellung des Bogens (Live-Link **und** Builder-Vorschau).
 - Schema-Änderungen nur als neue Datei in `supabase/migrations/`, Ruwen spielt sie ein. Lieber `settings` (jsonb) nutzen als neue Spalten.
 - Admin-CSS (`app/globals.css`) wirkt nur in `.admin-main > h1` und `.panel`, damit die Vorschau nicht beeinflusst wird.
@@ -27,7 +30,7 @@ Framework/Styles/Regeln/KPI: `lib/framework.ts`, `lib/styles.ts`, `lib/rules.ts`
 
 ## Definition of Done (jede Runde)
 1. `npx tsc --noEmit` und `npm run build` grün.
-2. `npm run dev`, dann `node scripts/visual-test.mjs http://localhost:3000` (alles fehlerfrei) und bei Design-Änderungen `node scripts/vergleich.mjs <screens>`.
+2. `npx next dev -p 3123`, dann `node scripts/visual-test.mjs http://localhost:3123` (muss mit `errors: none` enden) und bei Design-Änderungen `node scripts/vergleich.mjs start=10-start multiple-choice=11-frage-1 stars=11-frage-2`.
 3. Screenshots in `.shots/vergleich-*.png` mit `docs/prototyp/` vergleichen: Abweichungen beheben oder begründen.
 4. Learnings in `docs/LEARNINGS.md` eintragen.
 5. Branch + PR, Vercel-Preview abwarten, Preview-Link testen.

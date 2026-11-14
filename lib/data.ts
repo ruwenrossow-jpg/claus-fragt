@@ -41,17 +41,23 @@ export function newSlug(): string {
 
 export interface NewFormInput {
   title: string;
+  description?: string | null;
   style: string;
-  settings: FormSettings;
-  questions: (formId: string) => Question[];
+  settings?: FormSettings;
+  /** Fragen (z. B. beim Duplizieren); neue Bögen starten leer */
+  questions?: (formId: string) => Question[];
 }
 
-/** Legt einen Bogen inkl. vorbelegter Plätze an. */
+/** Legt einen Bogen an (neue Bögen ohne Fragen). */
 export async function createForm(input: NewFormInput): Promise<Form> {
   const form: Form = unwrap(
-    await supabase.from("forms").insert({ title: input.title, style: input.style, settings: input.settings, public_slug: newSlug() }).select().single()
+    await supabase
+      .from("forms")
+      .insert({ title: input.title, description: input.description ?? null, style: input.style, settings: input.settings ?? {}, public_slug: newSlug() })
+      .select()
+      .single()
   );
-  const qs = input.questions(form.id).map((q, i) => ({ ...q, position: i }));
+  const qs = (input.questions?.(form.id) ?? []).map((q, i) => ({ ...q, position: i }));
   if (qs.length) unwrap(await supabase.from("questions").insert(qs));
   return form;
 }
@@ -61,6 +67,7 @@ export async function duplicateForm(id: string): Promise<Form> {
   const { form, questions } = await loadForm(id);
   return createForm({
     title: `${form.title} (Kopie)`,
+    description: form.description,
     style: form.style ?? "inspire",
     settings: form.settings ?? {},
     questions: (formId) => questions.map((q) => ({ ...q, id: crypto.randomUUID(), form_id: formId })),
@@ -99,8 +106,7 @@ export async function loadForm(id: string): Promise<{ form: Form; questions: Que
   return { form: unwrap(f) as Form, questions: (unwrap(q) as Question[]) ?? [] };
 }
 
-/** Speichert Bogen + Fragen in einem Rutsch (Reihenfolge = Array-Reihenfolge). */
-/** Gibt den (ggf. neu vergebenen) öffentlichen Slug zurück. */
+/** Speichert Bogen + Fragen in einem Rutsch (Reihenfolge = Array-Reihenfolge). Gibt den (ggf. neu vergebenen) öffentlichen Slug zurück. */
 export async function saveForm(form: Form, questions: Question[], removedIds: string[]): Promise<string> {
   const slug = form.public_slug || newSlug();
   unwrap(
